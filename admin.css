@@ -1,13 +1,13 @@
 * { box-sizing: border-box; }
 body { margin: 0; min-height: 100vh; padding: 24px 14px; display: grid; place-items: center; background: #3d3d3d; color: #202124; font-family: Arial, sans-serif; }
 .admin-card { width: min(680px, 100%); padding: 24px; border: 1px solid #b9bec7; border-radius: 12px; background: #fff; }
-.back-link { color: #2457a7; }
+.back-link { color: #01473d; }
 h1 { margin: 18px 0 8px; }
 .intro { color: #626a76; }
 label { display: block; margin: 18px 0 7px; font-weight: 600; }
 select, input { width: 100%; min-height: 42px; padding: 9px 10px; border: 1px solid #aeb5c0; border-radius: 7px; background: white; font: inherit; }
 .add-row { display: flex; gap: 8px; }
-.add-row button, .remove-item { border: 0; border-radius: 7px; background: #2457a7; color: white; font: inherit; cursor: pointer; }
+.add-row button, .remove-item { border: 0; border-radius: 7px; background: #01473d; color: white; font: inherit; cursor: pointer; }
 .add-row button { flex: 0 0 auto; padding: 0 16px; }
 h2 { margin-top: 26px; font-size: 1.15rem; }
 .item-list { margin: 0; padding: 0; list-style: none; }
@@ -16,6 +16,6 @@ h2 { margin-top: 26px; font-size: 1.15rem; }
 .minimum-field { display: flex; align-items: center; gap: 7px; color: #626a76; font-size: 0.9rem; }
 .minimum-field input { width: 82px; min-height: 36px; }
 .remove-item { padding: 8px 12px; background: #a83232; }
-.status { min-height: 1.3em; color: #2457a7; }
+.status { min-height: 1.3em; color: #01473d; }
 button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible { outline: 3px solid #f0a72e; outline-offset: 2px; }
 @media (max-width: 460px) { .admin-card { padding: 17px; } .add-row { flex-direction: column; } .add-row button { min-height: 42px; } }
