@@ -15,7 +15,7 @@ h2 { margin-top: 26px; font-size: 1.15rem; }
 .item-details { display: flex; flex: 1; align-items: center; justify-content: space-between; gap: 12px; }
 .minimum-field { display: flex; align-items: center; gap: 7px; color: #626a76; font-size: 0.9rem; }
 .minimum-field input { width: 82px; min-height: 36px; }
-.remove-item { padding: 8px 12px; background: #a83232; }
+.remove-item { padding: 8px 12px; background: #001b17; }
 .status { min-height: 1.3em; color: #01473d; }
 button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible { outline: 3px solid #f0a72e; outline-offset: 2px; }
 @media (max-width: 460px) { .admin-card { padding: 17px; } .add-row { flex-direction: column; } .add-row button { min-height: 42px; } }
