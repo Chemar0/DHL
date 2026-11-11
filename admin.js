@@ -1,14 +1,20 @@
 const store = window.FastenerInventory;
 const inventory = JSON.parse(JSON.stringify(store.defaults));
 const minimums = {};
-const notes = {};
+const manufacturers = {};
+const partNumbers = JSON.parse(JSON.stringify(store.partNumbers || {}));
+const manufacturersStorageKey = store.manufacturersKey || store.notesKey;
 const categorySelect = document.getElementById('category-select');
 const itemList = document.getElementById('item-list');
 const addForm = document.getElementById('add-form');
 const newItemInput = document.getElementById('new-item');
 const status = document.getElementById('admin-status');
 
-Object.keys(inventory).forEach((category) => { minimums[category] = {}; notes[category] = {}; });
+Object.keys(inventory).forEach((category) => {
+    minimums[category] = {};
+    manufacturers[category] = {};
+    if (!partNumbers[category]) partNumbers[category] = {};
+});
 try {
     const savedMinimums = JSON.parse(localStorage.getItem(store.minimumsKey) || 'null');
     if (savedMinimums && typeof savedMinimums === 'object' && !Array.isArray(savedMinimums)) {
@@ -26,18 +32,34 @@ try {
 }
 
 try {
-    const savedNotes = JSON.parse(localStorage.getItem(store.notesKey) || 'null');
-    if (savedNotes && typeof savedNotes === 'object' && !Array.isArray(savedNotes)) {
+    const legacyNotes = store.manufacturersKey && store.notesKey ? localStorage.getItem(store.notesKey) : null;
+    const savedManufacturers = JSON.parse(localStorage.getItem(manufacturersStorageKey) || legacyNotes || 'null');
+    if (savedManufacturers && typeof savedManufacturers === 'object' && !Array.isArray(savedManufacturers)) {
         Object.keys(inventory).forEach((category) => {
-            const values = savedNotes[category];
+            const values = savedManufacturers[category];
             if (!values || typeof values !== 'object' || Array.isArray(values)) return;
-            Object.entries(values).forEach(([name, note]) => {
-                if (typeof note === 'string') notes[category][name] = note;
+            Object.entries(values).forEach(([name, manufacturer]) => {
+                if (typeof manufacturer === 'string') manufacturers[category][name] = manufacturer;
             });
         });
     }
 } catch (error) {
-    status.textContent = 'Could not read saved item notes.';
+    status.textContent = 'Could not read saved manufacturer values.';
+}
+
+try {
+    const savedPartNumbers = JSON.parse(localStorage.getItem(store.partNumbersKey) || 'null');
+    if (savedPartNumbers && typeof savedPartNumbers === 'object' && !Array.isArray(savedPartNumbers)) {
+        Object.keys(inventory).forEach((category) => {
+            const values = savedPartNumbers[category];
+            if (!values || typeof values !== 'object' || Array.isArray(values)) return;
+            Object.entries(values).forEach(([name, partNumber]) => {
+                if (typeof partNumber === 'string') partNumbers[category][name] = partNumber;
+            });
+        });
+    }
+} catch (error) {
+    status.textContent = 'Could not read saved part numbers.';
 }
 
 try {
@@ -78,12 +100,21 @@ function saveMinimums() {
     }
 }
 
-function saveNotes() {
+function saveManufacturers() {
     try {
-        localStorage.setItem(store.notesKey, JSON.stringify(notes));
-        status.textContent = 'Item note saved.';
+        localStorage.setItem(manufacturersStorageKey, JSON.stringify(manufacturers));
+        status.textContent = store.manufacturersKey ? 'Manufacturer saved.' : 'Item note saved.';
     } catch (error) {
-        status.textContent = 'Could not save item notes in this browser.';
+        status.textContent = 'Could not save this value in this browser.';
+    }
+}
+
+function savePartNumbers() {
+    try {
+        localStorage.setItem(store.partNumbersKey, JSON.stringify(partNumbers));
+        status.textContent = 'Part number saved.';
+    } catch (error) {
+        status.textContent = 'Could not save the part number in this browser.';
     }
 }
 
@@ -96,8 +127,8 @@ function renderItems() {
         const details = document.createElement('div');
         const minimumLabel = document.createElement('label');
         const minimumInput = document.createElement('input');
-        const noteLabel = document.createElement('label');
-        const noteInput = document.createElement('input');
+        const manufacturerLabel = document.createElement('label');
+        const manufacturerInput = document.createElement('input');
         const removeButton = document.createElement('button');
         itemName.textContent = name;
         details.className = 'item-details';
@@ -119,20 +150,40 @@ function renderItems() {
             saveMinimums();
         });
         minimumLabel.append(minimumInput);
-        noteLabel.className = 'note-field';
-        noteLabel.append(document.createTextNode('Notes'));
-        noteInput.type = 'text';
-        noteInput.maxLength = 200;
-        noteInput.value = notes[category][name] || '';
-        noteInput.placeholder = 'Optional note';
-        noteInput.setAttribute('aria-label', `Notes for ${name}`);
-        noteInput.addEventListener('change', () => {
-            const note = noteInput.value.trim();
-            if (note) notes[category][name] = note;
-            else delete notes[category][name];
-            saveNotes();
+        manufacturerLabel.className = 'note-field';
+        manufacturerLabel.append(document.createTextNode(store.manufacturersKey ? 'Manufacturer' : 'Notes'));
+        manufacturerInput.type = 'text';
+        manufacturerInput.maxLength = 200;
+        manufacturerInput.value = manufacturers[category][name] || '';
+        manufacturerInput.placeholder = store.manufacturersKey ? 'Optional manufacturer' : 'Optional note';
+        manufacturerInput.setAttribute('aria-label', `${store.manufacturersKey ? 'Manufacturer' : 'Notes'} for ${name}`);
+        manufacturerInput.addEventListener('change', () => {
+            const manufacturer = manufacturerInput.value.trim();
+            if (manufacturer) manufacturers[category][name] = manufacturer;
+            else delete manufacturers[category][name];
+            saveManufacturers();
         });
-        noteLabel.append(noteInput);
+        manufacturerLabel.append(manufacturerInput);
+        const itemFields = [minimumLabel, manufacturerLabel];
+        if (store.partNumbersKey) {
+            const partNumberLabel = document.createElement('label');
+            const partNumberInput = document.createElement('input');
+            partNumberLabel.className = 'note-field';
+            partNumberLabel.append(document.createTextNode('Part number'));
+            partNumberInput.type = 'text';
+            partNumberInput.maxLength = 100;
+            partNumberInput.value = partNumbers[category][name] || '';
+            partNumberInput.placeholder = 'Optional part number';
+            partNumberInput.setAttribute('aria-label', `Part number for ${name}`);
+            partNumberInput.addEventListener('change', () => {
+                const partNumber = partNumberInput.value.trim();
+                if (partNumber) partNumbers[category][name] = partNumber;
+                else delete partNumbers[category][name];
+                savePartNumbers();
+            });
+            partNumberLabel.append(partNumberInput);
+            itemFields.push(partNumberLabel);
+        }
         removeButton.type = 'button';
         removeButton.className = 'remove-item';
         removeButton.textContent = 'Remove';
@@ -142,7 +193,7 @@ function renderItems() {
             saveInventory();
             renderItems();
         });
-        details.append(itemName, minimumLabel, noteLabel);
+        details.append(itemName, ...itemFields);
         row.append(details, removeButton);
         itemList.append(row);
     });
