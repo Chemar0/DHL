@@ -13,7 +13,7 @@ window.FastenerInventory = {
         Washers: ['M4 x 9', 'M6 x 15', 'M6 x 25', 'M8 x 17'],
         'Spring Washers': ['M6', 'M8'],
         'Nylon Insert Nuts': ['M4', 'M5', 'M6', 'M8'],
-        Nuts: ['M5', 'M6', 'M8', 'M12', 'M12 (Half)', 'M16', 'M16 (Half)'],
+     Nuts: ['M5', 'M6', 'M8', 'M12', 'M12 (Half)', 'M16', 'M16 (Half)'],
         'Shoulder Bolt': [],
         'Hardened Dowels': []
     }
