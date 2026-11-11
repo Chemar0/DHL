@@ -6,19 +6,21 @@ h1 { margin: 18px 0 8px; }
 .intro { color: #626a76;}
 label { display: block; margin: 18px 0 7px; font-weight: 600; }
 select, input { width: 100%; min-height: 42px; padding: 9px 10px; border: 1px solid #aeb5c0; border-radius: 7px; background: white; font: inherit; }
-.add-row { display: flex; gap: 8px; }
+.add-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; }
+.add-row input { min-width: 0; }
 .add-row button, .remove-item { border: 0; border-radius: 7px; background: #01473d; color: white; font: inherit; cursor: pointer; }
 .add-row button { flex: 0 0 auto; padding: 0 16px; }
 h2 { margin-top: 26px; font-size: 1.15rem; }
 .item-list { margin: 0; padding: 0; list-style: none; }
-.item-list li { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 0; border-bottom: 1px solid #e1e4e9; }
-.item-details { display: flex; flex: 1; align-items: center; justify-content: space-between; gap: 12px; }
-.minimum-field { display: flex; align-items: center; gap: 7px; color: #626a76; font-size: 0.9rem; }
-.minimum-field input { width: 82px; min-height: 36px; }
-.note-field { display: flex; flex: 1; align-items: center; gap: 7px; margin: 0; color: #626a76; font-size: 0.9rem; }
-.note-field input { min-width: 100px; min-height: 36px; }
-.remove-item { padding: 8px 12px; background: #001b17; }
+.item-list li { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid #e1e4e9; }
+.item-details { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); flex: 1; min-width: 0; gap: 8px 12px; }
+.item-details > span { grid-column: 1 / -1; min-width: 0; overflow-wrap: anywhere; }
+.minimum-field { display: flex; min-width: 0; align-items: center; justify-content: space-between; gap: 7px; color: #626a76; font-size: 0.9rem; }
+.minimum-field input { width: 82px; min-width: 0; min-height: 36px; flex: 0 0 82px; }
+.note-field { display: flex; min-width: 0; align-items: center; gap: 7px; margin: 0; color: #626a76; font-size: 0.9rem; }
+.note-field input { width: 100%; min-width: 0; min-height: 36px; flex: 1 1 0; }
+.remove-item { justify-self: end; padding: 8px 12px; background: #001b17; }
 .status { min-height: 1.3em; color: #01473d; }
 button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible { outline: 3px solid #f0a72e; outline-offset: 2px; }
-@media (max-width: 600px) { .item-details { align-items: stretch; flex-direction: column; gap: 7px; } .minimum-field, .note-field { justify-content: space-between; } }
+@media (max-width: 600px) { .item-details { grid-template-columns: minmax(0, 1fr); } .item-details > span { grid-column: 1; } .minimum-field, .note-field { justify-content: space-between; } }
 @media (max-width: 460px) { .admin-card { padding: 17px; } .add-row { flex-direction: column; } .add-row button { min-height: 42px; } }
