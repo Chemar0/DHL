@@ -115,6 +115,7 @@ const cartItems = document.getElementById('cart-items');
 const cartEmpty = document.getElementById('cart-empty');
 const emailCart = document.getElementById('email-cart');
 const clearCartButton = document.getElementById('clear-cart');
+const cartSyncStatus = document.getElementById('cart-sync-status');
 const emailConfirm = document.getElementById('email-confirm');
 const emailYes = document.getElementById('email-yes');
 const emailNo = document.getElementById('email-no');
