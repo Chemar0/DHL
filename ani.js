@@ -277,6 +277,26 @@ function renderCart() {
     }
 }
 
+async function clearSharedCart() {
+    try {
+        await callSharedCartRpc('clear_shared_cart');
+    } catch (clearError) {
+        // Older Supabase deployments may not have the clear RPC in their schema cache.
+        const rows = await callSharedCartRpc('get_shared_cart');
+        if (!Array.isArray(rows)) throw clearError;
+        for (const row of rows) {
+            if (typeof row.category !== 'string' || typeof row.item_name !== 'string' ||
+                !Number.isInteger(row.quantity) || row.quantity < 1) continue;
+            await callSharedCartRpc('adjust_shared_cart_item', {
+                p_category: row.category,
+                p_item_name: row.item_name,
+                p_delta: -row.quantity
+            });
+        }
+    }
+    await refreshSharedCart();
+}
+
 clearCartButton.addEventListener('click', async () => {
     if (!sharedCartEnabled) {
         cart.clear();
@@ -285,9 +305,9 @@ clearCartButton.addEventListener('click', async () => {
     }
     updateCartSyncStatus('Clearing shared cart…');
     try {
-        await callSharedCartRpc('clear_shared_cart');
-        await refreshSharedCart();
+        await clearSharedCart();
     } catch (error) {
+        console.error('Could not clear the shared cart:', error);
         updateCartSyncStatus('Could not clear the shared cart. Check the Supabase setup and connection.', true);
     }
 });
