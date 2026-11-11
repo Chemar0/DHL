@@ -4,8 +4,8 @@ window.FastenerInventory = {
     minimumsKey: 'electrical-list-minimums',
     notesKey: 'electrical-list-notes',
     defaults: {
-        // Put default Wiring items between these brackets, for example: Wiring: ['Wire 1 mm²'],
-        Wiring: [],
+        // Put default Cable Indents items between these brackets, for example: 'Cable Indents': ['Wire 1 mm²'],
+        'Cable Indents': [],
         // Put default Connectors items between these brackets.
         Connectors: [],
         // Put default Switches items between these brackets.
