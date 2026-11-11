@@ -155,9 +155,10 @@ const cartStorageKey = 'electrical-list-cart';
 
 const sharedCartStatus = document.getElementById('cart-sync-status');
 const supabaseConfig = window.SUPABASE_CONFIG || {};
+const publicApiKey = supabaseConfig.publishableKey || supabaseConfig.anonKey || '';
 const sharedCartEnabled = Boolean(
     typeof supabaseConfig.url === 'string' && supabaseConfig.url.trim() &&
-    typeof supabaseConfig.anonKey === 'string' && supabaseConfig.anonKey.trim()
+    typeof publicApiKey === 'string' && publicApiKey.trim()
 );
 
 function updateCartSyncStatus(message, isError = false) {
@@ -172,8 +173,7 @@ async function callSharedCartRpc(functionName, payload = {}) {
     const response = await fetch(`${baseUrl}/rest/v1/rpc/${functionName}`, {
         method: 'POST',
         headers: {
-            apikey: supabaseConfig.anonKey.trim(),
-            Authorization: `Bearer ${supabaseConfig.anonKey.trim()}`,
+            apikey: publicApiKey.trim(),
             'Content-Type': 'application/json'
         },
         body: JSON.stringify(payload)
