@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Fastener Items</title>
+    <link rel="stylesheet" href="admin.css">
+</head>
+<body>
+    <main class="admin-card">
+        <a class="back-link" href="mechanical.html">← Back to fastener list</a>
+        <h1>Manage items</h1>
+        <p class="intro">Choose a tab to add or remove its items, set each minimum order quantity, and add notes. Changes are saved in this browser. The email quantity is the minimum multiplied by the number added to the cart. Notes appear in brackets beside the item in the email.</p>
+
+        <label for="category-select">Tab category</label>
+        <select id="category-select"></select>
+
+        <form id="add-form">
+            <label for="new-item">Add an item</label>
+            <div class="add-row">
+                <input id="new-item" name="item" type="text" maxlength="100" required placeholder="For example, M4 x 20">
+                <button type="submit">Add item</button>
+            </div>
+        </form>
+
+        <h2>Items in this tab</h2>
+        <ul id="item-list" class="item-list"></ul>
+        <p id="admin-status" class="status" role="status" aria-live="polite"></p>
+    </main>
+    <script src="inventory.js"></script>
+    <script src="admin.js"></script>
+</body>
+</html>

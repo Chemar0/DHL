@@ -1,0 +1,227 @@
+/* Global sizing and the hidden top-left admin shortcut. */
+* { box-sizing: border-box; }
+
+.admin-entry { position: fixed; z-index: 6; top: 0; left: 0; width: 30px; height: 30px; margin: 0; padding: 0; border: 0; background: transparent; color: transparent; opacity: 0; }
+.admin-entry:focus-visible { width: auto; height: auto; padding: 8px 12px; background: #01473d; color: #fff; opacity: 1; }
+
+/* Page background and centered fastener-list card. */
+body {
+    min-height: 100vh;
+    margin: 0;
+    padding: 24px 12px;
+    display: grid;
+    place-items: center;
+    font-family: Arial, sans-serif;
+    color: #202124;
+    background: #3d3d3d;
+}
+
+.main-layout { width: min(760px, 100%); }
+
+.box {
+    width: 100%;
+    margin: auto;
+    padding: 20px;
+    border: 1px solid #b9bec7;
+    border-radius: 12px;
+    background: #fff;
+    text-align: center;
+}
+
+h1 { margin: 0 0 18px; font-size: 1.6rem; }
+
+/* Logo centered above the main page title. */
+.site-logo { display: block; width: min(180px, 55vw); max-height: 90px; margin: 0 auto 32px; object-fit: contain; }
+
+/* Tab grid, selected state, and keyboard focus. */
+.tabs {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.tab {
+    width: auto;
+    min-height: 42px;
+    margin: 0;
+    border: 1px solid #aeb5c0;
+    border-radius: 7px;
+    background: #eef0f4;
+    color: #202124;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background-color 160ms ease, border-color 160ms ease, transform 160ms ease;
+}
+
+.tab:hover { background: #e1e5ec; transform: translateY(-1px); }
+.tab.active { border-color: #01473d; background: #01473d; color: #fff; }
+.tab:focus-visible, .item:focus-visible { outline: 3px solid #f0a72e; outline-offset: 2px; }
+
+.inner-box {
+    height: 360px;
+    padding: 14px;
+    border: 1px solid #b9bec7;
+    border-radius: 8px;
+    text-align: center;
+    overflow-y: auto;
+}
+
+.tab-panel:not([hidden]) { animation: panel-enter 220ms ease-out both; }
+
+/* Fastener item buttons and empty-tab helper text. */
+.item {
+    display: block;
+    width: min(90%, 420px);
+    margin: 6px auto;
+    padding: 10px;
+    border: 1px solid #8b929d;
+    border-radius: 8px;
+    background: #fff;
+    font-size: 1rem;
+    transition: transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease;
+}
+
+.item:hover { transform: translateY(-1px); border-color: #01473d; box-shadow: 0 3px 9px #20212418; }
+.item:active { transform: translateY(0); }
+
+.hint { margin: 28px 0; color: #626a76; }
+
+/* Fixed cart button and item-count badge. */
+.cart-toggle {
+    position: fixed;
+    z-index: 5;
+    top: 16px;
+    right: 16px;
+    width: auto;
+    margin: 0;
+    padding: 10px 14px;
+    border: 0;
+    border-radius: 999px;
+    background: #01473d;
+    color: white;
+    box-shadow: 0 2px 10px #0003;
+    cursor: pointer;
+    transition: background-color 160ms ease, transform 160ms ease;
+}
+
+.cart-toggle:hover { background: #00382f; transform: translateY(-1px); }
+
+.cart-count {
+    display: inline-grid;
+    min-width: 22px;
+    height: 22px;
+    margin-left: 5px;
+    padding: 0 5px;
+    place-items: center;
+    border-radius: 50%;
+    background: white;
+    color: #01473d;
+    font-weight: bold;
+}
+
+/* Cart overlay and sliding side panel. */
+.cart-backdrop {
+    position: fixed;
+    z-index: 8;
+    inset: 0;
+    background: #10152266;
+}
+
+.cart-panel {
+    position: fixed;
+    z-index: 9;
+    top: 0;
+    right: 0;
+    width: min(380px, 90vw);
+    height: 100dvh;
+    padding: 22px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    background: white;
+    box-shadow: -8px 0 24px #0002;
+    transform: translateX(105%);
+    transition: transform 220ms ease;
+}
+
+.cart-panel.open { transform: translateX(0); }
+
+/* Cart heading, category groups, and item rows. */
+.cart-header { display: flex; align-items: center; justify-content: space-between; }
+.cart-header h2 { margin: 0; }
+.cart-close { width: 38px; height: 38px; margin: 0; font-size: 1.5rem; cursor: pointer; }
+.cart-empty { color: #626a76; }
+.cart-items { margin: 18px 0; padding: 0; list-style: none; }
+.cart-items li { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 0; border-bottom: 1px solid #e1e4e9; }
+.cart-items li:not(.cart-category) { animation: item-enter 160ms ease-out both; }
+.cart-items li.cart-category { display: block; padding: 14px 0 6px; border-bottom: 0; color: #01473d; font-weight: 700; }
+.cart-item-name { font-weight: 600; }
+.cart-item-quantity { min-width: 24px; color: #626a76; text-align: center; }
+
+/* Plus/minus quantity controls and fixed cart action footer. */
+.quantity-controls { display: flex; align-items: center; gap: 8px; }
+.quantity-button { width: 34px; height: 34px; margin: 0; border: 1px solid #aeb5c0; border-radius: 6px; background: #f5f6f8; font-size: 1.2rem; cursor: pointer; }
+.quantity-button { transition: background-color 140ms ease, transform 140ms ease; }
+.quantity-button:hover { background: #e1e5ec; transform: scale(1.05); }
+.cart-actions { position: sticky; bottom: 0; z-index: 2; display: flex; flex-direction: column; gap: 10px; flex: 0 0 auto; margin: auto -22px 0; padding: 14px 22px; background: #fff; box-shadow: 0 -8px 14px #fff; }
+.clear-cart { display: block; flex: 0 0 auto; width: 100%; min-height: 46px; margin: 12px 0 0; padding: 12px; border: 1px solid #a83232; border-radius: 8px; background: white; color: #a83232; font-size: 1rem; cursor: pointer; }
+.clear-cart:hover { background: #fff1f1; }
+.email-cart { display: block; flex: 0 0 auto; width: 100%; min-height: 46px; margin: 0; padding: 12px; border: 0; border-radius: 8px; background: #01473d; color: #fff; font-size: 1rem; cursor: pointer; }
+.email-cart:disabled { background: #66a89e; cursor: not-allowed; }
+
+/* Yes/No confirmation dialog before opening an email draft. */
+.email-confirm { width: min(380px, calc(100% - 32px)); padding: 22px; border: 1px solid #b9bec7; border-radius: 12px; color: #202124; }
+.email-confirm[open], .quantity-dialog[open] { animation: dialog-enter 180ms ease-out both; }
+.email-confirm::backdrop { background: #10152288; }
+.email-confirm h2 { margin-top: 0; }
+.email-confirm-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
+.email-confirm-actions button { width: auto; min-width: 76px; margin: 0; padding: 10px 14px; cursor: pointer; }
+#email-yes { border: 0; border-radius: 7px; background: #01473d; color: white; }
+
+/* Quantity prompt shown when a fastener item is selected. */
+.quantity-dialog { width: min(400px, calc(100% - 32px)); padding: 22px; border: 1px solid #b9bec7; border-radius: 12px; color: #202124; }
+.quantity-dialog::backdrop { background: #10152288; }
+.quantity-dialog h2 { margin-top: 0; }
+.quantity-dialog p { color: #626a76; }
+.quantity-dialog label { display: block; margin: 16px 0 7px; font-weight: 600; }
+.quantity-dialog input { width: 100%; min-height: 42px; padding: 9px 10px; border: 1px solid #aeb5c0; border-radius: 7px; font: inherit; }
+.quantity-dialog-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
+.quantity-dialog-actions button { width: auto; min-width: 90px; margin: 0; padding: 10px 14px; cursor: pointer; }
+.quantity-submit { border: 0; border-radius: 7px; background: #01473d; color: #fff; }
+
+/* Short entrance motions for tab panels, cart rows, and prompts. */
+@keyframes panel-enter {
+    from { opacity: 0; transform: translateY(5px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes item-enter {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes dialog-enter {
+    from { opacity: 0; transform: translateY(6px) scale(0.98); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* Prevent background scrolling while the cart is open. */
+body.cart-open { overflow: hidden; }
+
+/* Small-screen spacing adjustments. */
+@media (max-width: 420px) {
+    .box { padding: 14px; }
+    .tabs { gap: 6px; }
+    .cart-toggle { top: 10px; right: 10px; }
+    h1 { padding-top: 40px; }
+}
+
+/* Respect visitors' reduced-motion preference. */
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
