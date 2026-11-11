@@ -168,7 +168,7 @@ function updateCartSyncStatus(message, isError = false) {
 
 async function callSharedCartRpc(functionName, payload = {}) {
     if (!sharedCartEnabled) throw new Error('Shared cart is not configured.');
-    const baseUrl = supabaseConfig.url.trim().replace(/\\/+$/, '');
+    const baseUrl = supabaseConfig.url.trim().replace(/\/+$/, '');
     const response = await fetch(`${baseUrl}/rest/v1/rpc/${functionName}`, {
         method: 'POST',
         headers: {
