@@ -39,7 +39,7 @@ begin
     if p_item_name is null or char_length(btrim(p_item_name)) not between 1 and 100 then
         raise exception 'Item name must contain 1 to 100 characters.';
     end if;
-    if p_delta is null or p_delta = 0 or abs(p_delta) > 1000 then
+    if p_delta is null or p_delta = 0 or p_delta < -1000 or p_delta > 1000 then
         raise exception 'Quantity change must be between -1000 and 1000.';
     end if;
 
