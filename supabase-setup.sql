@@ -49,15 +49,16 @@ begin
         on conflict (category, item_name) do update
             set quantity = public.shared_cart_items.quantity + excluded.quantity;
     else
-        update public.shared_cart_items
-        set quantity = quantity + p_delta
-        where category = btrim(p_category)
-          and item_name = btrim(p_item_name);
-
         delete from public.shared_cart_items
         where category = btrim(p_category)
           and item_name = btrim(p_item_name)
-          and quantity <= 0;
+          and quantity + p_delta <= 0;
+
+        update public.shared_cart_items
+        set quantity = quantity + p_delta
+        where category = btrim(p_category)
+          and item_name = btrim(p_item_name)
+          and quantity + p_delta > 0;
     end if;
 end;
 $$;
