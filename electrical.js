@@ -3,7 +3,9 @@ const panels = Array.from(document.querySelectorAll('[role="tabpanel"]'));
 const inventoryStore = window.FastenerInventory;
 const inventory = JSON.parse(JSON.stringify(inventoryStore.defaults));
 const minimums = {};
-const notes = {};
+const manufacturers = {};
+const partNumbers = JSON.parse(JSON.stringify(inventoryStore.partNumbers || {}));
+const manufacturersStorageKey = inventoryStore.manufacturersKey || inventoryStore.notesKey;
 
 try {
     const savedInventory = JSON.parse(localStorage.getItem(inventoryStore.storageKey) || 'null');
@@ -35,18 +37,40 @@ try {
 }
 
 try {
-    const savedNotes = JSON.parse(localStorage.getItem(inventoryStore.notesKey) || 'null');
-    if (savedNotes && typeof savedNotes === 'object' && !Array.isArray(savedNotes)) {
-        Object.entries(savedNotes).forEach(([category, values]) => {
+    const legacyNotes = inventoryStore.manufacturersKey && inventoryStore.notesKey
+        ? localStorage.getItem(inventoryStore.notesKey)
+        : null;
+    const savedManufacturers = JSON.parse(localStorage.getItem(manufacturersStorageKey) || legacyNotes || 'null');
+    if (savedManufacturers && typeof savedManufacturers === 'object' && !Array.isArray(savedManufacturers)) {
+        Object.entries(savedManufacturers).forEach(([category, values]) => {
             if (!values || typeof values !== 'object' || Array.isArray(values)) return;
-            notes[category] = {};
-            Object.entries(values).forEach(([name, note]) => {
-                if (typeof note === 'string' && note.trim()) notes[category][name] = note.trim();
+            manufacturers[category] = {};
+            Object.entries(values).forEach(([name, manufacturer]) => {
+                if (typeof manufacturer === 'string' && manufacturer.trim()) {
+                    manufacturers[category][name] = manufacturer.trim();
+                }
             });
         });
     }
 } catch (error) {
-    // Notes are optional when browser storage is unavailable or malformed.
+    // Manufacturer values are optional when browser storage is unavailable or malformed.
+}
+
+try {
+    const savedPartNumbers = JSON.parse(localStorage.getItem(inventoryStore.partNumbersKey) || 'null');
+    if (savedPartNumbers && typeof savedPartNumbers === 'object' && !Array.isArray(savedPartNumbers)) {
+        Object.entries(savedPartNumbers).forEach(([category, values]) => {
+            if (!values || typeof values !== 'object' || Array.isArray(values)) return;
+            if (!partNumbers[category]) partNumbers[category] = {};
+            Object.entries(values).forEach(([name, partNumber]) => {
+                if (typeof partNumber === 'string' && partNumber.trim()) {
+                    partNumbers[category][name] = partNumber.trim();
+                }
+            });
+        });
+    }
+} catch (error) {
+    // Part numbers are optional when browser storage is unavailable or malformed.
 }
 
 panels.forEach((panel) => {
@@ -219,8 +243,13 @@ emailCart.addEventListener('click', () => {
         items.forEach((quantity, name) => {
             const minimumQuantity = minimums[category]?.[name] || 1;
             const orderQuantity = minimumQuantity * quantity;
-            const note = notes[category]?.[name];
-            lines.push(`  ${name}${note ? ` (${note})` : ''} — quantity: ${orderQuantity}`);
+            const manufacturer = manufacturers[category]?.[name];
+            const partNumber = partNumbers[category]?.[name];
+            const itemDetails = [
+                partNumber ? `Part number: ${partNumber}` : '',
+                manufacturer ? `Manufacturer: ${manufacturer}` : ''
+            ].filter(Boolean);
+            lines.push(`  ${name}${itemDetails.length ? ` (${itemDetails.join('; ')})` : ''} — quantity: ${orderQuantity}`);
         });
         lines.push('');
     });
