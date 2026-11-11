@@ -3,7 +3,9 @@ const panels = Array.from(document.querySelectorAll('[role="tabpanel"]'));
 const inventoryStore = window.FastenerInventory;
 const inventory = JSON.parse(JSON.stringify(inventoryStore.defaults));
 const minimums = {};
-const notes = {};
+const manufacturers = {};
+const partNumbers = JSON.parse(JSON.stringify(inventoryStore.partNumbers || {}));
+const manufacturersStorageKey = inventoryStore.manufacturersKey || inventoryStore.notesKey;
 
 try {
     const savedInventory = JSON.parse(localStorage.getItem(inventoryStore.storageKey) || 'null');
@@ -35,18 +37,40 @@ try {
 }
 
 try {
-    const savedNotes = JSON.parse(localStorage.getItem(inventoryStore.notesKey) || 'null');
-    if (savedNotes && typeof savedNotes === 'object' && !Array.isArray(savedNotes)) {
-        Object.entries(savedNotes).forEach(([category, values]) => {
+    const legacyNotes = inventoryStore.manufacturersKey && inventoryStore.notesKey
+        ? localStorage.getItem(inventoryStore.notesKey)
+        : null;
+    const savedManufacturers = JSON.parse(localStorage.getItem(manufacturersStorageKey) || legacyNotes || 'null');
+    if (savedManufacturers && typeof savedManufacturers === 'object' && !Array.isArray(savedManufacturers)) {
+        Object.entries(savedManufacturers).forEach(([category, values]) => {
             if (!values || typeof values !== 'object' || Array.isArray(values)) return;
-            notes[category] = {};
-            Object.entries(values).forEach(([name, note]) => {
-                if (typeof note === 'string' && note.trim()) notes[category][name] = note.trim();
+            manufacturers[category] = {};
+            Object.entries(values).forEach(([name, manufacturer]) => {
+                if (typeof manufacturer === 'string' && manufacturer.trim()) {
+                    manufacturers[category][name] = manufacturer.trim();
+                }
             });
         });
     }
 } catch (error) {
-    // Notes are optional when browser storage is unavailable or malformed.
+    // Manufacturer values are optional when browser storage is unavailable or malformed.
+}
+
+try {
+    const savedPartNumbers = JSON.parse(localStorage.getItem(inventoryStore.partNumbersKey) || 'null');
+    if (savedPartNumbers && typeof savedPartNumbers === 'object' && !Array.isArray(savedPartNumbers)) {
+        Object.entries(savedPartNumbers).forEach(([category, values]) => {
+            if (!values || typeof values !== 'object' || Array.isArray(values)) return;
+            if (!partNumbers[category]) partNumbers[category] = {};
+            Object.entries(values).forEach(([name, partNumber]) => {
+                if (typeof partNumber === 'string' && partNumber.trim()) {
+                    partNumbers[category][name] = partNumber.trim();
+                }
+            });
+        });
+    }
+} catch (error) {
+    // Part numbers are optional when browser storage is unavailable or malformed.
 }
 
 panels.forEach((panel) => {
@@ -128,19 +152,101 @@ let pendingEmailUrl = '';
 let pendingCartItem = null;
 const cartStorageKey = 'electrical-list-cart';
 
-// Restore the last saved cart when this page is reopened in the same browser.
-try {
-    const savedCart = JSON.parse(localStorage.getItem(cartStorageKey) || '[]');
-    if (Array.isArray(savedCart)) {
+
+const sharedCartStatus = document.getElementById('cart-sync-status');
+const supabaseConfig = window.SUPABASE_CONFIG || {};
+const publicApiKey = supabaseConfig.publishableKey || supabaseConfig.anonKey || '';
+const sharedCartEnabled = Boolean(
+    typeof supabaseConfig.url === 'string' && supabaseConfig.url.trim() &&
+    typeof publicApiKey === 'string' && publicApiKey.trim()
+);
+
+function updateCartSyncStatus(message, isError = false) {
+    if (!sharedCartStatus) return;
+    sharedCartStatus.textContent = message;
+    sharedCartStatus.classList.toggle('error', isError);
+}
+
+async function callSharedCartRpc(functionName, payload = {}) {
+    if (!sharedCartEnabled) throw new Error('Shared cart is not configured.');
+    const baseUrl = supabaseConfig.url.trim().replace(/\/+$/, '');
+    const response = await fetch(`${baseUrl}/rest/v1/rpc/${functionName}`, {
+        method: 'POST',
+        headers: {
+            apikey: publicApiKey.trim(),
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+    });
+    if (!response.ok) {
+        const detail = await response.text();
+        throw new Error(detail || `Supabase request failed (${response.status}).`);
+    }
+    const responseText = await response.text();
+    return responseText ? JSON.parse(responseText) : null;
+}
+
+function loadLocalCart() {
+    try {
+        const savedCart = JSON.parse(localStorage.getItem(cartStorageKey) || '[]');
+        if (!Array.isArray(savedCart)) return;
         savedCart.forEach(([category, entries]) => {
             if (typeof category !== 'string' || !Array.isArray(entries)) return;
             const items = new Map(entries.filter(([name, quantity]) =>
                 typeof name === 'string' && Number.isInteger(quantity) && quantity > 0));
             if (items.size) cart.set(category, items);
         });
+    } catch (error) {
+        // Keep an in-memory cart if browser storage is unavailable or malformed.
     }
-} catch (error) {
-    // If browser storage is unavailable or malformed, keep using an in-memory cart.
+}
+
+async function refreshSharedCart() {
+    if (!sharedCartEnabled) return;
+    try {
+        const rows = await callSharedCartRpc('get_shared_cart');
+        cart.clear();
+        if (Array.isArray(rows)) {
+            rows.forEach(({ category, item_name: name, quantity }) => {
+                if (typeof category !== 'string' || typeof name !== 'string' ||
+                    !Number.isInteger(quantity) || quantity < 1) return;
+                if (!cart.has(category)) cart.set(category, new Map());
+                cart.get(category).set(name, quantity);
+            });
+        }
+        renderCart();
+        updateCartSyncStatus('Shared cart is up to date.');
+    } catch (error) {
+        updateCartSyncStatus('Could not sync the shared cart. Check the Supabase setup and connection.', true);
+    }
+}
+
+function applyLocalCartChange(category, name, delta) {
+    if (!cart.has(category)) cart.set(category, new Map());
+    const items = cart.get(category);
+    const nextQuantity = (items.get(name) || 0) + delta;
+    if (nextQuantity <= 0) items.delete(name);
+    else items.set(name, nextQuantity);
+    if (items.size === 0) cart.delete(category);
+}
+
+async function updateCartItem(category, name, delta) {
+    if (!sharedCartEnabled) {
+        applyLocalCartChange(category, name, delta);
+        renderCart();
+        return;
+    }
+    updateCartSyncStatus('Saving shared cart…');
+    try {
+        await callSharedCartRpc('adjust_shared_cart_item', {
+            p_category: category,
+            p_item_name: name,
+            p_delta: delta
+        });
+        await refreshSharedCart();
+    } catch (error) {
+        updateCartSyncStatus('Could not save to the shared cart. Check the Supabase setup and connection.', true);
+    }
 }
 
 function renderCart() {
@@ -176,15 +282,10 @@ function renderCart() {
             increase.textContent = '+';
             increase.setAttribute('aria-label', `Add one ${name}`);
             decrease.addEventListener('click', () => {
-                const nextQuantity = (items.get(name) || 0) - 1;
-                if (nextQuantity <= 0) items.delete(name);
-                else items.set(name, nextQuantity);
-                if (items.size === 0) cart.delete(category);
-                renderCart();
+                updateCartItem(category, name, -1);
             });
             increase.addEventListener('click', () => {
-                items.set(name, (items.get(name) || 0) + 1);
-                renderCart();
+                updateCartItem(category, name, 1);
             });
             controls.append(decrease, itemQuantity, increase);
             row.append(itemName, controls);
@@ -195,18 +296,30 @@ function renderCart() {
     cartCount.textContent = String(total);
     cartEmpty.hidden = total > 0;
     emailCart.disabled = total === 0;
-    try {
-        localStorage.setItem(cartStorageKey, JSON.stringify(
-            Array.from(cart, ([category, items]) => [category, Array.from(items)])
-        ));
-    } catch (error) {
-        // The cart still works for this page session if browser storage is unavailable.
+    if (!sharedCartEnabled) {
+        try {
+            localStorage.setItem(cartStorageKey, JSON.stringify(
+                Array.from(cart, ([category, items]) => [category, Array.from(items)])
+            ));
+        } catch (error) {
+            // The cart still works for this page session if browser storage is unavailable.
+        }
     }
 }
 
-clearCartButton.addEventListener('click', () => {
-    cart.clear();
-    renderCart();
+clearCartButton.addEventListener('click', async () => {
+    if (!sharedCartEnabled) {
+        cart.clear();
+        renderCart();
+        return;
+    }
+    updateCartSyncStatus('Clearing shared cart…');
+    try {
+        await callSharedCartRpc('clear_shared_cart');
+        await refreshSharedCart();
+    } catch (error) {
+        updateCartSyncStatus('Could not clear the shared cart. Check the Supabase setup and connection.', true);
+    }
 });
 
 // Opens a new draft in the visitor's configured email app; it does not send automatically.
@@ -219,8 +332,13 @@ emailCart.addEventListener('click', () => {
         items.forEach((quantity, name) => {
             const minimumQuantity = minimums[category]?.[name] || 1;
             const orderQuantity = minimumQuantity * quantity;
-            const note = notes[category]?.[name];
-            lines.push(`  ${name}${note ? ` (${note})` : ''} — quantity: ${orderQuantity}`);
+            const manufacturer = manufacturers[category]?.[name];
+            const partNumber = partNumbers[category]?.[name];
+            const itemDetails = [
+                partNumber ? `Part number: ${partNumber}` : '',
+                manufacturer ? `Manufacturer: ${manufacturer}` : ''
+            ].filter(Boolean);
+            lines.push(`  ${name}${itemDetails.length ? ` (${itemDetails.join('; ')})` : ''} — quantity: ${orderQuantity}`);
         });
         lines.push('');
     });
@@ -267,12 +385,9 @@ quantityForm.addEventListener('submit', (event) => {
     }
 
     const { category, name } = pendingCartItem;
-    if (!cart.has(category)) cart.set(category, new Map());
-    const items = cart.get(category);
-    items.set(name, (items.get(name) || 0) + quantity);
     pendingCartItem = null;
     quantityDialog.close();
-    renderCart();
+    updateCartItem(category, name, quantity);
 });
 
 quantityCancel.addEventListener('click', () => {
@@ -302,4 +417,17 @@ document.addEventListener('keydown', (event) => {
     if (event.key === 'Escape' && !cartPanel.inert) setCartOpen(false);
 });
 
-renderCart();
+if (sharedCartEnabled) {
+    updateCartSyncStatus('Connecting to shared cart…');
+    refreshSharedCart();
+    window.setInterval(() => {
+        if (document.visibilityState === 'visible') refreshSharedCart();
+    }, 4000);
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') refreshSharedCart();
+    });
+} else {
+    loadLocalCart();
+    renderCart();
+    updateCartSyncStatus('Cart is saved only on this device until Supabase is configured.');
+}
