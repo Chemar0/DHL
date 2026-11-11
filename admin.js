@@ -1,13 +1,14 @@
 const store = window.FastenerInventory;
 const inventory = JSON.parse(JSON.stringify(store.defaults));
 const minimums = {};
+const notes = {};
 const categorySelect = document.getElementById('category-select');
 const itemList = document.getElementById('item-list');
 const addForm = document.getElementById('add-form');
 const newItemInput = document.getElementById('new-item');
 const status = document.getElementById('admin-status');
 
-Object.keys(inventory).forEach((category) => { minimums[category] = {}; });
+Object.keys(inventory).forEach((category) => { minimums[category] = {}; notes[category] = {}; });
 try {
     const savedMinimums = JSON.parse(localStorage.getItem(store.minimumsKey) || 'null');
     if (savedMinimums && typeof savedMinimums === 'object' && !Array.isArray(savedMinimums)) {
@@ -22,6 +23,21 @@ try {
     }
 } catch (error) {
     status.textContent = 'Could not read saved minimum quantities. Each item defaults to 1.';
+}
+
+try {
+    const savedNotes = JSON.parse(localStorage.getItem(store.notesKey) || 'null');
+    if (savedNotes && typeof savedNotes === 'object' && !Array.isArray(savedNotes)) {
+        Object.keys(inventory).forEach((category) => {
+            const values = savedNotes[category];
+            if (!values || typeof values !== 'object' || Array.isArray(values)) return;
+            Object.entries(values).forEach(([name, note]) => {
+                if (typeof note === 'string') notes[category][name] = note;
+            });
+        });
+    }
+} catch (error) {
+    status.textContent = 'Could not read saved item notes.';
 }
 
 try {
@@ -62,6 +78,15 @@ function saveMinimums() {
     }
 }
 
+function saveNotes() {
+    try {
+        localStorage.setItem(store.notesKey, JSON.stringify(notes));
+        status.textContent = 'Item note saved.';
+    } catch (error) {
+        status.textContent = 'Could not save item notes in this browser.';
+    }
+}
+
 function renderItems() {
     itemList.replaceChildren();
     const category = categorySelect.value;
@@ -71,6 +96,8 @@ function renderItems() {
         const details = document.createElement('div');
         const minimumLabel = document.createElement('label');
         const minimumInput = document.createElement('input');
+        const noteLabel = document.createElement('label');
+        const noteInput = document.createElement('input');
         const removeButton = document.createElement('button');
         itemName.textContent = name;
         details.className = 'item-details';
@@ -92,6 +119,20 @@ function renderItems() {
             saveMinimums();
         });
         minimumLabel.append(minimumInput);
+        noteLabel.className = 'note-field';
+        noteLabel.append(document.createTextNode('Notes'));
+        noteInput.type = 'text';
+        noteInput.maxLength = 200;
+        noteInput.value = notes[category][name] || '';
+        noteInput.placeholder = 'Optional note';
+        noteInput.setAttribute('aria-label', `Notes for ${name}`);
+        noteInput.addEventListener('change', () => {
+            const note = noteInput.value.trim();
+            if (note) notes[category][name] = note;
+            else delete notes[category][name];
+            saveNotes();
+        });
+        noteLabel.append(noteInput);
         removeButton.type = 'button';
         removeButton.className = 'remove-item';
         removeButton.textContent = 'Remove';
@@ -101,7 +142,7 @@ function renderItems() {
             saveInventory();
             renderItems();
         });
-        details.append(itemName, minimumLabel);
+        details.append(itemName, minimumLabel, noteLabel);
         row.append(details, removeButton);
         itemList.append(row);
     });

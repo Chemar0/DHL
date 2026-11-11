@@ -3,6 +3,7 @@ const panels = Array.from(document.querySelectorAll('[role="tabpanel"]'));
 const inventoryStore = window.FastenerInventory;
 const inventory = JSON.parse(JSON.stringify(inventoryStore.defaults));
 const minimums = {};
+const notes = {};
 
 try {
     const savedInventory = JSON.parse(localStorage.getItem(inventoryStore.storageKey) || 'null');
@@ -31,6 +32,21 @@ try {
     }
 } catch (error) {
     // Default each item's minimum order quantity to 1 when storage is unavailable.
+}
+
+try {
+    const savedNotes = JSON.parse(localStorage.getItem(inventoryStore.notesKey) || 'null');
+    if (savedNotes && typeof savedNotes === 'object' && !Array.isArray(savedNotes)) {
+        Object.entries(savedNotes).forEach(([category, values]) => {
+            if (!values || typeof values !== 'object' || Array.isArray(values)) return;
+            notes[category] = {};
+            Object.entries(values).forEach(([name, note]) => {
+                if (typeof note === 'string' && note.trim()) notes[category][name] = note.trim();
+            });
+        });
+    }
+} catch (error) {
+    // Notes are optional when browser storage is unavailable or malformed.
 }
 
 panels.forEach((panel) => {
@@ -203,12 +219,13 @@ emailCart.addEventListener('click', () => {
         items.forEach((quantity, name) => {
             const minimumQuantity = minimums[category]?.[name] || 1;
             const orderQuantity = minimumQuantity * quantity;
-            lines.push(`  ${name} — quantity: ${orderQuantity}`);
+            const note = notes[category]?.[name];
+            lines.push(`  ${name}${note ? ` (${note})` : ''} — quantity: ${orderQuantity}`);
         });
         lines.push('');
     });
     const subject = 'Fastener parts request';
-    const body = `Hello,\n\nPlease could I have the following parts:\n\n${lines.join('\n')}\nThank you.`;
+    const body = `Hello,\n\nPlease, could I have the following parts:\n\n${lines.join('\n')}\nThank you.`;
     pendingEmailUrl = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
     emailConfirm.showModal();
 });

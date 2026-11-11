@@ -2,6 +2,7 @@
 window.FastenerInventory = {
     storageKey: 'fastener-list-inventory',
     minimumsKey: 'fastener-list-minimums',
+    notesKey: 'fastener-list-notes',
     defaults: {
         'Grub Screws': ['M4 x 6', 'M5 x 5', 'M5 x 8', 'M5 x 10'],
         'Button Head Screws': ['M4 x 6', 'M4 x 16', 'M5 x 10', 'M5 x 25', 'M5 x 60', 'M6 x 6', 'M6 x 10', 'M10 x 16', 'M10 x 40 (t40)'],
