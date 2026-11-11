@@ -4,12 +4,12 @@ The electrical cart is one shared list for everyone who opens the site. The site
 
 1. Create a Supabase project.
 2. Open the project SQL editor and run `supabase-setup.sql`.
-3. In the project API settings, copy the Project URL and the anon/publishable key.
+3. In the project API settings, copy the Project URL and the publishable key.
 4. Put those two values in `supabase-config.js`:
    ```js
    window.SUPABASE_CONFIG = {
        url: 'https://YOUR-PROJECT.supabase.co',
-       anonKey: 'YOUR-PUBLISHABLE-ANON-KEY'
+       publishableKey: 'YOUR-PUBLISHABLE-KEY'
    };
    ```
 5. Commit the real URL and anon/publishable key to the site's deployed branch. These values are designed to be public in browser code. Never use a service-role key.
