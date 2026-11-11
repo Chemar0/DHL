@@ -164,6 +164,10 @@ addForm.addEventListener('submit', (event) => {
         return;
     }
     inventory[category].push(name);
+    inventory[category].sort((first, second) => first.localeCompare(second, undefined, {
+        numeric: true,
+        sensitivity: 'base'
+    }));
     saveInventory();
     newItemInput.value = '';
     renderItems();
