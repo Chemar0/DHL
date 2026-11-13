@@ -17,14 +17,32 @@
             <h2>Your cart</h2>
             <button class="cart-close" id="cart-close" type="button" aria-label="Close cart">×</button>
         </div>
+        <p class="cart-user-label">Using this browser as <strong id="cart-user-name"></strong>
+            <button id="change-cart-user" type="button" hidden>Change</button>
+        </p>
         <button class="clear-cart" id="clear-cart" type="button">Clear cart</button>
         <p id="cart-sync-status" role="status" aria-live="polite"></p>
         <p class="cart-empty" id="cart-empty">Your cart is empty.</p>
         <ul class="cart-items" id="cart-items" aria-live="polite"></ul>
+        <section class="cart-activity" aria-labelledby="cart-activity-heading">
+            <h3 id="cart-activity-heading">Recent changes</h3>
+            <ul id="cart-activity-list" aria-live="polite"></ul>
+        </section>
         <div class="cart-actions">
             <button class="email-cart" id="email-cart" type="button" disabled>Email parts list</button>
         </div>
     </aside>
+    <dialog class="user-name-dialog" id="cart-user-dialog" aria-labelledby="cart-user-title">
+        <form id="cart-user-form">
+            <h2 id="cart-user-title">Who is using this browser?</h2>
+            <p>Your name is remembered in this browser and shown with cart changes. Anyone using this browser can use this name.</p>
+            <label for="cart-user-input">Your name</label>
+            <input id="cart-user-input" type="text" maxlength="80" autocomplete="name" required>
+            <div class="user-name-actions">
+                <button type="submit">Save name</button>
+            </div>
+        </form>
+    </dialog>
     <dialog class="email-confirm" id="email-confirm" aria-labelledby="email-confirm-title">
         <h2 id="email-confirm-title">Create email?</h2>
         <p>Open an email draft with the parts in your cart?</p>
@@ -103,6 +121,7 @@
     </div>
     <script src="supabase-config.js?v=shared-cart-clear-1"></script>
     <script src="electrical-inventory.js"></script>
-    <script src="electrical.js?v=shared-cart-clear-1"></script>
+    <script src="cart-user.js?v=cart-attribution-1"></script>
+    <script src="electrical.js?v=cart-attribution-1"></script>
 </body>
 </html>
