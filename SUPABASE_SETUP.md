@@ -1,17 +1,48 @@
-# Configure the shared cart
+# Configure the shared cart and administrator
 
-The mechanical and electrical pages use one shared list for everyone who opens the site. The site needs a Supabase project to sync it across devices.
+The mechanical and electrical pages share one cart through Supabase.
 
-1. Create a Supabase project.
-2. Open the project SQL editor and run supabase-setup.sql. Run the updated script again when you add the remembered-name and cart-history changes.
-3. In the project API settings, copy the Project URL and the publishable key.
-4. Put those two values in supabase-config.js:
-   window.SUPABASE_CONFIG = {
-       url: 'https://YOUR-PROJECT.supabase.co',
-       publishableKey: 'YOUR-PUBLISHABLE-KEY'
-   };
-5. Commit the real URL and anon/publishable key to the site's deployed branch. These values are designed to be public in browser code. Never use a service-role key.
+## Connect the project
 
-Each browser asks for a display name once and remembers it in that browser's local storage. The shared cart shows who first added each item, who last changed it, and a recent activity list. The name is self-entered, not verified; anyone using that browser can change or use the saved name. Private browsing, another browser profile, or cleared site data may require entering it again.
+1. For a new project, run `supabase-setup.sql` in the SQL editor. For the existing project, run `supabase-admin-security.sql` to add the admin protections without deleting the cart or its activity.
+2. In the project's API settings, copy the Project URL and publishable key.
+3. Put those values in `supabase-config.js`. The publishable key is designed for browser use. Never put a service-role key in this repository.
 
-The shared cart and its activity are readable by anyone who can access the site. Do not put private or sensitive information in it. If the Supabase settings are missing, the cart and its activity are saved only in that browser. The page checks for shared changes every four seconds while visible.
+## Set up the sole administrator
+
+The site does not create Auth accounts. Add the administrator from Supabase Dashboard → Authentication → Users, using an inbox you control, then verify the account. The browser sign-in sends a magic link only to an account that already exists in Supabase Auth.
+
+In Authentication → URL Configuration, allow these redirect URLs (or the equivalent URLs for your deployed domain):
+
+- `https://chemar0.github.io/DHL/mechanical.html`
+- `https://chemar0.github.io/DHL/electrical.html`
+
+After the email is verified, replace the placeholder below with that address and run this once in the SQL editor. It adds only the matching verified Auth user ID to the private admin allowlist and raises an error if no verified account matches.
+
+```sql
+do $$
+declare
+    v_admin_id uuid;
+begin
+    select id
+    into v_admin_id
+    from auth.users
+    where lower(email) = lower('REPLACE-WITH-ADMIN-EMAIL@example.com')
+      and email_confirmed_at is not null;
+
+    if v_admin_id is null then
+        raise exception 'No verified Supabase Auth user found for that email.';
+    end if;
+
+    insert into private.cart_admins (user_id)
+    values (v_admin_id)
+    on conflict (user_id) do nothing;
+end;
+$$;
+```
+
+After sign-in, the database checks the authenticated user ID against `private.cart_admins`. The browser label and local storage cannot grant administrator access. Only the allowlisted account can change the administrator display name, clear recent changes, or clear the shared cart. Clearing recent changes leaves a server-authenticated entry showing who cleared them.
+
+Other visitors still enter a display name for cart attribution. That name is self-entered and stored in that browser profile; it is not a verified identity or a MAC-address identity. Visitors cannot rename it through the site after the initial entry, and the database blocks use of the administrator's reserved display name in cart activity.
+
+The cart contents and recent activity are readable by anyone who can access the site. Avoid putting sensitive information there. If Supabase settings are missing, the page saves a separate local cart in that browser instead of using the shared cart.

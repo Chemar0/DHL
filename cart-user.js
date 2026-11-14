@@ -6,6 +6,8 @@
     const nameOutput = document.getElementById('cart-user-name');
     const changeButton = document.getElementById('change-cart-user');
     let currentName = '';
+    let adminName = '';
+    let adminAccess = false;
 
     try {
         currentName = (localStorage.getItem(storageKey) || '').trim();
@@ -14,24 +16,11 @@
     }
 
     function showName() {
-        nameOutput.textContent = currentName;
-        changeButton.hidden = false;
+        nameOutput.textContent = adminAccess && adminName ? adminName : currentName;
+        changeButton.hidden = !adminAccess;
     }
 
-    function promptForName() {
-        input.value = currentName;
-        if (!dialog.open) dialog.showModal();
-        input.focus();
-    }
-
-    form.addEventListener('submit', (event) => {
-        event.preventDefault();
-        const name = input.value.trim().replace(/\s+/g, ' ').slice(0, 80);
-        if (!name) {
-            input.reportValidity();
-            return;
-        }
-
+    function saveNameLocally(name) {
         currentName = name;
         try {
             localStorage.setItem(storageKey, currentName);
@@ -39,10 +28,44 @@
             // The current page can still use the name for this session.
         }
         showName();
+    }
+
+    function promptForName() {
+        input.value = adminAccess && adminName ? adminName : currentName;
+        if (!dialog.open) dialog.showModal();
+        input.focus();
+    }
+
+    form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const name = input.value.trim().replace(/\s+/g, ' ').slice(0, 80);
+        if (!name) {
+            input.reportValidity();
+            return;
+        }
+
+        if (currentName && !window.CartAdmin?.isAdmin()) {
+            window.CartAdmin?.setStatus('Only the verified administrator can change the saved name.');
+            return;
+        }
+
+        if (window.CartAdmin?.isAdmin()) {
+            try {
+                await window.CartAdmin.setName(name);
+            } catch (error) {
+                window.CartAdmin.setStatus(error.message || 'Could not save the administrator name.', true);
+                return;
+            }
+        } else {
+            saveNameLocally(name);
+        }
+
         dialog.close();
     });
 
-    changeButton.addEventListener('click', promptForName);
+    changeButton.addEventListener('click', () => {
+        if (window.CartAdmin?.isAdmin()) promptForName();
+    });
     dialog.addEventListener('cancel', (event) => {
         if (!currentName) event.preventDefault();
     });
@@ -51,7 +74,19 @@
     else promptForName();
 
     window.CartUser = {
-        getName: () => currentName,
+        getName: () => adminAccess && adminName ? adminName : currentName,
+        setAdminAccess(enabled) {
+            adminAccess = Boolean(enabled);
+            if (!adminAccess) adminName = '';
+            showName();
+        },
+        setAdminName(name) {
+            const cleaned = String(name || '').trim().replace(/\s+/g, ' ').slice(0, 80);
+            if (cleaned) {
+                adminName = cleaned;
+                showName();
+            }
+        },
         promptForName
     };
 })();

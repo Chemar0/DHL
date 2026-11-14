@@ -149,12 +149,15 @@ function updateCartSyncStatus(message, isError = false) {
 async function callSharedCartRpc(functionName, payload = {}) {
     if (!sharedCartEnabled) throw new Error('Shared cart is not configured.');
     const baseUrl = supabaseConfig.url.trim().replace(/\/+$/, '');
+    const headers = {
+        apikey: publicApiKey.trim(),
+        'Content-Type': 'application/json'
+    };
+    const accessToken = window.CartAdmin?.getAccessToken();
+    if (accessToken) headers.Authorization = `Bearer ${accessToken}`;
     const response = await fetch(`${baseUrl}/rest/v1/rpc/${functionName}`, {
         method: 'POST',
-        headers: {
-            apikey: publicApiKey.trim(),
-            'Content-Type': 'application/json'
-        },
+        headers,
         body: JSON.stringify(payload)
     });
     if (!response.ok) {
@@ -298,6 +301,7 @@ function describeCartActivity(entry) {
     if (entry.action === 'quantity_reduced') return actor + ' reduced ' + item + category + ' by ' + amount;
     if (entry.action === 'item_removed') return actor + ' removed ' + item + category;
     if (entry.action === 'cart_cleared') return actor + ' cleared the cart';
+    if (entry.action === 'activity_cleared') return actor + ' cleared recent changes';
     return actor + ' changed the cart';
 }
 
@@ -398,23 +402,7 @@ function renderCart() {
 }
 
 async function clearSharedCart() {
-    try {
-        await callSharedCartRpc('clear_shared_cart', { p_actor_name: window.CartUser.getName() });
-    } catch (clearError) {
-        // Older Supabase deployments may not have the clear RPC in their schema cache.
-        const rows = await callSharedCartRpc('get_shared_cart');
-        if (!Array.isArray(rows)) throw clearError;
-        for (const row of rows) {
-            if (typeof row.category !== 'string' || typeof row.item_name !== 'string' ||
-                !Number.isInteger(row.quantity) || row.quantity < 1) continue;
-            await callSharedCartRpc('adjust_shared_cart_item', {
-                p_category: row.category,
-                p_item_name: row.item_name,
-                p_delta: -row.quantity,
-                p_actor_name: window.CartUser.getName()
-            });
-        }
-    }
+    await callSharedCartRpc('clear_shared_cart', { p_actor_name: window.CartUser.getName() });
     await refreshSharedCart();
 }
 
@@ -526,6 +514,7 @@ document.addEventListener('keydown', (event) => {
 });
 
 if (sharedCartEnabled) {
+    window.refreshSharedCart = refreshSharedCart;
     updateCartSyncStatus('Connecting to shared cart…');
     refreshSharedCart();
     window.setInterval(() => {

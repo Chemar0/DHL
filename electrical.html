@@ -20,13 +20,31 @@
         <p class="cart-user-label">Using this browser as <strong id="cart-user-name"></strong>
             <button id="change-cart-user" type="button" hidden>Change</button>
         </p>
-        <button class="clear-cart" id="clear-cart" type="button">Clear cart</button>
+        <button class="clear-cart" id="clear-cart" type="button" hidden>Clear cart</button>
         <p id="cart-sync-status" role="status" aria-live="polite"></p>
         <p class="cart-empty" id="cart-empty">Your cart is empty.</p>
         <ul class="cart-items" id="cart-items" aria-live="polite"></ul>
         <section class="cart-activity" aria-labelledby="cart-activity-heading">
             <h3 id="cart-activity-heading">Recent changes</h3>
             <ul id="cart-activity-list" aria-live="polite"></ul>
+        </section>
+        <section class="cart-admin" aria-labelledby="cart-admin-heading">
+            <h3 id="cart-admin-heading">Administrator</h3>
+            <p id="cart-admin-status" role="status" aria-live="polite">Admin controls require a verified account.</p>
+            <form id="cart-admin-login-form">
+                <label for="cart-admin-email">Admin email</label>
+                <input id="cart-admin-email" type="email" autocomplete="email" required>
+                <button type="submit">Send sign-in link</button>
+            </form>
+            <div id="cart-admin-actions" hidden>
+                <form id="cart-admin-name-form">
+                    <label for="cart-admin-name">Admin display name</label>
+                    <input id="cart-admin-name" type="text" maxlength="80" autocomplete="name" required>
+                    <button type="submit">Save name</button>
+                </form>
+                <button id="clear-recent-changes" type="button">Clear recent changes</button>
+            </div>
+            <button id="cart-admin-sign-out" type="button" hidden>Sign out</button>
         </section>
         <div class="cart-actions">
             <button class="email-cart" id="email-cart" type="button" disabled>Email parts list</button>
@@ -35,7 +53,7 @@
     <dialog class="user-name-dialog" id="cart-user-dialog" aria-labelledby="cart-user-title">
         <form id="cart-user-form">
             <h2 id="cart-user-title">Who is using this browser?</h2>
-            <p>Your name is remembered in this browser and shown with cart changes. Anyone using this browser can use this name.</p>
+            <p>Your name is remembered in this browser and shown with cart changes. It is a display label, not a verified identity. Only the verified administrator can change a saved name.</p>
             <label for="cart-user-input">Your name</label>
             <input id="cart-user-input" type="text" maxlength="80" autocomplete="name" required>
             <div class="user-name-actions">
@@ -122,6 +140,8 @@
     <script src="supabase-config.js?v=shared-cart-clear-1"></script>
     <script src="electrical-inventory.js"></script>
     <script src="cart-user.js?v=cart-attribution-1"></script>
-    <script src="electrical.js?v=cart-attribution-1"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="cart-admin.js?v=admin-access-1"></script>
+    <script src="electrical.js?v=admin-access-1"></script>
 </body>
 </html>
