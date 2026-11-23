@@ -159,6 +159,8 @@ h1 { margin: 0 0 18px; font-size: 1.6rem; }
 #cart-activity-list li { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; padding: 7px 0; border-bottom: 1px solid #e1e4e9; font-size: 0.86rem; }
 #cart-activity-list time { flex: 0 0 auto; color: #626a76; font-size: 0.78rem; }
 #cart-activity-list .activity-empty { color: #626a76; }
+.cart-admin-entry { align-self: flex-start; margin: 0 0 12px; padding: 4px 0; border: 0; background: transparent; color: #626a76; font: inherit; font-size: 0.82rem; text-decoration: underline; cursor: pointer; }
+.cart-admin-entry[hidden], .cart-admin[hidden] { display: none; }
 .cart-admin { margin: 12px 0 18px; padding: 12px; border: 1px solid #d5dae1; border-radius: 8px; text-align: left; }
 .cart-admin h3 { margin: 0 0 8px; color: #01473d; font-size: 1rem; }
 .cart-admin p { margin: 0 0 10px; color: #626a76; font-size: 0.84rem; }

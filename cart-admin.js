@@ -1,5 +1,7 @@
 (() => {
     const status = document.getElementById('cart-admin-status');
+    const adminPanel = document.getElementById('cart-admin');
+    const adminEntryButton = document.getElementById('cart-admin-entry');
     const loginForm = document.getElementById('cart-admin-login-form');
     const emailInput = document.getElementById('cart-admin-email');
     const adminActions = document.getElementById('cart-admin-actions');
@@ -10,7 +12,7 @@
     const signOutButton = document.getElementById('cart-admin-sign-out');
     const config = window.SUPABASE_CONFIG || {};
     const publicApiKey = config.publishableKey || config.anonKey || '';
-    const state = { client: null, session: null, isAdmin: false };
+    const state = { client: null, session: null, isAdmin: false, adminConfigured: null, loginOpen: false };
 
     function setStatus(message, isError = false) {
         if (!status) return;
@@ -26,7 +28,21 @@
         const config = window.SUPABASE_CONFIG || {};
         const sharedCartConfigured = Boolean(config.url && (config.publishableKey || config.anonKey));
         if (clearCartButton) clearCartButton.hidden = sharedCartConfigured && !state.isAdmin;
+        if (state.isAdmin) state.loginOpen = false;
+        if (adminPanel) {
+            adminPanel.hidden = !state.isAdmin && state.adminConfigured !== false && !state.loginOpen;
+        }
+        if (adminEntryButton) {
+            adminEntryButton.hidden = state.adminConfigured !== true || state.isAdmin || state.loginOpen;
+        }
         window.CartUser?.setAdminAccess(state.isAdmin);
+    }
+
+    async function refreshAdminSetupStatus() {
+        const { data, error } = await state.client.rpc('cart_admin_is_configured');
+        // Fail closed: never display admin controls publicly if the status endpoint is unavailable.
+        state.adminConfigured = error ? true : data === true;
+        updateControls();
     }
 
     async function refreshAdminAccess(session = state.session) {
@@ -49,6 +65,7 @@
 
         const profile = Array.isArray(data) ? data[0] : null;
         if (!profile) {
+            state.loginOpen = false;
             setStatus('This verified account is not on the cart administrator allowlist.');
             updateControls();
             return;
@@ -86,6 +103,8 @@
 
     if (!config.url || !publicApiKey || !window.supabase?.createClient) {
         setStatus('Admin sign-in is unavailable because the Supabase connection did not load.', true);
+        if (adminPanel) adminPanel.hidden = false;
+        if (adminEntryButton) adminEntryButton.hidden = true;
         if (clearCartButton) clearCartButton.hidden = false;
         if (loginForm) loginForm.addEventListener('submit', (event) => event.preventDefault());
         window.CartAdmin = {
@@ -111,6 +130,14 @@
         setName,
         setStatus
     };
+
+    adminEntryButton?.addEventListener('click', () => {
+        state.loginOpen = true;
+        updateControls();
+        emailInput?.focus();
+    });
+
+    void refreshAdminSetupStatus();
 
     loginForm.addEventListener('submit', async (event) => {
         event.preventDefault();

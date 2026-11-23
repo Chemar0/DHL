@@ -220,3 +220,18 @@ revoke all on function private.guard_admin_display_name() from public, anon, aut
 grant execute on function public.get_cart_admin_profile() to authenticated;
 grant execute on function public.set_cart_admin_name(text) to authenticated;
 grant execute on function public.clear_shared_cart_activity() to authenticated;
+
+-- Let the cart hide its administrator panel from visitors without disclosing
+-- the administrator's email address or user ID.
+create or replace function public.cart_admin_is_configured()
+returns boolean
+language sql
+stable
+security definer
+set search_path = pg_catalog, private
+as $$
+    select exists (select 1 from private.cart_admins);
+$$;
+
+revoke all on function public.cart_admin_is_configured() from public, anon, authenticated;
+grant execute on function public.cart_admin_is_configured() to anon, authenticated;

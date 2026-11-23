@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Electrical Parts List</title>
-    <link rel="stylesheet" href="ani.css">
+    <link rel="stylesheet" href="ani.css?v=admin-visibility-1">
 </head>
 <body>
     <button class="admin-entry" type="button" aria-label="Open admin page" title="Admin">Admin</button>
@@ -28,7 +28,8 @@
             <h3 id="cart-activity-heading">Recent changes</h3>
             <ul id="cart-activity-list" aria-live="polite"></ul>
         </section>
-        <section class="cart-admin" aria-labelledby="cart-admin-heading">
+        <button class="cart-admin-entry" id="cart-admin-entry" type="button" aria-controls="cart-admin" hidden>Administrator sign in</button>
+        <section class="cart-admin" id="cart-admin" aria-labelledby="cart-admin-heading" hidden>
             <h3 id="cart-admin-heading">Administrator</h3>
             <p id="cart-admin-status" role="status" aria-live="polite">Admin controls require a verified account.</p>
             <form id="cart-admin-login-form">
@@ -141,7 +142,7 @@
     <script src="electrical-inventory.js"></script>
     <script src="cart-user.js?v=cart-attribution-1"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="cart-admin.js?v=admin-access-1"></script>
+    <script src="cart-admin.js?v=admin-visibility-1"></script>
     <script src="electrical.js?v=admin-access-1"></script>
 </body>
 </html>

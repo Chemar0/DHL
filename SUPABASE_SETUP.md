@@ -4,7 +4,7 @@ The mechanical and electrical pages share one cart through Supabase.
 
 ## Connect the project
 
-1. For a new project, run `supabase-setup.sql` in the SQL editor. For the existing project, run `supabase-admin-security.sql` to add the admin protections without deleting the cart or its activity.
+1. For a new project, run `supabase-setup.sql` in the SQL editor. For the existing project, run `supabase-admin-security.sql` to add the admin protections without deleting the cart or its activity. If that security migration is already installed, run `supabase-admin-visibility.sql` to let the pages hide the admin panel from visitors.
 2. In the project's API settings, copy the Project URL and publishable key.
 3. Put those values in `supabase-config.js`. The publishable key is designed for browser use. Never put a service-role key in this repository.
 
@@ -42,6 +42,8 @@ $$;
 ```
 
 After sign-in, the database checks the authenticated user ID against `private.cart_admins`. The browser label and local storage cannot grant administrator access. Only the allowlisted account can change the administrator display name, clear recent changes, or clear the shared cart. Clearing recent changes leaves a server-authenticated entry showing who cleared them.
+
+When an administrator is configured, the cart hides the full administrator panel from visitors. It shows a small “Administrator sign in” entry so the allowlisted account can sign in again on another browser. The public setup check returns only whether an administrator exists; it does not expose the account email or ID.
 
 Other visitors still enter a display name for cart attribution. That name is self-entered and stored in that browser profile; it is not a verified identity or a MAC-address identity. Visitors cannot rename it through the site after the initial entry, and the database blocks use of the administrator's reserved display name in cart activity.
 
