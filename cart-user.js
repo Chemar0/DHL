@@ -36,7 +36,7 @@
         changeButton.hidden = !adminAccess;
     }
 
-    function saveNameLocally(name) {
+    function saveNameLocally(name, nameReentered = false) {
         currentName = name;
         try {
             localStorage.setItem(storageKey, currentName);
@@ -44,7 +44,9 @@
             // The current page can still use the name for this session.
         }
         showName();
-        document.dispatchEvent(new Event('cart-user-name-changed'));
+        document.dispatchEvent(new CustomEvent('cart-user-name-changed', {
+            detail: { nameReentered }
+        }));
     }
 
     function promptForName() {
@@ -74,7 +76,7 @@
                 return;
             }
         } else {
-            saveNameLocally(name);
+            saveNameLocally(name, true);
         }
 
         dialog.close();
@@ -105,6 +107,16 @@
                 showName();
             }
         },
-        promptForName
+        promptForName,
+        requireNameAgain() {
+            currentName = '';
+            try {
+                localStorage.removeItem(storageKey);
+            } catch (error) {
+                // The current page still requires a fresh name for this session.
+            }
+            showName();
+            promptForName();
+        }
     };
 })();

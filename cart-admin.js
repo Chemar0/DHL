@@ -21,8 +21,6 @@
     const orderLogSection = document.getElementById('cart-order-log');
     const orderLogList = document.getElementById('cart-order-email-list');
     const loadOlderOrderLogsButton = document.getElementById('load-older-order-logs');
-    const clearCartButton = document.getElementById('clear-cart');
-    const clearLocalCartButton = document.getElementById('clear-local-cart');
     const signOutButton = document.getElementById('cart-admin-sign-out');
     const config = window.SUPABASE_CONFIG || {};
     const publicApiKey = config.publishableKey || config.anonKey || '';
@@ -73,10 +71,6 @@
         if (activityPanel) activityPanel.hidden = !state.isAdmin;
         if (orderLogSection) orderLogSection.hidden = !state.isAdmin;
         if (signOutButton) signOutButton.hidden = !hasSession;
-        const config = window.SUPABASE_CONFIG || {};
-        const sharedCartConfigured = Boolean(config.url && (config.publishableKey || config.anonKey));
-        if (clearCartButton) clearCartButton.hidden = !sharedCartConfigured || !state.isAdmin;
-        if (clearLocalCartButton) clearLocalCartButton.hidden = sharedCartConfigured;
         if (state.isAdmin) state.loginOpen = false;
         if (adminPanel) {
             adminPanel.hidden = !state.adminMenuOpen && !state.loginOpen && state.adminConfigured !== false;
@@ -287,7 +281,7 @@
                 removeButton.className = 'delete-auth-account';
                 removeButton.textContent = 'Remove browser';
                 removeButton.addEventListener('click', async () => {
-                    if (!state.isOwner || !window.confirm(`Remove ${user.display_name || 'this browser'} from the cart user list? It may appear again when the browser visits the site.`)) return;
+                    if (!state.isOwner || !window.confirm(`Remove ${user.display_name || 'this browser'} from the cart user list? This browser will need to enter a name again before it can be listed.`)) return;
                     removeButton.disabled = true;
                     let removeError;
                     try {
@@ -302,7 +296,7 @@
                         setStatus(`Could not remove this browser: ${removeError.message || 'try again.'}`, true);
                         return;
                     }
-                    setStatus('Browser removed from the cart user list.');
+                    setStatus('Browser removed. It must enter a name again before it can be listed.');
                     await refreshCartUsers();
                 });
                 row.append(removeButton);
@@ -430,8 +424,6 @@
         setStatus('Admin sign-in is unavailable because the Supabase connection did not load.', true);
         if (adminPanel) adminPanel.hidden = false;
         if (adminToolsToggle) adminToolsToggle.hidden = true;
-        if (clearCartButton) clearCartButton.hidden = false;
-        if (clearLocalCartButton) clearLocalCartButton.hidden = false;
         if (loginForm) loginForm.addEventListener('submit', (event) => event.preventDefault());
         window.CartAdmin = {
             isAdmin: () => false,

@@ -24,7 +24,7 @@
         <p class="cart-empty" id="cart-empty">Your cart is empty.</p>
         <ul class="cart-items" id="cart-items" aria-live="polite"></ul>
         <div class="cart-actions">
-            <button class="clear-cart" id="clear-local-cart" type="button" hidden>Clear cart</button>
+            <button class="clear-cart" id="clear-cart" type="button" disabled>Clear cart</button>
             <button class="email-cart" id="email-cart" type="button" disabled>Email parts list</button>
         </div>
     </aside>
@@ -43,7 +43,6 @@
                 <button type="submit">Send sign-in link</button>
             </form>
             <div id="cart-admin-actions" hidden>
-                <button class="clear-cart" id="clear-cart" type="button" hidden>Clear shared cart</button>
                 <form id="cart-admin-name-form">
                     <label for="cart-admin-name">Admin display name</label>
                     <input id="cart-admin-name" type="text" maxlength="80" autocomplete="name" required>
@@ -86,7 +85,7 @@
     <dialog class="user-name-dialog" id="cart-user-dialog" aria-labelledby="cart-user-title">
         <form id="cart-user-form">
             <h2 id="cart-user-title">Who is using this browser?</h2>
-            <p>Your name is remembered in this browser and shown with cart changes. It is a display label, not a verified identity. Only the verified administrator can change a saved name.</p>
+            <p>Your name is remembered in this browser and shown with cart changes. It is a display label, not a verified identity. If the owner removes this browser from the user list, enter a name again to use it.</p>
             <label for="cart-user-input">Your name</label>
             <input id="cart-user-input" type="text" maxlength="80" autocomplete="name" required>
             <div class="user-name-actions">
@@ -263,9 +262,9 @@
     </div>
     <script src="supabase-config.js?v=shared-cart-4"></script>
     <script src="inventory.js"></script>
-    <script src="cart-user.js?v=cart-clear-refresh-2"></script>
+    <script src="cart-user.js?v=cart-reset-public-clear-1"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="cart-admin.js?v=cart-clear-refresh-2"></script>
-    <script src="ani.js?v=cart-clear-refresh-2"></script>
+    <script src="cart-admin.js?v=cart-reset-public-clear-1"></script>
+    <script src="ani.js?v=cart-reset-public-clear-1"></script>
 </body>
 </html>

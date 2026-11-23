@@ -116,7 +116,6 @@ const cartActivityList = document.getElementById('cart-activity-list');
 const cartEmpty = document.getElementById('cart-empty');
 const emailCart = document.getElementById('email-cart');
 const clearCartButton = document.getElementById('clear-cart');
-const clearLocalCartButton = document.getElementById('clear-local-cart');
 const cartSyncStatus = document.getElementById('cart-sync-status');
 const emailConfirm = document.getElementById('email-confirm');
 const emailYes = document.getElementById('email-yes');
@@ -172,7 +171,7 @@ async function callSharedCartRpc(functionName, payload = {}) {
 
 let lastCartUserRegistration = 0;
 let registeringCartUser = false;
-async function registerCartUser(force = false) {
+async function registerCartUser(force = false, nameReentered = false) {
     if (!sharedCartEnabled || registeringCartUser || !window.CartUser?.getName()) return;
     if (!force && Date.now() - lastCartUserRegistration < 5 * 60 * 1000) return;
     registeringCartUser = true;
@@ -181,17 +180,25 @@ async function registerCartUser(force = false) {
         if (window.CartAdmin?.isAdmin() || !window.CartUser.getName()) return;
         await callSharedCartRpc('register_shared_cart_user', {
             p_device_id: window.CartUser.getDeviceId(),
-            p_display_name: window.CartUser.getName()
+            p_display_name: window.CartUser.getName(),
+            p_name_reentered: nameReentered
         });
         lastCartUserRegistration = Date.now();
     } catch (error) {
+        if (error.message.includes('NAME_RESET_REQUIRED')) {
+            lastCartUserRegistration = 0;
+            window.CartUser.requireNameAgain();
+            return;
+        }
         updateCartSyncStatus('Your browser name could not be added to the admin user list. Ask the owner to check the Supabase setup.', true);
     } finally {
         registeringCartUser = false;
     }
 }
 
-document.addEventListener('cart-user-name-changed', () => { void registerCartUser(true); });
+document.addEventListener('cart-user-name-changed', (event) => {
+    void registerCartUser(true, event.detail?.nameReentered === true);
+});
 
 function loadLocalCart() {
     try {
@@ -423,6 +430,7 @@ function renderCart() {
     cartCount.textContent = String(total);
     cartEmpty.hidden = total > 0;
     emailCart.disabled = total === 0;
+    clearCartButton.disabled = total === 0;
     if (!sharedCartEnabled) {
         try {
             localStorage.setItem(cartStorageKey, JSON.stringify(
@@ -441,26 +449,32 @@ function renderCart() {
 
 async function clearSharedCart() {
     await callSharedCartRpc('clear_shared_cart', { p_actor_name: window.CartUser.getName() });
-    await refreshSharedCart();
+    const refreshed = await refreshSharedCart();
+    if (refreshed === false) throw new Error('The cart was cleared, but this page could not reload the shared cart. Refresh the page to confirm.');
 }
 
 clearCartButton.addEventListener('click', async () => {
-    if (!sharedCartEnabled || !window.CartAdmin?.isAdmin()) return;
-    updateCartSyncStatus('Clearing shared cart…');
+    if (clearCartButton.disabled || !window.confirm(sharedCartEnabled
+        ? 'Clear the shared cart for everyone? This cannot be undone.'
+        : 'Clear this cart? This cannot be undone.')) return;
+    clearCartButton.disabled = true;
     try {
-        await clearSharedCart();
+        if (sharedCartEnabled) {
+            updateCartSyncStatus('Clearing shared cart for everyone…');
+            await clearSharedCart();
+            updateCartSyncStatus('The shared cart was cleared for everyone.');
+        } else {
+            if (cart.size > 0) recordCartActivity('cart_cleared', '', '', 0, 0, window.CartUser.getName());
+            cart.clear();
+            cartAttribution.clear();
+            renderCart();
+        }
     } catch (error) {
         console.error('Could not clear the shared cart:', error);
-        updateCartSyncStatus('Could not clear the shared cart. Check the Supabase setup and connection.', true);
+        updateCartSyncStatus(error.message || 'Could not clear the shared cart. Check the Supabase setup and connection.', true);
+    } finally {
+        clearCartButton.disabled = cart.size === 0;
     }
-});
-
-clearLocalCartButton.addEventListener('click', () => {
-    if (sharedCartEnabled) return;
-    if (cart.size > 0) recordCartActivity('cart_cleared', '', '', 0, 0, window.CartUser.getName());
-    cart.clear();
-    cartAttribution.clear();
-    renderCart();
 });
 
 // Opens a new draft in the visitor's configured email app; it does not send automatically.
@@ -585,7 +599,7 @@ if (sharedCartEnabled) {
     document.addEventListener('visibilitychange', () => {
         if (document.visibilityState === 'visible') {
             refreshSharedCart();
-            void registerCartUser();
+            void registerCartUser(true);
         }
     });
     window.setInterval(() => {
