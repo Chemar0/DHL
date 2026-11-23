@@ -161,7 +161,7 @@ begin
     left join private.cart_admin_profiles as profile on profile.user_id = admin.user_id
     where admin.user_id = auth.uid();
 
-    delete from public.shared_cart_activity;
+    delete from public.shared_cart_activity where true;
     get diagnostics v_deleted = row_count;
 
     -- Keep a server-authenticated audit event so the history is not silently erased.
@@ -194,7 +194,7 @@ begin
     left join private.cart_admin_profiles as profile on profile.user_id = admin.user_id
     where admin.user_id = auth.uid();
 
-    delete from public.shared_cart_items;
+    delete from public.shared_cart_items where true;
     insert into public.shared_cart_activity (action, actor_name)
     values ('cart_cleared', v_actor_name);
 end;
@@ -888,7 +888,7 @@ begin
         where admin.user_id = auth.uid();
     end if;
 
-    delete from public.shared_cart_items;
+    delete from public.shared_cart_items where true;
     insert into public.shared_cart_activity (action, actor_name)
     values ('cart_cleared', v_actor_name);
 end;
@@ -1110,7 +1110,7 @@ begin
         where admin.user_id = auth.uid();
     end if;
 
-    delete from public.shared_cart_items;
+    delete from public.shared_cart_items where true;
     insert into public.shared_cart_activity (action, actor_name)
     values ('cart_cleared', v_actor_name);
 end;

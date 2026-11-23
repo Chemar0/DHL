@@ -194,7 +194,7 @@ begin
         where admin.user_id = auth.uid();
     end if;
 
-    delete from public.shared_cart_items;
+    delete from public.shared_cart_items where true;
     insert into public.shared_cart_activity (action, actor_name)
     values ('cart_cleared', v_actor_name);
 end;
