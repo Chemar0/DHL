@@ -5,6 +5,7 @@
     const form = document.getElementById('cart-user-form');
     const input = document.getElementById('cart-user-input');
     const nameOutput = document.getElementById('cart-user-name');
+    const emailOutput = document.getElementById('cart-user-email');
     const changeButton = document.getElementById('change-cart-user');
     let currentName = '';
     let adminName = '';
@@ -90,7 +91,14 @@
     });
 
     if (currentName) showName();
-    else promptForName();
+
+    document.addEventListener('cart-user-auth-ready', (event) => {
+        emailOutput.textContent = event.detail?.email || '';
+        if (!currentName && !adminAccess) promptForName();
+    });
+    document.addEventListener('cart-user-auth-signed-out', () => {
+        emailOutput.textContent = '';
+    });
 
     window.CartUser = {
         getName: () => adminAccess && adminName ? adminName : currentName,
@@ -106,6 +114,9 @@
                 adminName = cleaned;
                 showName();
             }
+        },
+        setVerifiedEmail(email) {
+            emailOutput.textContent = String(email || '');
         },
         promptForName,
         requireNameAgain() {

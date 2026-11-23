@@ -5,6 +5,12 @@
     const adminToolsClose = document.getElementById('admin-tools-close');
     const loginForm = document.getElementById('cart-admin-login-form');
     const emailInput = document.getElementById('cart-admin-email');
+    const visitorAuthDialog = document.getElementById('cart-visitor-auth-dialog');
+    const visitorAuthForm = document.getElementById('cart-visitor-auth-form');
+    const visitorAuthEmailInput = document.getElementById('cart-visitor-email');
+    const visitorAuthStatus = document.getElementById('cart-visitor-auth-status');
+    const visitorAuthSubmit = document.getElementById('cart-visitor-send-link');
+    const visitorSignOutButton = document.getElementById('cart-user-sign-out');
     const adminActions = document.getElementById('cart-admin-actions');
     const nameForm = document.getElementById('cart-admin-name-form');
     const nameInput = document.getElementById('cart-admin-name');
@@ -13,6 +19,7 @@
     const addAdminForm = document.getElementById('add-cart-admin-form');
     const addAdminEmailInput = document.getElementById('add-cart-admin-email');
     const adminList = document.getElementById('cart-admin-list');
+    const refreshAccountsButton = document.getElementById('refresh-cart-auth-users');
     const cartUserList = document.getElementById('cart-user-list');
     const cartUserSection = document.getElementById('cart-user-management');
     const refreshCartUsersButton = document.getElementById('refresh-cart-users');
@@ -40,6 +47,7 @@
         session: null,
         isAdmin: false,
         isOwner: false,
+        isVisitorVerified: false,
         adminConfigured: null,
         loginOpen: adminPortalRequested,
         adminMenuOpen: adminPortalRequested,
@@ -48,6 +56,10 @@
         hasMoreOrderEmails: false,
         loadingOrderEmails: false
     };
+
+    visitorAuthDialog?.addEventListener('cancel', (event) => {
+        if (!state.isVisitorVerified) event.preventDefault();
+    });
 
     function finishAccessCheck() {
         if (accessReadyResolved) return;
@@ -71,6 +83,11 @@
         if (activityPanel) activityPanel.hidden = !state.isAdmin;
         if (orderLogSection) orderLogSection.hidden = !state.isAdmin;
         if (signOutButton) signOutButton.hidden = !hasSession;
+        if (visitorSignOutButton) visitorSignOutButton.hidden = !state.isVisitorVerified || state.isAdmin;
+        if (visitorAuthDialog) {
+            if (state.isVisitorVerified && visitorAuthDialog.open) visitorAuthDialog.close();
+            else if (!state.isVisitorVerified && !visitorAuthDialog.open) visitorAuthDialog.showModal();
+        }
         if (state.isAdmin) state.loginOpen = false;
         if (adminPanel) {
             adminPanel.hidden = !state.adminMenuOpen && !state.loginOpen && state.adminConfigured !== false;
@@ -82,6 +99,25 @@
         window.CartUser?.setAdminAccess(state.isAdmin);
     }
 
+    function setVisitorAuthStatus(message, isError = false) {
+        if (!visitorAuthStatus) return;
+        visitorAuthStatus.textContent = message;
+        visitorAuthStatus.classList.toggle('error', isError);
+    }
+
+    function notifyVisitorVerified() {
+        if (!state.isVisitorVerified || state.isAdmin) return;
+        const email = state.session?.user?.email || '';
+        window.CartUser?.setVerifiedEmail(email);
+        document.dispatchEvent(new CustomEvent('cart-user-auth-ready', { detail: { email } }));
+        void window.refreshSharedCart?.();
+    }
+
+    function notifyVisitorSignedOut() {
+        window.CartUser?.setVerifiedEmail('');
+        document.dispatchEvent(new Event('cart-user-auth-signed-out'));
+    }
+
     async function refreshAdminSetupStatus() {
         const { data, error } = await state.client.rpc('cart_admin_is_configured');
         // Fail closed: never display admin controls publicly if the status endpoint is unavailable.
@@ -90,13 +126,27 @@
     }
 
     async function refreshAdminAccess(session = state.session) {
+        const wasVisitorVerified = state.isVisitorVerified && !state.isAdmin;
         state.session = session || null;
         state.isAdmin = false;
         state.isOwner = false;
+        state.isVisitorVerified = Boolean(
+            state.session?.user?.email &&
+            (state.session.user.email_confirmed_at || state.session.user.confirmed_at)
+        );
         updateControls();
 
         if (!state.session) {
+            if (wasVisitorVerified) notifyVisitorSignedOut();
+            setVisitorAuthStatus('Enter your email to receive a verification link.');
             setStatus('Admin controls require a verified, allowlisted Supabase account.');
+            finishAccessCheck();
+            return;
+        }
+
+        if (!state.isVisitorVerified) {
+            setVisitorAuthStatus('Open the verification link in your email to continue.');
+            setStatus('Email verification is required to use the shared cart.');
             finishAccessCheck();
             return;
         }
@@ -106,6 +156,7 @@
         if (error) {
             setStatus('Admin setup is incomplete. Run the updated Supabase SQL and allowlist the account.', true);
             updateControls();
+            notifyVisitorVerified();
             finishAccessCheck();
             return;
         }
@@ -116,12 +167,14 @@
             state.adminMenuOpen = false;
             setStatus('This verified account is not on the cart administrator allowlist.');
             updateControls();
+            notifyVisitorVerified();
             finishAccessCheck();
             return;
         }
 
         state.isAdmin = true;
         state.isOwner = profile.is_owner === true;
+        window.CartUser?.setVerifiedEmail(state.session.user.email || '');
         hasAdminDeviceMarker = true;
         try {
             localStorage.setItem(adminDeviceKey, 'true');
@@ -164,7 +217,16 @@
 
     async function refreshAccountList() {
         if (!state.isAdmin || !adminList) return;
-        const { data, error } = await state.client.rpc('get_cart_auth_users');
+        if (refreshAccountsButton) refreshAccountsButton.disabled = true;
+        let data;
+        let error;
+        try {
+            ({ data, error } = await state.client.rpc('get_cart_auth_users'));
+        } catch (requestError) {
+            error = requestError;
+        } finally {
+            if (refreshAccountsButton) refreshAccountsButton.disabled = false;
+        }
         if (error) {
             setStatus('Could not load accounts. Check the admin account management SQL setup.', true);
             return;
@@ -208,7 +270,7 @@
                 deleteButton.textContent = 'Delete account';
                 deleteButton.addEventListener('click', async () => {
                     const accountLabel = account.email || 'this account';
-                    const warning = `Permanently delete ${accountLabel} from Supabase Auth? This cannot be undone. Their existing session may remain valid until its token expires, and this does not block public cart access.`;
+                    const warning = `Permanently delete ${accountLabel} from Supabase Auth? This cannot be undone. Their current session may remain on screen, but it will no longer pass the verified account check for shared cart access.`;
                     if (!state.isOwner || !window.confirm(warning)) return;
                     deleteButton.disabled = true;
                     setStatus(`Deleting ${accountLabel}…`);
@@ -251,7 +313,7 @@
         if (users.length === 0) {
             const empty = document.createElement('li');
             empty.className = 'admin-account-empty';
-            empty.textContent = 'No named browsers have registered yet.';
+            empty.textContent = 'No verified browsers have registered yet.';
             cartUserList.append(empty);
             return;
         }
@@ -260,10 +322,13 @@
             const row = document.createElement('li');
             const details = document.createElement('div');
             const name = document.createElement('span');
+            const verifiedEmail = document.createElement('span');
             const dates = document.createElement('span');
             details.className = 'admin-account-details';
             name.className = 'admin-account-name';
             name.textContent = user.display_name || 'Unnamed browser';
+            verifiedEmail.className = 'admin-owner-label';
+            verifiedEmail.textContent = user.email ? `Verified email ${user.email}` : 'No verified account linked';
             const firstSeen = user.first_seen_at ? new Date(user.first_seen_at) : null;
             const lastSeen = user.last_seen_at ? new Date(user.last_seen_at) : null;
             const firstLabel = firstSeen && !Number.isNaN(firstSeen.valueOf())
@@ -272,7 +337,7 @@
                 ? `Last active ${lastSeen.toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}` : 'Last active date unavailable';
             dates.className = 'admin-account-dates';
             dates.textContent = `${firstLabel} · ${lastLabel}`;
-            details.append(name, dates);
+            details.append(name, verifiedEmail, dates);
             row.append(details);
 
             if (state.isOwner) {
@@ -418,15 +483,19 @@
     }
 
     loadOlderOrderLogsButton?.addEventListener('click', () => { void refreshOrderEmailLog(false); });
+    refreshAccountsButton?.addEventListener('click', () => { void refreshAccountList(); });
     refreshCartUsersButton?.addEventListener('click', () => { void refreshCartUsers(); });
 
     if (!config.url || !publicApiKey || !window.supabase?.createClient) {
         setStatus('Admin sign-in is unavailable because the Supabase connection did not load.', true);
+        setVisitorAuthStatus('Email verification is unavailable because the Supabase connection did not load.', true);
+        if (visitorAuthDialog && !visitorAuthDialog.open) visitorAuthDialog.showModal();
         if (adminPanel) adminPanel.hidden = false;
         if (adminToolsToggle) adminToolsToggle.hidden = true;
         if (loginForm) loginForm.addEventListener('submit', (event) => event.preventDefault());
         window.CartAdmin = {
             isAdmin: () => false,
+            isVisitorVerified: () => false,
             whenAccessChecked: () => Promise.resolve(),
             getAccessToken: () => '',
             refreshOrderEmailLog: () => Promise.resolve(),
@@ -446,6 +515,7 @@
 
     window.CartAdmin = {
         isAdmin: () => state.isAdmin,
+        isVisitorVerified: () => state.isVisitorVerified,
         whenAccessChecked: () => accessReady,
         getAccessToken: () => state.session?.access_token || '',
         refreshOrderEmailLog,
@@ -474,6 +544,54 @@
     });
 
     void refreshAdminSetupStatus();
+
+    visitorAuthForm?.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const email = visitorAuthEmailInput.value.trim();
+        if (!email) {
+            visitorAuthEmailInput.reportValidity();
+            return;
+        }
+
+        visitorAuthSubmit.disabled = true;
+        setVisitorAuthStatus('Sending your verification link…');
+        let error;
+        try {
+            ({ error } = await state.client.auth.signInWithOtp({
+                email,
+                options: {
+                    shouldCreateUser: true,
+                    emailRedirectTo: `${window.location.origin}${window.location.pathname}`
+                }
+            }));
+        } catch (requestError) {
+            error = requestError;
+        } finally {
+            visitorAuthSubmit.disabled = false;
+        }
+        if (error) {
+            if (error.status === 429 || error.code === 'over_email_send_rate_limit' ||
+                error.code === 'over_request_rate_limit') {
+                setVisitorAuthStatus('Please wait before requesting another link, and check your inbox and junk folder.', true);
+            } else if (error.code === 'email_address_not_authorized') {
+                setVisitorAuthStatus('Supabase email delivery is not configured for this address. Configure custom SMTP in Authentication → Emails → SMTP Settings.', true);
+            } else if (error.code === 'otp_disabled') {
+                setVisitorAuthStatus('Email verification links are disabled in Supabase. Enable Email OTP under Authentication → Sign In / Providers.', true);
+            } else if (error.code === 'signup_disabled' || error.code === 'signups_disabled') {
+                setVisitorAuthStatus('Visitor registration is disabled in Supabase Auth settings.', true);
+            } else {
+                setVisitorAuthStatus(error.message || 'Could not send the verification link. Check Supabase Auth email settings.', true);
+            }
+            return;
+        }
+
+        setVisitorAuthStatus('Verification link sent. Open it from your email to return to the cart.');
+    });
+
+    visitorSignOutButton?.addEventListener('click', async () => {
+        const { error } = await state.client.auth.signOut();
+        if (error) setVisitorAuthStatus('Could not sign out. Reload the page and try again.', true);
+    });
 
     loginForm.addEventListener('submit', async (event) => {
         event.preventDefault();
@@ -564,6 +682,7 @@
     signOutButton.addEventListener('click', async () => {
         const { error } = await state.client.auth.signOut();
         if (error) setStatus('Could not sign out. Reload the page and try again.', true);
+        else window.CartUser?.setVerifiedEmail('');
     });
 
     state.client.auth.onAuthStateChange((_event, session) => {

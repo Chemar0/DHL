@@ -153,6 +153,16 @@ h1 { margin: 0 0 18px; font-size: 1.6rem; }
 .cart-user-label { margin: 10px 0 0; color: #626a76; font-size: 0.92rem; }
 .cart-user-label strong { color: #202124; }
 .cart-user-label button { margin-left: 4px; padding: 2px 5px; border: 0; background: transparent; color: #01473d; text-decoration: underline; cursor: pointer; }
+.user-name-dialog { width: min(420px, calc(100% - 32px)); padding: 22px; border: 1px solid #b9bec7; border-radius: 12px; color: #202124; }
+.user-name-dialog::backdrop { background: #10152288; }
+.user-name-dialog h2 { margin: 0 0 10px; color: #01473d; font-size: 1.2rem; }
+.user-name-dialog p { color: #626a76; line-height: 1.45; }
+.user-name-dialog #cart-visitor-auth-status.error { color: #a83232; }
+.user-name-dialog label { display: block; margin: 16px 0 7px; font-weight: 600; }
+.user-name-dialog input { width: 100%; min-height: 42px; padding: 9px 10px; border: 1px solid #aeb5c0; border-radius: 7px; font: inherit; }
+.user-name-actions { display: flex; justify-content: flex-end; margin-top: 18px; }
+.user-name-actions button { min-height: 42px; padding: 9px 14px; border: 1px solid #01473d; border-radius: 7px; background: #01473d; color: #fff; font: inherit; cursor: pointer; }
+.user-name-actions button:disabled { opacity: 0.65; cursor: progress; }
 .cart-activity { margin: 4px 0 18px; }
 .cart-activity[hidden] { display: none; }
 .cart-activity h3 { margin: 10px 0 4px; color: #01473d; font-size: 1rem; }

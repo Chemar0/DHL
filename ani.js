@@ -177,7 +177,7 @@ async function registerCartUser(force = false, nameReentered = false) {
     registeringCartUser = true;
     try {
         await window.CartAdmin?.whenAccessChecked?.();
-        if (window.CartAdmin?.isAdmin() || !window.CartUser.getName()) return;
+        if (window.CartAdmin?.isAdmin() || !window.CartAdmin?.isVisitorVerified?.() || !window.CartUser.getName()) return;
         await callSharedCartRpc('register_shared_cart_user', {
             p_device_id: window.CartUser.getDeviceId(),
             p_display_name: window.CartUser.getName(),
@@ -199,6 +199,7 @@ async function registerCartUser(force = false, nameReentered = false) {
 document.addEventListener('cart-user-name-changed', (event) => {
     void registerCartUser(true, event.detail?.nameReentered === true);
 });
+document.addEventListener('cart-user-auth-ready', () => { void registerCartUser(true); });
 
 function loadLocalCart() {
     try {
@@ -233,6 +234,10 @@ function loadLocalCart() {
 
 async function refreshSharedCart() {
     if (!sharedCartEnabled) return false;
+    if (!window.CartAdmin?.isVisitorVerified?.()) {
+        updateCartSyncStatus('Verify your email to access the shared cart.');
+        return false;
+    }
     try {
         const rows = await callSharedCartRpc('get_shared_cart');
         cart.clear();

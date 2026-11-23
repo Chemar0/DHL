@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Electrical Parts List</title>
-    <link rel="stylesheet" href="ani.css?v=cart-user-registry-1">
+    <link rel="stylesheet" href="ani.css?v=verified-cart-users-1">
 </head>
 <body>
     <button class="admin-entry" type="button" aria-label="Open admin page" title="Admin">Admin</button>
@@ -17,8 +17,9 @@
             <h2>Your cart</h2>
             <button class="cart-close" id="cart-close" type="button" aria-label="Close cart">×</button>
         </div>
-        <p class="cart-user-label">Using this browser as <strong id="cart-user-name"></strong>
+        <p class="cart-user-label">Verified email <strong id="cart-user-email"></strong> · Using this browser as <strong id="cart-user-name"></strong>
             <button id="change-cart-user" type="button" hidden>Change</button>
+            <button id="cart-user-sign-out" type="button" hidden>Sign out</button>
         </p>
         <p id="cart-sync-status" role="status" aria-live="polite"></p>
         <p class="cart-empty" id="cart-empty">Your cart is empty.</p>
@@ -60,20 +61,21 @@
                     <button id="load-older-order-logs" type="button" hidden>Load older orders</button>
                 </section>
                 <section class="cart-admin-management" id="cart-admin-management" hidden aria-labelledby="cart-admin-management-heading">
-                    <h4 id="cart-admin-management-heading">Manage accounts</h4>
-                    <p>All admins can view every Supabase Auth account. Cart display names are listed separately below.</p>
+                    <h4 id="cart-admin-management-heading">Registered users</h4>
+                    <p>Visitor accounts appear here after they verify their email. All admins can see registered emails; cart browser names are listed separately below.</p>
                     <div id="cart-admin-owner-actions" hidden>
-                        <p>Only the owner can grant admin access or permanently delete accounts. Deleting an account does not block public cart access.</p>
+                        <p>Only the owner can grant admin access or delete accounts. Deleting a visitor account removes its access to the shared cart.</p>
                         <form id="add-cart-admin-form">
                             <label for="add-cart-admin-email">Verified account email</label>
                             <input id="add-cart-admin-email" type="email" autocomplete="off" required>
                             <button type="submit">Grant admin access</button>
                         </form>
                     </div>
+                    <button id="refresh-cart-auth-users" type="button">Refresh registered users</button>
                     <ul id="cart-admin-list" aria-live="polite"></ul>
                     <section class="cart-user-management" id="cart-user-management" hidden aria-labelledby="cart-user-management-heading">
                         <h4 id="cart-user-management-heading">Cart usernames</h4>
-                        <p>These are names entered on each browser. They are display labels, not verified identities. The owner can remove a browser from this list.</p>
+                        <p>Browser names are self-entered labels linked to a verified email account. The owner can remove a browser from this list.</p>
                         <button id="refresh-cart-users" type="button">Refresh usernames</button>
                         <ul id="cart-user-list" aria-live="polite"></ul>
                     </section>
@@ -82,6 +84,18 @@
             <button id="cart-admin-sign-out" type="button" hidden>Sign out</button>
         </section>
     </aside>
+    <dialog class="user-name-dialog" id="cart-visitor-auth-dialog" aria-labelledby="cart-visitor-auth-title">
+        <form id="cart-visitor-auth-form">
+            <h2 id="cart-visitor-auth-title">Verify your email to use the cart</h2>
+            <p>Enter your email and open the verification link on this device. You must verify before using the shared cart; cart admins can see your registered email.</p>
+            <label for="cart-visitor-email">Email address</label>
+            <input id="cart-visitor-email" type="email" autocomplete="email" required>
+            <p id="cart-visitor-auth-status" role="status" aria-live="polite"></p>
+            <div class="user-name-actions">
+                <button id="cart-visitor-send-link" type="submit">Send verification link</button>
+            </div>
+        </form>
+    </dialog>
     <dialog class="user-name-dialog" id="cart-user-dialog" aria-labelledby="cart-user-title">
         <form id="cart-user-form">
             <h2 id="cart-user-title">Who is using this browser?</h2>
@@ -171,9 +185,9 @@
     </div>
     <script src="supabase-config.js?v=shared-cart-clear-1"></script>
     <script src="electrical-inventory.js"></script>
-    <script src="cart-user.js?v=cart-reset-public-clear-1"></script>
+    <script src="cart-user.js?v=verified-cart-users-1"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="cart-admin.js?v=cart-reset-public-clear-1"></script>
-    <script src="electrical.js?v=cart-reset-public-clear-1"></script>
+    <script src="cart-admin.js?v=verified-cart-users-1"></script>
+    <script src="electrical.js?v=verified-cart-users-1"></script>
 </body>
 </html>
