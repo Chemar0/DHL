@@ -1,5 +1,6 @@
 (() => {
     const storageKey = 'dhl-cart-user-name';
+    const deviceStorageKey = 'dhl-cart-device-id';
     const dialog = document.getElementById('cart-user-dialog');
     const form = document.getElementById('cart-user-form');
     const input = document.getElementById('cart-user-input');
@@ -8,11 +9,26 @@
     let currentName = '';
     let adminName = '';
     let adminAccess = false;
+    let deviceId = '';
+
+    function createDeviceId() {
+        if (window.crypto?.randomUUID) return window.crypto.randomUUID();
+        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (character) => {
+            const random = Math.random() * 16 | 0;
+            return (character === 'x' ? random : (random & 0x3 | 0x8)).toString(16);
+        });
+    }
 
     try {
         currentName = (localStorage.getItem(storageKey) || '').trim();
+        deviceId = localStorage.getItem(deviceStorageKey) || '';
+        if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(deviceId)) {
+            deviceId = createDeviceId();
+            localStorage.setItem(deviceStorageKey, deviceId);
+        }
     } catch (error) {
-        // Keep the name in memory if browser storage is unavailable.
+        // Keep this browser session working if browser storage is unavailable.
+        if (!deviceId) deviceId = createDeviceId();
     }
 
     function showName() {
@@ -28,6 +44,7 @@
             // The current page can still use the name for this session.
         }
         showName();
+        document.dispatchEvent(new Event('cart-user-name-changed'));
     }
 
     function promptForName() {
@@ -75,6 +92,7 @@
 
     window.CartUser = {
         getName: () => adminAccess && adminName ? adminName : currentName,
+        getDeviceId: () => deviceId,
         setAdminAccess(enabled) {
             adminAccess = Boolean(enabled);
             if (!adminAccess) adminName = '';

@@ -13,6 +13,9 @@
     const addAdminForm = document.getElementById('add-cart-admin-form');
     const addAdminEmailInput = document.getElementById('add-cart-admin-email');
     const adminList = document.getElementById('cart-admin-list');
+    const cartUserList = document.getElementById('cart-user-list');
+    const cartUserSection = document.getElementById('cart-user-management');
+    const refreshCartUsersButton = document.getElementById('refresh-cart-users');
     const clearHistoryButton = document.getElementById('clear-recent-changes');
     const activityPanel = document.getElementById('cart-activity-panel');
     const orderLogSection = document.getElementById('cart-order-log');
@@ -26,6 +29,9 @@
     const adminDeviceKey = 'dhl-cart-admin-portal';
     const adminPortalRequested = new URLSearchParams(window.location.search).get('cartAdmin') === 'signin';
     let hasAdminDeviceMarker = false;
+    let resolveAccessReady;
+    let accessReadyResolved = false;
+    const accessReady = new Promise((resolve) => { resolveAccessReady = resolve; });
     try {
         hasAdminDeviceMarker = localStorage.getItem(adminDeviceKey) === 'true';
     } catch (error) {
@@ -45,6 +51,12 @@
         loadingOrderEmails: false
     };
 
+    function finishAccessCheck() {
+        if (accessReadyResolved) return;
+        accessReadyResolved = true;
+        resolveAccessReady();
+    }
+
     function setStatus(message, isError = false) {
         if (!status) return;
         status.textContent = message;
@@ -56,6 +68,7 @@
         if (loginForm) loginForm.hidden = hasSession;
         if (adminActions) adminActions.hidden = !state.isAdmin;
         if (adminManagement) adminManagement.hidden = !state.isAdmin;
+        if (cartUserSection) cartUserSection.hidden = !state.isAdmin;
         if (ownerActions) ownerActions.hidden = !state.isOwner;
         if (activityPanel) activityPanel.hidden = !state.isAdmin;
         if (orderLogSection) orderLogSection.hidden = !state.isAdmin;
@@ -90,6 +103,7 @@
 
         if (!state.session) {
             setStatus('Admin controls require a verified, allowlisted Supabase account.');
+            finishAccessCheck();
             return;
         }
 
@@ -98,6 +112,7 @@
         if (error) {
             setStatus('Admin setup is incomplete. Run the updated Supabase SQL and allowlist the account.', true);
             updateControls();
+            finishAccessCheck();
             return;
         }
 
@@ -107,6 +122,7 @@
             state.adminMenuOpen = false;
             setStatus('This verified account is not on the cart administrator allowlist.');
             updateControls();
+            finishAccessCheck();
             return;
         }
 
@@ -119,7 +135,9 @@
             // The direct admin sign-in URL remains available if storage is blocked.
         }
         updateControls();
+        finishAccessCheck();
         void refreshAccountList();
+        void refreshCartUsers();
         void refreshOrderEmailLog(true);
         void window.refreshSharedCart?.();
         if (profile.display_name) {
@@ -214,6 +232,82 @@
                 row.append(deleteButton);
             }
             adminList.append(row);
+        });
+    }
+
+    async function refreshCartUsers() {
+        if (!state.isAdmin || !cartUserList) return;
+        if (refreshCartUsersButton) refreshCartUsersButton.disabled = true;
+        let data;
+        let error;
+        try {
+            ({ data, error } = await state.client.rpc('get_shared_cart_users'));
+        } catch (requestError) {
+            error = requestError;
+        } finally {
+            if (refreshCartUsersButton) refreshCartUsersButton.disabled = false;
+        }
+        if (error) {
+            setStatus(`Could not load cart usernames: ${error.message || 'check the Supabase user registry setup.'}`, true);
+            return;
+        }
+
+        cartUserList.replaceChildren();
+        const users = Array.isArray(data) ? data : [];
+        if (users.length === 0) {
+            const empty = document.createElement('li');
+            empty.className = 'admin-account-empty';
+            empty.textContent = 'No named browsers have registered yet.';
+            cartUserList.append(empty);
+            return;
+        }
+
+        users.forEach((user) => {
+            const row = document.createElement('li');
+            const details = document.createElement('div');
+            const name = document.createElement('span');
+            const dates = document.createElement('span');
+            details.className = 'admin-account-details';
+            name.className = 'admin-account-name';
+            name.textContent = user.display_name || 'Unnamed browser';
+            const firstSeen = user.first_seen_at ? new Date(user.first_seen_at) : null;
+            const lastSeen = user.last_seen_at ? new Date(user.last_seen_at) : null;
+            const firstLabel = firstSeen && !Number.isNaN(firstSeen.valueOf())
+                ? `First seen ${firstSeen.toLocaleDateString()}` : 'First seen date unavailable';
+            const lastLabel = lastSeen && !Number.isNaN(lastSeen.valueOf())
+                ? `Last active ${lastSeen.toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}` : 'Last active date unavailable';
+            dates.className = 'admin-account-dates';
+            dates.textContent = `${firstLabel} · ${lastLabel}`;
+            details.append(name, dates);
+            row.append(details);
+
+            if (state.isOwner) {
+                const removeButton = document.createElement('button');
+                removeButton.type = 'button';
+                removeButton.className = 'delete-auth-account';
+                removeButton.textContent = 'Remove browser';
+                removeButton.addEventListener('click', async () => {
+                    if (!state.isOwner || !window.confirm(`Remove ${user.display_name || 'this browser'} from the cart user list? It may appear again when the browser visits the site.`)) return;
+                    removeButton.disabled = true;
+                    let removeError;
+                    try {
+                        ({ error: removeError } = await state.client.rpc('remove_shared_cart_user', {
+                            p_device_id: user.device_id
+                        }));
+                    } catch (requestError) {
+                        removeError = requestError;
+                    }
+                    if (removeError) {
+                        removeButton.disabled = false;
+                        setStatus(`Could not remove this browser: ${removeError.message || 'try again.'}`, true);
+                        return;
+                    }
+                    setStatus('Browser removed from the cart user list.');
+                    await refreshCartUsers();
+                });
+                row.append(removeButton);
+            }
+            cartUserList.append(row);
         });
     }
 
@@ -330,6 +424,7 @@
     }
 
     loadOlderOrderLogsButton?.addEventListener('click', () => { void refreshOrderEmailLog(false); });
+    refreshCartUsersButton?.addEventListener('click', () => { void refreshCartUsers(); });
 
     if (!config.url || !publicApiKey || !window.supabase?.createClient) {
         setStatus('Admin sign-in is unavailable because the Supabase connection did not load.', true);
@@ -340,6 +435,7 @@
         if (loginForm) loginForm.addEventListener('submit', (event) => event.preventDefault());
         window.CartAdmin = {
             isAdmin: () => false,
+            whenAccessChecked: () => Promise.resolve(),
             getAccessToken: () => '',
             refreshOrderEmailLog: () => Promise.resolve(),
             setName,
@@ -358,6 +454,7 @@
 
     window.CartAdmin = {
         isAdmin: () => state.isAdmin,
+        whenAccessChecked: () => accessReady,
         getAccessToken: () => state.session?.access_token || '',
         refreshOrderEmailLog,
         setName,
@@ -452,19 +549,20 @@
     });
 
     clearHistoryButton.addEventListener('click', async () => {
-        if (!state.isAdmin || !window.confirm('Clear the recent changes list? A record of this clear action will remain.')) return;
+        if (!state.isAdmin || !window.confirm('Clear the existing recent changes? One entry recording this clear action will remain in the history.')) return;
 
         clearHistoryButton.disabled = true;
         setStatus('Clearing recent changes…');
-        const { error } = await state.client.rpc('clear_shared_cart_activity');
-        clearHistoryButton.disabled = false;
-        if (error) {
-            setStatus('Could not clear recent changes. Check the Supabase SQL setup.', true);
-            return;
+        try {
+            const { data, error } = await state.client.rpc('clear_shared_cart_activity');
+            if (error) throw error;
+            await window.refreshSharedCart?.();
+            setStatus(`Cleared ${Number.isInteger(data) ? data : 'the existing'} recent changes. The clear action remains in the log.`);
+        } catch (error) {
+            setStatus(`Could not clear recent changes: ${error.message || 'check the connection and try again.'}`, true);
+        } finally {
+            clearHistoryButton.disabled = false;
         }
-
-        setStatus('Recent changes cleared.');
-        await window.refreshSharedCart?.();
     });
 
     signOutButton.addEventListener('click', async () => {
@@ -480,6 +578,7 @@
     state.client.auth.getSession().then(({ data, error }) => {
         if (error) {
             setStatus('Could not restore the administrator session. Sign in again.', true);
+            finishAccessCheck();
             return;
         }
         void refreshAdminAccess(data.session);

@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Fastener List</title>
-    <link rel="stylesheet" href="ani.css?v=admin-tools-all-users-1">
+    <link rel="stylesheet" href="ani.css?v=cart-user-registry-1">
 </head>
 <body>
     <button class="admin-entry" type="button" aria-label="Open admin page" title="Admin">Admin</button>
@@ -62,7 +62,7 @@
                 </section>
                 <section class="cart-admin-management" id="cart-admin-management" hidden aria-labelledby="cart-admin-management-heading">
                     <h4 id="cart-admin-management-heading">Manage accounts</h4>
-                    <p>All admins can view Supabase Auth accounts. Anonymous cart visitors do not appear here.</p>
+                    <p>All admins can view every Supabase Auth account. Cart display names are listed separately below.</p>
                     <div id="cart-admin-owner-actions" hidden>
                         <p>Only the owner can grant admin access or permanently delete accounts. Deleting an account does not block public cart access.</p>
                         <form id="add-cart-admin-form">
@@ -72,6 +72,12 @@
                         </form>
                     </div>
                     <ul id="cart-admin-list" aria-live="polite"></ul>
+                    <section class="cart-user-management" id="cart-user-management" hidden aria-labelledby="cart-user-management-heading">
+                        <h4 id="cart-user-management-heading">Cart usernames</h4>
+                        <p>These are names entered on each browser. They are display labels, not verified identities. The owner can remove a browser from this list.</p>
+                        <button id="refresh-cart-users" type="button">Refresh usernames</button>
+                        <ul id="cart-user-list" aria-live="polite"></ul>
+                    </section>
                 </section>
             </div>
             <button id="cart-admin-sign-out" type="button" hidden>Sign out</button>
@@ -257,9 +263,9 @@
     </div>
     <script src="supabase-config.js?v=shared-cart-4"></script>
     <script src="inventory.js"></script>
-    <script src="cart-user.js?v=cart-attribution-1"></script>
+    <script src="cart-user.js?v=cart-user-registry-1"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="cart-admin.js?v=admin-tools-all-users-1"></script>
-    <script src="ani.js?v=admin-tools-all-users-1"></script>
+    <script src="cart-admin.js?v=cart-user-registry-1"></script>
+    <script src="ani.js?v=cart-user-registry-1"></script>
 </body>
 </html>

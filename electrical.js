@@ -196,6 +196,29 @@ async function callSharedCartRpc(functionName, payload = {}) {
     return responseText ? JSON.parse(responseText) : null;
 }
 
+let lastCartUserRegistration = 0;
+let registeringCartUser = false;
+async function registerCartUser(force = false) {
+    if (!sharedCartEnabled || registeringCartUser || !window.CartUser?.getName()) return;
+    if (!force && Date.now() - lastCartUserRegistration < 5 * 60 * 1000) return;
+    registeringCartUser = true;
+    try {
+        await window.CartAdmin?.whenAccessChecked?.();
+        if (window.CartAdmin?.isAdmin() || !window.CartUser.getName()) return;
+        await callSharedCartRpc('register_shared_cart_user', {
+            p_device_id: window.CartUser.getDeviceId(),
+            p_display_name: window.CartUser.getName()
+        });
+        lastCartUserRegistration = Date.now();
+    } catch (error) {
+        updateCartSyncStatus('Your browser name could not be added to the admin user list. Ask the owner to check the Supabase setup.', true);
+    } finally {
+        registeringCartUser = false;
+    }
+}
+
+document.addEventListener('cart-user-name-changed', () => { void registerCartUser(true); });
+
 function loadLocalCart() {
     try {
         const savedCart = JSON.parse(localStorage.getItem(cartStorageKey) || '[]');
@@ -593,14 +616,21 @@ document.addEventListener('keydown', (event) => {
 
 if (sharedCartEnabled) {
     window.refreshSharedCart = refreshSharedCart;
+    void registerCartUser();
     updateCartSyncStatus('Connecting to shared cart…');
     refreshSharedCart();
     window.setInterval(() => {
         if (document.visibilityState === 'visible') refreshSharedCart();
     }, 4000);
     document.addEventListener('visibilitychange', () => {
-        if (document.visibilityState === 'visible') refreshSharedCart();
+        if (document.visibilityState === 'visible') {
+            refreshSharedCart();
+            void registerCartUser();
+        }
     });
+    window.setInterval(() => {
+        if (document.visibilityState === 'visible') void registerCartUser();
+    }, 5 * 60 * 1000);
 } else {
     loadLocalCart();
     renderCart();

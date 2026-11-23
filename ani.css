@@ -190,6 +190,16 @@ h1 { margin: 0 0 18px; font-size: 1.6rem; }
 .cart-admin-management .delete-auth-account:hover { background: #fff1f1; }
 .cart-admin-management .admin-owner-label { flex: 0 0 auto; color: #626a76; font-size: 0.78rem; }
 .cart-admin-management[hidden] { display: none; }
+.cart-user-management { margin-top: 14px; padding-top: 12px; border-top: 1px solid #d5dae1; }
+.cart-user-management[hidden] { display: none; }
+.cart-user-management h4 { margin: 0 0 6px; color: #01473d; font-size: 0.94rem; }
+.cart-user-management > p { margin-bottom: 8px; }
+.cart-user-management ul { max-height: 260px; overflow-y: auto; margin: 8px 0 0; padding: 0; list-style: none; }
+.cart-user-management li { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; padding: 8px 0; overflow-wrap: anywhere; font-size: 0.86rem; }
+.cart-user-management .admin-account-details { min-width: 0; display: flex; flex: 1 1 180px; flex-direction: column; gap: 3px; }
+.cart-user-management .admin-account-name { overflow-wrap: anywhere; font-weight: 600; }
+.cart-user-management .admin-account-dates { color: #626a76; font-size: 0.76rem; }
+.cart-user-management .admin-account-empty { color: #626a76; }
 #cart-admin-owner-actions[hidden] { display: none; }
 .cart-order-log { margin-top: 14px; padding-top: 12px; border-top: 1px solid #d5dae1; }
 .cart-order-log[hidden] { display: none; }
