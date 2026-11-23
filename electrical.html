@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Electrical Parts List</title>
-    <link rel="stylesheet" href="ani.css?v=admin-visibility-1">
+    <link rel="stylesheet" href="ani.css?v=admin-owner-portal-1">
 </head>
 <body>
     <button class="admin-entry" type="button" aria-label="Open admin page" title="Admin">Admin</button>
@@ -44,6 +44,16 @@
                     <button type="submit">Save name</button>
                 </form>
                 <button id="clear-recent-changes" type="button">Clear recent changes</button>
+                <section class="cart-admin-management" id="cart-admin-management" hidden aria-labelledby="cart-admin-management-heading">
+                    <h4 id="cart-admin-management-heading">Manage administrators</h4>
+                    <p>Add an existing verified Supabase account. Only the account owner can grant admin access.</p>
+                    <form id="add-cart-admin-form">
+                        <label for="add-cart-admin-email">Verified account email</label>
+                        <input id="add-cart-admin-email" type="email" autocomplete="off" required>
+                        <button type="submit">Grant admin access</button>
+                    </form>
+                    <ul id="cart-admin-list" aria-live="polite"></ul>
+                </section>
             </div>
             <button id="cart-admin-sign-out" type="button" hidden>Sign out</button>
         </section>
@@ -142,7 +152,7 @@
     <script src="electrical-inventory.js"></script>
     <script src="cart-user.js?v=cart-attribution-1"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="cart-admin.js?v=admin-visibility-1"></script>
+    <script src="cart-admin.js?v=admin-owner-portal-1"></script>
     <script src="electrical.js?v=admin-access-1"></script>
 </body>
 </html>

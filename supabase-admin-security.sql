@@ -6,10 +6,13 @@ revoke all on schema private from public, anon, authenticated;
 
 create table if not exists private.cart_admins (
     user_id uuid primary key references auth.users(id) on delete cascade,
+    is_owner boolean not null default false,
     created_at timestamptz not null default now()
 );
-create unique index if not exists cart_admins_one_admin_idx
-    on private.cart_admins ((true));
+alter table private.cart_admins add column if not exists is_owner boolean not null default false;
+drop index if exists private.cart_admins_one_admin_idx;
+create unique index if not exists cart_admins_single_owner_idx
+    on private.cart_admins ((is_owner)) where is_owner;
 
 create table if not exists private.cart_admin_profiles (
     user_id uuid primary key references private.cart_admins(user_id) on delete cascade,
@@ -40,8 +43,9 @@ alter table public.shared_cart_activity
         'activity_cleared'
     ));
 
+drop function if exists public.get_cart_admin_profile();
 create or replace function public.get_cart_admin_profile()
-returns table(display_name text)
+returns table(display_name text, is_owner boolean)
 language plpgsql
 security definer
 set search_path = pg_catalog, public, auth, private
@@ -55,13 +59,10 @@ begin
     end if;
 
     return query
-    select profile.display_name
-    from private.cart_admin_profiles as profile
-    where profile.user_id = auth.uid();
-
-    if not found then
-        return query select null::text;
-    end if;
+    select profile.display_name, admin.is_owner
+    from private.cart_admins as admin
+    left join private.cart_admin_profiles as profile on profile.user_id = admin.user_id
+    where admin.user_id = auth.uid();
 end;
 $$;
 
@@ -235,3 +236,76 @@ $$;
 
 revoke all on function public.cart_admin_is_configured() from public, anon, authenticated;
 grant execute on function public.cart_admin_is_configured() to anon, authenticated;
+
+-- The current owner may add other already-verified Auth users as ordinary admins.
+update private.cart_admins as admin
+set is_owner = true
+where admin.user_id = (
+    select existing.user_id
+    from private.cart_admins as existing
+    order by existing.created_at, existing.user_id
+    limit 1
+)
+and not exists (select 1 from private.cart_admins where is_owner);
+
+create or replace function public.get_cart_admins()
+returns table(email text, is_owner boolean)
+language plpgsql
+security definer
+set search_path = pg_catalog, auth, private
+as $$
+begin
+    if auth.uid() is null or not exists (
+        select 1 from private.cart_admins
+        where private.cart_admins.user_id = auth.uid() and private.cart_admins.is_owner
+    ) then
+        raise exception using errcode = '42501', message = 'Cart owner access required.';
+    end if;
+
+    return query
+    select users.email::text, admin.is_owner
+    from private.cart_admins as admin
+    join auth.users as users on users.id = admin.user_id
+    order by admin.is_owner desc, lower(users.email);
+end;
+$$;
+
+create or replace function public.add_cart_admin(p_email text)
+returns text
+language plpgsql
+security definer
+set search_path = pg_catalog, auth, private
+as $$
+declare
+    v_user_id uuid;
+    v_email text;
+begin
+    if auth.uid() is null or not exists (
+        select 1 from private.cart_admins
+        where private.cart_admins.user_id = auth.uid() and private.cart_admins.is_owner
+    ) then
+        raise exception using errcode = '42501', message = 'Cart owner access required.';
+    end if;
+
+    select users.id, users.email::text
+    into v_user_id, v_email
+    from auth.users as users
+    where lower(users.email) = lower(btrim(p_email))
+      and users.email_confirmed_at is not null;
+
+    if v_user_id is null then
+        raise exception 'No verified Supabase Auth account found for that email.';
+    end if;
+
+    insert into private.cart_admins (user_id, is_owner)
+    values (v_user_id, false)
+    on conflict (user_id) do nothing;
+
+    return v_email;
+end;
+$$;
+
+revoke all on function public.get_cart_admins() from public, anon, authenticated;
+revoke all on function public.add_cart_admin(text) from public, anon, authenticated;
+grant execute on function public.get_cart_admins() to authenticated;
+grant execute on function public.add_cart_admin(text) to authenticated;

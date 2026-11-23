@@ -4,7 +4,7 @@ The mechanical and electrical pages share one cart through Supabase.
 
 ## Connect the project
 
-1. For a new project, run `supabase-setup.sql` in the SQL editor. For the existing project, run `supabase-admin-security.sql` to add the admin protections without deleting the cart or its activity. If that security migration is already installed, run `supabase-admin-visibility.sql` to let the pages hide the admin panel from visitors.
+1. For a new project, run `supabase-setup.sql` in the SQL editor. For the existing project, run `supabase-admin-security.sql` to add admin protections without deleting cart data, then run `supabase-admin-visibility.sql` and `supabase-admin-management.sql`. If the security migration is already installed, run the visibility and management migrations only.
 2. In the project's API settings, copy the Project URL and publishable key.
 3. Put those values in `supabase-config.js`. The publishable key is designed for browser use. Never put a service-role key in this repository.
 
@@ -17,7 +17,7 @@ In Authentication → URL Configuration, allow these redirect URLs (or the equiv
 - `https://chemar0.github.io/DHL/mechanical.html`
 - `https://chemar0.github.io/DHL/electrical.html`
 
-After the email is verified, replace the placeholder below with that address and run this once in the SQL editor. It adds only the matching verified Auth user ID to the private admin allowlist and raises an error if no verified account matches.
+After the email is verified, replace the placeholder below with that address and run this once in the SQL editor. It adds only the matching verified Auth user ID as the owner and raises an error if no verified account matches.
 
 ```sql
 do $$
@@ -34,16 +34,18 @@ begin
         raise exception 'No verified Supabase Auth user found for that email.';
     end if;
 
-    insert into private.cart_admins (user_id)
-    values (v_admin_id)
+    insert into private.cart_admins (user_id, is_owner)
+    values (v_admin_id, true)
     on conflict (user_id) do nothing;
 end;
 $$;
 ```
 
-After sign-in, the database checks the authenticated user ID against `private.cart_admins`. The browser label and local storage cannot grant administrator access. Only the allowlisted account can change the administrator display name, clear recent changes, or clear the shared cart. Clearing recent changes leaves a server-authenticated entry showing who cleared them.
+After sign-in, the database checks the authenticated user ID against `private.cart_admins`. The browser label and local storage cannot grant administrator access. Allowlisted admins can change the administrator display name, clear recent changes, and clear the shared cart. Only the owner can grant admin access to other verified Supabase Auth accounts; the sign-in form never creates accounts. Clearing recent changes leaves a server-authenticated entry showing who cleared them.
 
-When an administrator is configured, the cart hides the full administrator panel from visitors. It shows a small “Administrator sign in” entry so the allowlisted account can sign in again on another browser. The public setup check returns only whether an administrator exists; it does not expose the account email or ID.
+When an administrator is configured, the cart hides the administrator panel and sign-in entry from ordinary visitors. A browser that has previously signed in as an admin remembers the sign-in entry locally. On a new browser, an admin can open `mechanical.html?cartAdmin=signin` (or `electrical.html?cartAdmin=signin`) to sign in. This URL only opens the sign-in form; database checks still prevent non-admin accounts from using admin actions. The public setup check returns only whether an administrator exists; it does not expose account emails or IDs.
+
+To add another administrator, first invite or create that person in Supabase Auth and verify their email. Then sign in as the owner, open the cart, and use **Manage administrators** to add their verified email. Admin accounts added this way cannot grant admin access to others.
 
 Other visitors still enter a display name for cart attribution. That name is self-entered and stored in that browser profile; it is not a verified identity or a MAC-address identity. Visitors cannot rename it through the site after the initial entry, and the database blocks use of the administrator's reserved display name in cart activity.
 

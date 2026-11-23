@@ -7,12 +7,31 @@
     const adminActions = document.getElementById('cart-admin-actions');
     const nameForm = document.getElementById('cart-admin-name-form');
     const nameInput = document.getElementById('cart-admin-name');
+    const adminManagement = document.getElementById('cart-admin-management');
+    const addAdminForm = document.getElementById('add-cart-admin-form');
+    const addAdminEmailInput = document.getElementById('add-cart-admin-email');
+    const adminList = document.getElementById('cart-admin-list');
     const clearHistoryButton = document.getElementById('clear-recent-changes');
     const clearCartButton = document.getElementById('clear-cart');
     const signOutButton = document.getElementById('cart-admin-sign-out');
     const config = window.SUPABASE_CONFIG || {};
     const publicApiKey = config.publishableKey || config.anonKey || '';
-    const state = { client: null, session: null, isAdmin: false, adminConfigured: null, loginOpen: false };
+    const adminDeviceKey = 'dhl-cart-admin-portal';
+    const adminPortalRequested = new URLSearchParams(window.location.search).get('cartAdmin') === 'signin';
+    let hasAdminDeviceMarker = false;
+    try {
+        hasAdminDeviceMarker = localStorage.getItem(adminDeviceKey) === 'true';
+    } catch (error) {
+        // A private browser can still use the direct admin sign-in URL.
+    }
+    const state = {
+        client: null,
+        session: null,
+        isAdmin: false,
+        isOwner: false,
+        adminConfigured: null,
+        loginOpen: adminPortalRequested
+    };
 
     function setStatus(message, isError = false) {
         if (!status) return;
@@ -24,6 +43,7 @@
         const hasSession = Boolean(state.session);
         if (loginForm) loginForm.hidden = hasSession;
         if (adminActions) adminActions.hidden = !state.isAdmin;
+        if (adminManagement) adminManagement.hidden = !state.isOwner;
         if (signOutButton) signOutButton.hidden = !hasSession;
         const config = window.SUPABASE_CONFIG || {};
         const sharedCartConfigured = Boolean(config.url && (config.publishableKey || config.anonKey));
@@ -33,7 +53,7 @@
             adminPanel.hidden = !state.isAdmin && state.adminConfigured !== false && !state.loginOpen;
         }
         if (adminEntryButton) {
-            adminEntryButton.hidden = state.adminConfigured !== true || state.isAdmin || state.loginOpen;
+            adminEntryButton.hidden = state.adminConfigured !== true || state.isAdmin || state.loginOpen || !hasAdminDeviceMarker;
         }
         window.CartUser?.setAdminAccess(state.isAdmin);
     }
@@ -48,6 +68,7 @@
     async function refreshAdminAccess(session = state.session) {
         state.session = session || null;
         state.isAdmin = false;
+        state.isOwner = false;
         updateControls();
 
         if (!state.session) {
@@ -72,7 +93,15 @@
         }
 
         state.isAdmin = true;
+        state.isOwner = profile.is_owner === true;
+        hasAdminDeviceMarker = true;
+        try {
+            localStorage.setItem(adminDeviceKey, 'true');
+        } catch (error) {
+            // The direct admin sign-in URL remains available if storage is blocked.
+        }
         updateControls();
+        if (state.isOwner) void refreshAdminList();
         if (profile.display_name) {
             nameInput.value = profile.display_name;
             window.CartUser?.setAdminName(profile.display_name);
@@ -99,6 +128,30 @@
         window.CartUser?.setAdminName(savedName);
         setStatus('Administrator name saved.');
         return savedName;
+    }
+
+    async function refreshAdminList() {
+        if (!state.isOwner || !adminList) return;
+        const { data, error } = await state.client.rpc('get_cart_admins');
+        if (error) {
+            setStatus('Could not load administrators. Check the admin management SQL setup.', true);
+            return;
+        }
+
+        adminList.replaceChildren();
+        (Array.isArray(data) ? data : []).forEach((administrator) => {
+            const row = document.createElement('li');
+            const name = document.createElement('span');
+            name.textContent = administrator.email || 'Verified account';
+            row.append(name);
+            if (administrator.is_owner) {
+                const owner = document.createElement('span');
+                owner.className = 'admin-owner-label';
+                owner.textContent = 'Owner';
+                row.append(owner);
+            }
+            adminList.append(row);
+        });
     }
 
     if (!config.url || !publicApiKey || !window.supabase?.createClient) {
@@ -152,7 +205,7 @@
             email,
             options: {
                 shouldCreateUser: false,
-                emailRedirectTo: window.location.href.split('#')[0]
+                emailRedirectTo: `${window.location.origin}${window.location.pathname}`
             }
         });
         if (error) {
@@ -178,6 +231,30 @@
         } catch (error) {
             setStatus(error.message || 'Could not save the administrator name.', true);
         }
+    });
+
+    addAdminForm?.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        if (!state.isOwner) return;
+        const email = addAdminEmailInput.value.trim();
+        if (!email) {
+            addAdminEmailInput.reportValidity();
+            return;
+        }
+
+        const submitButton = addAdminForm.querySelector('button[type="submit"]');
+        submitButton.disabled = true;
+        setStatus('Adding the verified account…');
+        const { data, error } = await state.client.rpc('add_cart_admin', { p_email: email });
+        submitButton.disabled = false;
+        if (error) {
+            setStatus(error.message || 'Could not grant administrator access.', true);
+            return;
+        }
+
+        addAdminEmailInput.value = '';
+        setStatus(`Administrator access granted to ${data || email}.`);
+        await refreshAdminList();
     });
 
     clearHistoryButton.addEventListener('click', async () => {
