@@ -476,8 +476,8 @@ revoke all on function public.get_cart_order_email_log(bigint) from public, anon
 grant execute on function public.get_cart_order_email_log(bigint) to authenticated;
 revoke all on function public.delete_cart_order_email_log(bigint) from public, anon, authenticated;
 grant execute on function public.delete_cart_order_email_log(bigint) to authenticated;
--- Let only the owner view all Supabase Auth accounts and delete selected
--- non-owner accounts. The owner account is never deletable through these RPCs.
+-- Let every cart admin view Supabase Auth accounts. Only the owner can
+-- delete selected non-owner accounts; the owner account is never deletable here.
 
 create or replace function public.get_cart_auth_users()
 returns table(
@@ -495,10 +495,10 @@ set search_path = pg_catalog, auth, private
 as $$
 begin
     if auth.uid() is null or not exists (
-        select 1 from private.cart_admins as owner
-        where owner.user_id = auth.uid() and owner.is_owner
+        select 1 from private.cart_admins as admin
+        where admin.user_id = auth.uid()
     ) then
-        raise exception using errcode = '42501', message = 'Cart owner access required.';
+        raise exception using errcode = '42501', message = 'Cart administrator access required.';
     end if;
 
     return query
@@ -559,8 +559,8 @@ revoke all on function public.get_cart_auth_users() from public, anon, authentic
 grant execute on function public.get_cart_auth_users() to authenticated;
 revoke all on function public.delete_cart_auth_user(uuid) from public, anon, authenticated;
 grant execute on function public.delete_cart_auth_user(uuid) to authenticated;
--- Let only the owner view all Supabase Auth accounts and delete selected
--- non-owner accounts. The owner account is never deletable through these RPCs.
+-- Let every cart admin view Supabase Auth accounts. Only the owner can
+-- delete selected non-owner accounts; the owner account is never deletable here.
 
 create or replace function public.get_cart_auth_users()
 returns table(
@@ -578,10 +578,10 @@ set search_path = pg_catalog, auth, private
 as $$
 begin
     if auth.uid() is null or not exists (
-        select 1 from private.cart_admins as owner
-        where owner.user_id = auth.uid() and owner.is_owner
+        select 1 from private.cart_admins as admin
+        where admin.user_id = auth.uid()
     ) then
-        raise exception using errcode = '42501', message = 'Cart owner access required.';
+        raise exception using errcode = '42501', message = 'Cart administrator access required.';
     end if;
 
     return query

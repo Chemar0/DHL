@@ -1,13 +1,15 @@
 (() => {
     const status = document.getElementById('cart-admin-status');
-    const adminPanel = document.getElementById('cart-admin');
-    const adminEntryButton = document.getElementById('cart-admin-entry');
+    const adminPanel = document.getElementById('admin-tools-panel');
+    const adminToolsToggle = document.getElementById('admin-tools-toggle');
+    const adminToolsClose = document.getElementById('admin-tools-close');
     const loginForm = document.getElementById('cart-admin-login-form');
     const emailInput = document.getElementById('cart-admin-email');
     const adminActions = document.getElementById('cart-admin-actions');
     const nameForm = document.getElementById('cart-admin-name-form');
     const nameInput = document.getElementById('cart-admin-name');
     const adminManagement = document.getElementById('cart-admin-management');
+    const ownerActions = document.getElementById('cart-admin-owner-actions');
     const addAdminForm = document.getElementById('add-cart-admin-form');
     const addAdminEmailInput = document.getElementById('add-cart-admin-email');
     const adminList = document.getElementById('cart-admin-list');
@@ -17,6 +19,7 @@
     const orderLogList = document.getElementById('cart-order-email-list');
     const loadOlderOrderLogsButton = document.getElementById('load-older-order-logs');
     const clearCartButton = document.getElementById('clear-cart');
+    const clearLocalCartButton = document.getElementById('clear-local-cart');
     const signOutButton = document.getElementById('cart-admin-sign-out');
     const config = window.SUPABASE_CONFIG || {};
     const publicApiKey = config.publishableKey || config.anonKey || '';
@@ -35,6 +38,7 @@
         isOwner: false,
         adminConfigured: null,
         loginOpen: adminPortalRequested,
+        adminMenuOpen: adminPortalRequested,
         orderEmailEntries: [],
         orderEmailCursor: null,
         hasMoreOrderEmails: false,
@@ -51,19 +55,22 @@
         const hasSession = Boolean(state.session);
         if (loginForm) loginForm.hidden = hasSession;
         if (adminActions) adminActions.hidden = !state.isAdmin;
-        if (adminManagement) adminManagement.hidden = !state.isOwner;
+        if (adminManagement) adminManagement.hidden = !state.isAdmin;
+        if (ownerActions) ownerActions.hidden = !state.isOwner;
         if (activityPanel) activityPanel.hidden = !state.isAdmin;
         if (orderLogSection) orderLogSection.hidden = !state.isAdmin;
         if (signOutButton) signOutButton.hidden = !hasSession;
         const config = window.SUPABASE_CONFIG || {};
         const sharedCartConfigured = Boolean(config.url && (config.publishableKey || config.anonKey));
-        if (clearCartButton) clearCartButton.hidden = sharedCartConfigured && !state.isAdmin;
+        if (clearCartButton) clearCartButton.hidden = !sharedCartConfigured || !state.isAdmin;
+        if (clearLocalCartButton) clearLocalCartButton.hidden = sharedCartConfigured;
         if (state.isAdmin) state.loginOpen = false;
         if (adminPanel) {
-            adminPanel.hidden = !state.isAdmin && state.adminConfigured !== false && !state.loginOpen;
+            adminPanel.hidden = !state.adminMenuOpen && !state.loginOpen && state.adminConfigured !== false;
         }
-        if (adminEntryButton) {
-            adminEntryButton.hidden = state.adminConfigured !== true || state.isAdmin || state.loginOpen || !hasAdminDeviceMarker;
+        if (adminToolsToggle) {
+            adminToolsToggle.hidden = state.adminConfigured !== true || (!state.isAdmin && !hasAdminDeviceMarker);
+            adminToolsToggle.setAttribute('aria-expanded', String(Boolean(adminPanel && !adminPanel.hidden)));
         }
         window.CartUser?.setAdminAccess(state.isAdmin);
     }
@@ -97,6 +104,7 @@
         const profile = Array.isArray(data) ? data[0] : null;
         if (!profile) {
             state.loginOpen = false;
+            state.adminMenuOpen = false;
             setStatus('This verified account is not on the cart administrator allowlist.');
             updateControls();
             return;
@@ -111,7 +119,7 @@
             // The direct admin sign-in URL remains available if storage is blocked.
         }
         updateControls();
-        if (state.isOwner) void refreshAccountList();
+        void refreshAccountList();
         void refreshOrderEmailLog(true);
         void window.refreshSharedCart?.();
         if (profile.display_name) {
@@ -143,7 +151,7 @@
     }
 
     async function refreshAccountList() {
-        if (!state.isOwner || !adminList) return;
+        if (!state.isAdmin || !adminList) return;
         const { data, error } = await state.client.rpc('get_cart_auth_users');
         if (error) {
             setStatus('Could not load accounts. Check the admin account management SQL setup.', true);
@@ -181,7 +189,7 @@
             details.append(name, role, dates);
             row.append(details);
 
-            if (!account.is_owner) {
+            if (!account.is_owner && state.isOwner) {
                 const deleteButton = document.createElement('button');
                 deleteButton.type = 'button';
                 deleteButton.className = 'delete-auth-account';
@@ -326,8 +334,9 @@
     if (!config.url || !publicApiKey || !window.supabase?.createClient) {
         setStatus('Admin sign-in is unavailable because the Supabase connection did not load.', true);
         if (adminPanel) adminPanel.hidden = false;
-        if (adminEntryButton) adminEntryButton.hidden = true;
+        if (adminToolsToggle) adminToolsToggle.hidden = true;
         if (clearCartButton) clearCartButton.hidden = false;
+        if (clearLocalCartButton) clearLocalCartButton.hidden = false;
         if (loginForm) loginForm.addEventListener('submit', (event) => event.preventDefault());
         window.CartAdmin = {
             isAdmin: () => false,
@@ -355,10 +364,24 @@
         setStatus
     };
 
-    adminEntryButton?.addEventListener('click', () => {
-        state.loginOpen = true;
+    adminToolsToggle?.addEventListener('click', () => {
+        state.adminMenuOpen = !state.adminMenuOpen;
         updateControls();
-        emailInput?.focus();
+        if (state.adminMenuOpen && !state.isAdmin) emailInput?.focus();
+    });
+
+    adminToolsClose?.addEventListener('click', () => {
+        state.adminMenuOpen = false;
+        state.loginOpen = false;
+        updateControls();
+        adminToolsToggle?.focus();
+    });
+
+    document.addEventListener('keydown', (event) => {
+        if (event.key !== 'Escape' || !adminPanel || adminPanel.hidden) return;
+        state.adminMenuOpen = false;
+        state.loginOpen = false;
+        updateControls();
     });
 
     void refreshAdminSetupStatus();

@@ -160,9 +160,13 @@ h1 { margin: 0 0 18px; font-size: 1.6rem; }
 #cart-activity-list li { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; padding: 7px 0; border-bottom: 1px solid #e1e4e9; font-size: 0.86rem; }
 #cart-activity-list time { flex: 0 0 auto; color: #626a76; font-size: 0.78rem; }
 #cart-activity-list .activity-empty { color: #626a76; }
-.cart-admin-entry { align-self: flex-start; margin: 0 0 12px; padding: 4px 0; border: 0; background: transparent; color: #626a76; font: inherit; font-size: 0.82rem; text-decoration: underline; cursor: pointer; }
-.cart-admin-entry[hidden], .cart-admin[hidden] { display: none; }
-.cart-admin { margin: 12px 0 18px; padding: 12px; border: 1px solid #d5dae1; border-radius: 8px; text-align: left; }
+.admin-tools-toggle { position: fixed; z-index: 7; top: 66px; right: 16px; width: auto; margin: 0; padding: 8px 12px; border: 1px solid #01473d; border-radius: 999px; background: #fff; color: #01473d; box-shadow: 0 2px 10px #0002; cursor: pointer; }
+.admin-tools-toggle[hidden], .admin-tools-panel[hidden], .cart-admin[hidden] { display: none; }
+.admin-tools-panel { position: fixed; z-index: 10; top: 112px; right: 16px; width: min(440px, calc(100vw - 32px)); max-height: calc(100dvh - 128px); padding: 12px; overflow-y: auto; border: 1px solid #b9bec7; border-radius: 12px; background: #fff; box-shadow: 0 8px 28px #0003; }
+.admin-tools-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.admin-tools-header h2 { margin: 0; color: #01473d; font-size: 1.1rem; }
+.admin-tools-header button { width: 38px; min-height: 38px; margin: 0; padding: 0; border: 0; background: transparent; color: #202124; font-size: 1.6rem; cursor: pointer; }
+.cart-admin { margin: 8px 0 0; padding: 12px; border: 1px solid #d5dae1; border-radius: 8px; text-align: left; }
 .cart-admin h3 { margin: 0 0 8px; color: #01473d; font-size: 1rem; }
 .cart-admin p { margin: 0 0 10px; color: #626a76; font-size: 0.84rem; }
 .cart-admin form { display: grid; gap: 7px; margin-top: 10px; }
@@ -186,6 +190,7 @@ h1 { margin: 0 0 18px; font-size: 1.6rem; }
 .cart-admin-management .delete-auth-account:hover { background: #fff1f1; }
 .cart-admin-management .admin-owner-label { flex: 0 0 auto; color: #626a76; font-size: 0.78rem; }
 .cart-admin-management[hidden] { display: none; }
+#cart-admin-owner-actions[hidden] { display: none; }
 .cart-order-log { margin-top: 14px; padding-top: 12px; border-top: 1px solid #d5dae1; }
 .cart-order-log[hidden] { display: none; }
 .cart-order-log h4 { margin: 0 0 6px; color: #01473d; font-size: 0.94rem; }

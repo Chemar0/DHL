@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Electrical Parts List</title>
-    <link rel="stylesheet" href="ani.css?v=owner-account-management-1">
+    <link rel="stylesheet" href="ani.css?v=admin-tools-all-users-1">
 </head>
 <body>
     <button class="admin-entry" type="button" aria-label="Open admin page" title="Admin">Admin</button>
@@ -20,17 +20,22 @@
         <p class="cart-user-label">Using this browser as <strong id="cart-user-name"></strong>
             <button id="change-cart-user" type="button" hidden>Change</button>
         </p>
-        <button class="clear-cart" id="clear-cart" type="button" hidden>Clear cart</button>
         <p id="cart-sync-status" role="status" aria-live="polite"></p>
         <p class="cart-empty" id="cart-empty">Your cart is empty.</p>
         <ul class="cart-items" id="cart-items" aria-live="polite"></ul>
-        <section class="cart-activity" id="cart-activity-panel" aria-labelledby="cart-activity-heading" hidden>
-            <h3 id="cart-activity-heading">Recent changes</h3>
-            <ul id="cart-activity-list" aria-live="polite"></ul>
-        </section>
-        <button class="cart-admin-entry" id="cart-admin-entry" type="button" aria-controls="cart-admin" hidden>Administrator sign in</button>
-        <section class="cart-admin" id="cart-admin" aria-labelledby="cart-admin-heading" hidden>
-            <h3 id="cart-admin-heading">Administrator</h3>
+        <div class="cart-actions">
+            <button class="clear-cart" id="clear-local-cart" type="button" hidden>Clear cart</button>
+            <button class="email-cart" id="email-cart" type="button" disabled>Email parts list</button>
+        </div>
+    </aside>
+    <button class="admin-tools-toggle" id="admin-tools-toggle" type="button" aria-controls="admin-tools-panel" aria-expanded="false" hidden>Admin features</button>
+    <aside class="admin-tools-panel" id="admin-tools-panel" aria-label="Admin features" hidden>
+        <div class="admin-tools-header">
+            <h2>Admin features</h2>
+            <button id="admin-tools-close" type="button" aria-label="Close admin features">×</button>
+        </div>
+        <section class="cart-admin" id="cart-admin" aria-labelledby="cart-admin-heading">
+            <h3 id="cart-admin-heading">Administrator access</h3>
             <p id="cart-admin-status" role="status" aria-live="polite">Admin controls require a verified account.</p>
             <form id="cart-admin-login-form">
                 <label for="cart-admin-email">Admin email</label>
@@ -38,11 +43,16 @@
                 <button type="submit">Send sign-in link</button>
             </form>
             <div id="cart-admin-actions" hidden>
+                <button class="clear-cart" id="clear-cart" type="button" hidden>Clear shared cart</button>
                 <form id="cart-admin-name-form">
                     <label for="cart-admin-name">Admin display name</label>
                     <input id="cart-admin-name" type="text" maxlength="80" autocomplete="name" required>
                     <button type="submit">Save name</button>
                 </form>
+                <section class="cart-activity" id="cart-activity-panel" aria-labelledby="cart-activity-heading" hidden>
+                    <h3 id="cart-activity-heading">Recent changes</h3>
+                    <ul id="cart-activity-list" aria-live="polite"></ul>
+                </section>
                 <button id="clear-recent-changes" type="button">Clear recent changes</button>
                 <section class="cart-order-log" id="cart-order-log" hidden aria-labelledby="cart-order-log-heading">
                     <h4 id="cart-order-log-heading">Order email history</h4>
@@ -52,20 +62,20 @@
                 </section>
                 <section class="cart-admin-management" id="cart-admin-management" hidden aria-labelledby="cart-admin-management-heading">
                     <h4 id="cart-admin-management-heading">Manage accounts</h4>
-                    <p>All Supabase Auth accounts appear here. You can grant admin access to verified accounts or permanently delete an account. Deleting an account does not block public cart access.</p>
-                    <form id="add-cart-admin-form">
-                        <label for="add-cart-admin-email">Verified account email</label>
-                        <input id="add-cart-admin-email" type="email" autocomplete="off" required>
-                        <button type="submit">Grant admin access</button>
-                    </form>
+                    <p>All admins can view Supabase Auth accounts. Anonymous cart visitors do not appear here.</p>
+                    <div id="cart-admin-owner-actions" hidden>
+                        <p>Only the owner can grant admin access or permanently delete accounts. Deleting an account does not block public cart access.</p>
+                        <form id="add-cart-admin-form">
+                            <label for="add-cart-admin-email">Verified account email</label>
+                            <input id="add-cart-admin-email" type="email" autocomplete="off" required>
+                            <button type="submit">Grant admin access</button>
+                        </form>
+                    </div>
                     <ul id="cart-admin-list" aria-live="polite"></ul>
                 </section>
             </div>
             <button id="cart-admin-sign-out" type="button" hidden>Sign out</button>
         </section>
-        <div class="cart-actions">
-            <button class="email-cart" id="email-cart" type="button" disabled>Email parts list</button>
-        </div>
     </aside>
     <dialog class="user-name-dialog" id="cart-user-dialog" aria-labelledby="cart-user-title">
         <form id="cart-user-form">
@@ -158,7 +168,7 @@
     <script src="electrical-inventory.js"></script>
     <script src="cart-user.js?v=cart-attribution-1"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="cart-admin.js?v=owner-account-management-1"></script>
-    <script src="electrical.js?v=owner-account-management-1"></script>
+    <script src="cart-admin.js?v=admin-tools-all-users-1"></script>
+    <script src="electrical.js?v=admin-tools-all-users-1"></script>
 </body>
 </html>

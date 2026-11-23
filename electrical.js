@@ -140,6 +140,7 @@ const cartActivityList = document.getElementById('cart-activity-list');
 const cartEmpty = document.getElementById('cart-empty');
 const emailCart = document.getElementById('email-cart');
 const clearCartButton = document.getElementById('clear-cart');
+const clearLocalCartButton = document.getElementById('clear-local-cart');
 const emailConfirm = document.getElementById('email-confirm');
 const emailYes = document.getElementById('email-yes');
 const emailNo = document.getElementById('email-no');
@@ -450,13 +451,7 @@ async function clearSharedCart() {
 }
 
 clearCartButton.addEventListener('click', async () => {
-    if (!sharedCartEnabled) {
-        if (cart.size > 0) recordCartActivity('cart_cleared', '', '', 0, 0, window.CartUser.getName());
-        cart.clear();
-        cartAttribution.clear();
-        renderCart();
-        return;
-    }
+    if (!sharedCartEnabled || !window.CartAdmin?.isAdmin()) return;
     updateCartSyncStatus('Clearing shared cart…');
     try {
         await clearSharedCart();
@@ -464,6 +459,14 @@ clearCartButton.addEventListener('click', async () => {
         console.error('Could not clear the shared cart:', error);
         updateCartSyncStatus('Could not clear the shared cart. Check the Supabase setup and connection.', true);
     }
+});
+
+clearLocalCartButton.addEventListener('click', () => {
+    if (sharedCartEnabled) return;
+    if (cart.size > 0) recordCartActivity('cart_cleared', '', '', 0, 0, window.CartUser.getName());
+    cart.clear();
+    cartAttribution.clear();
+    renderCart();
 });
 
 // Opens a new draft in the visitor's configured email app; it does not send automatically.
