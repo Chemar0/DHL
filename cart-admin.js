@@ -129,7 +129,16 @@
             }
         });
         if (error) {
-            setStatus('Could not send the link. Check the Auth account and Supabase email settings.', true);
+            if (error.status === 429 || error.code === 'over_email_send_rate_limit' ||
+                error.code === 'over_request_rate_limit') {
+                setStatus('Supabase is rate limiting sign-in requests. Wait at least 60 seconds before trying again, and check your inbox and junk folder for the previous link.', true);
+            } else if (error.code === 'email_address_not_authorized') {
+                setStatus('Supabase’s built-in email service only sends to project team members. Configure custom SMTP in Authentication → Emails → SMTP Settings.', true);
+            } else if (error.code === 'otp_disabled') {
+                setStatus('Email sign-in links are disabled in this Supabase project. Enable email OTP under Authentication → Sign In / Providers.', true);
+            } else {
+                setStatus(`Could not send the link${error.message ? `: ${error.message}` : '. Check the Auth account and Supabase email settings.'}`, true);
+            }
             return;
         }
         setStatus('If that email is registered in Supabase Auth, a sign-in link has been sent.');
