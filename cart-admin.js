@@ -12,6 +12,10 @@
     const addAdminEmailInput = document.getElementById('add-cart-admin-email');
     const adminList = document.getElementById('cart-admin-list');
     const clearHistoryButton = document.getElementById('clear-recent-changes');
+    const activityPanel = document.getElementById('cart-activity-panel');
+    const orderLogSection = document.getElementById('cart-order-log');
+    const orderLogList = document.getElementById('cart-order-email-list');
+    const loadOlderOrderLogsButton = document.getElementById('load-older-order-logs');
     const clearCartButton = document.getElementById('clear-cart');
     const signOutButton = document.getElementById('cart-admin-sign-out');
     const config = window.SUPABASE_CONFIG || {};
@@ -30,7 +34,11 @@
         isAdmin: false,
         isOwner: false,
         adminConfigured: null,
-        loginOpen: adminPortalRequested
+        loginOpen: adminPortalRequested,
+        orderEmailEntries: [],
+        orderEmailCursor: null,
+        hasMoreOrderEmails: false,
+        loadingOrderEmails: false
     };
 
     function setStatus(message, isError = false) {
@@ -44,6 +52,8 @@
         if (loginForm) loginForm.hidden = hasSession;
         if (adminActions) adminActions.hidden = !state.isAdmin;
         if (adminManagement) adminManagement.hidden = !state.isOwner;
+        if (activityPanel) activityPanel.hidden = !state.isAdmin;
+        if (orderLogSection) orderLogSection.hidden = !state.isAdmin;
         if (signOutButton) signOutButton.hidden = !hasSession;
         const config = window.SUPABASE_CONFIG || {};
         const sharedCartConfigured = Boolean(config.url && (config.publishableKey || config.anonKey));
@@ -102,6 +112,8 @@
         }
         updateControls();
         if (state.isOwner) void refreshAdminList();
+        void refreshOrderEmailLog(true);
+        void window.refreshSharedCart?.();
         if (profile.display_name) {
             nameInput.value = profile.display_name;
             window.CartUser?.setAdminName(profile.display_name);
@@ -154,6 +166,104 @@
         });
     }
 
+    function renderOrderEmailLog() {
+        if (!orderLogList || !state.isAdmin) return;
+        orderLogList.replaceChildren();
+
+        if (state.orderEmailEntries.length === 0) {
+            const empty = document.createElement('li');
+            empty.className = 'order-log-empty';
+            empty.textContent = 'No order email requests logged yet.';
+            orderLogList.append(empty);
+        }
+
+        state.orderEmailEntries.forEach((entry) => {
+            const row = document.createElement('li');
+            row.className = 'order-log-entry';
+            const details = document.createElement('details');
+            const summary = document.createElement('summary');
+            const title = document.createElement('span');
+            const time = document.createElement('time');
+            title.className = 'order-log-title';
+            title.textContent = `${entry.cart_type === 'electrical' ? 'Electrical' : 'Mechanical'} · ${entry.actor_name || 'Unknown user'}`;
+            const timestamp = new Date(entry.created_at);
+            if (!Number.isNaN(timestamp.valueOf())) {
+                time.dateTime = timestamp.toISOString();
+                time.textContent = timestamp.toLocaleString([], { dateStyle: 'short', timeStyle: 'short' });
+            }
+            summary.append(title, time);
+
+            const items = document.createElement('ul');
+            (Array.isArray(entry.order_items) ? entry.order_items : []).forEach((item) => {
+                const listItem = document.createElement('li');
+                const prefix = item.category ? `${item.category} · ` : '';
+                const metadata = [
+                    item.part_number ? `Part number: ${item.part_number}` : '',
+                    item.manufacturer ? `Manufacturer: ${item.manufacturer}` : ''
+                ].filter(Boolean).join('; ');
+                listItem.textContent = `${prefix}${item.item_name || 'Part'} — quantity: ${item.quantity || 0}${metadata ? ` (${metadata})` : ''}`;
+                items.append(listItem);
+            });
+
+            const deleteButton = document.createElement('button');
+            deleteButton.type = 'button';
+            deleteButton.className = 'delete-order-log';
+            deleteButton.textContent = 'Delete this entry';
+            deleteButton.addEventListener('click', async () => {
+                if (!state.isAdmin || !window.confirm('Delete this order email entry? This cannot be undone.')) return;
+                deleteButton.disabled = true;
+                const { error } = await state.client.rpc('delete_cart_order_email_log', { p_log_id: entry.id });
+                if (error) {
+                    deleteButton.disabled = false;
+                    setStatus(error.message || 'Could not delete the order entry.', true);
+                    return;
+                }
+                state.orderEmailEntries = state.orderEmailEntries.filter((candidate) => String(candidate.id) !== String(entry.id));
+                renderOrderEmailLog();
+                setStatus('Order email entry deleted.');
+            });
+
+            details.append(summary, items, deleteButton);
+            row.append(details);
+            orderLogList.append(row);
+        });
+
+        if (loadOlderOrderLogsButton) {
+            loadOlderOrderLogsButton.hidden = !state.hasMoreOrderEmails;
+            loadOlderOrderLogsButton.disabled = state.loadingOrderEmails;
+        }
+    }
+
+    async function refreshOrderEmailLog(reset = false) {
+        if (!state.isAdmin || !state.client || !orderLogList || state.loadingOrderEmails) return;
+        if (reset) {
+            state.orderEmailEntries = [];
+            state.orderEmailCursor = null;
+            state.hasMoreOrderEmails = false;
+            renderOrderEmailLog();
+        }
+
+        state.loadingOrderEmails = true;
+        renderOrderEmailLog();
+        const { data, error } = await state.client.rpc('get_cart_order_email_log', {
+            p_before_id: state.orderEmailCursor
+        });
+        state.loadingOrderEmails = false;
+        if (error) {
+            setStatus('Could not load the order email history. Check the admin order log SQL setup.', true);
+            renderOrderEmailLog();
+            return;
+        }
+
+        const entries = Array.isArray(data) ? data : [];
+        state.orderEmailEntries = [...state.orderEmailEntries, ...entries];
+        state.orderEmailCursor = entries.length ? entries[entries.length - 1].id : state.orderEmailCursor;
+        state.hasMoreOrderEmails = entries.length === 50;
+        renderOrderEmailLog();
+    }
+
+    loadOlderOrderLogsButton?.addEventListener('click', () => { void refreshOrderEmailLog(false); });
+
     if (!config.url || !publicApiKey || !window.supabase?.createClient) {
         setStatus('Admin sign-in is unavailable because the Supabase connection did not load.', true);
         if (adminPanel) adminPanel.hidden = false;
@@ -163,6 +273,7 @@
         window.CartAdmin = {
             isAdmin: () => false,
             getAccessToken: () => '',
+            refreshOrderEmailLog: () => Promise.resolve(),
             setName,
             setStatus
         };
@@ -180,6 +291,7 @@
     window.CartAdmin = {
         isAdmin: () => state.isAdmin,
         getAccessToken: () => state.session?.access_token || '',
+        refreshOrderEmailLog,
         setName,
         setStatus
     };

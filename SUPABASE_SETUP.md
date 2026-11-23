@@ -4,7 +4,7 @@ The mechanical and electrical pages share one cart through Supabase.
 
 ## Connect the project
 
-1. For a new project, run `supabase-setup.sql` in the SQL editor. For the existing project, run `supabase-admin-security.sql` to add admin protections without deleting cart data, then run `supabase-admin-visibility.sql` and `supabase-admin-management.sql`. If the security migration is already installed, run the visibility and management migrations only.
+1. For a new project, run `supabase-setup.sql` in the SQL editor. For the existing project, run `supabase-admin-security.sql` to add admin protections without deleting cart data, then run `supabase-admin-visibility.sql`, `supabase-admin-management.sql`, and `supabase-admin-order-log.sql`. If the earlier security migrations are already installed, run the order log migration (and any other migration that has not yet been applied).
 2. In the project's API settings, copy the Project URL and publishable key.
 3. Put those values in `supabase-config.js`. The publishable key is designed for browser use. Never put a service-role key in this repository.
 
@@ -41,7 +41,7 @@ end;
 $$;
 ```
 
-After sign-in, the database checks the authenticated user ID against `private.cart_admins`. The browser label and local storage cannot grant administrator access. Allowlisted admins can change the administrator display name, clear recent changes, and clear the shared cart. Only the owner can grant admin access to other verified Supabase Auth accounts; the sign-in form never creates accounts. Clearing recent changes leaves a server-authenticated entry showing who cleared them.
+After sign-in, the database checks the authenticated user ID against `private.cart_admins`. The browser label and local storage cannot grant administrator access. Allowlisted admins can view recent cart changes, change the administrator display name, clear recent changes, review order email history, delete mistaken order entries, and clear the shared cart. Only the owner can grant admin access to other verified Supabase Auth accounts; the sign-in form never creates accounts. Clearing recent changes leaves a server-authenticated entry showing who cleared them.
 
 When an administrator is configured, the cart hides the administrator panel and sign-in entry from ordinary visitors. A browser that has previously signed in as an admin remembers the sign-in entry locally. On a new browser, an admin can open `mechanical.html?cartAdmin=signin` (or `electrical.html?cartAdmin=signin`) to sign in. This URL only opens the sign-in form; database checks still prevent non-admin accounts from using admin actions. The public setup check returns only whether an administrator exists; it does not expose account emails or IDs.
 
@@ -49,4 +49,4 @@ To add another administrator, first invite or create that person in Supabase Aut
 
 Other visitors still enter a display name for cart attribution. That name is self-entered and stored in that browser profile; it is not a verified identity or a MAC-address identity. Visitors cannot rename it through the site after the initial entry, and the database blocks use of the administrator's reserved display name in cart activity.
 
-The cart contents and recent activity are readable by anyone who can access the site. Avoid putting sensitive information there. If Supabase settings are missing, the page saves a separate local cart in that browser instead of using the shared cart.
+Recent cart changes and order email history are available only to signed-in administrators; cart contents remain shared with site visitors. The order history records each confirmed request to open an email draft and its item details. Because the site opens the visitor's email app, the log cannot confirm whether the draft was actually sent. Admins can delete mistaken entries. Avoid putting sensitive information in the shared cart. If Supabase settings are missing, the page saves a separate local cart in that browser instead of using the shared cart, and order emails are unavailable because they cannot be logged centrally.

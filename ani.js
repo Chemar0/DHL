@@ -129,6 +129,7 @@ const cart = new Map();
 const cartAttribution = new Map();
 let recentCartActivity = [];
 let pendingEmailUrl = '';
+let pendingOrderItems = [];
 let pendingCartItem = null;
 const cartStorageKey = 'fastener-list-cart';
 const cartAttributionStorageKey = cartStorageKey + '-attribution';
@@ -203,7 +204,6 @@ async function refreshSharedCart() {
     if (!sharedCartEnabled) return;
     try {
         const rows = await callSharedCartRpc('get_shared_cart');
-        const activity = await callSharedCartRpc('get_shared_cart_activity');
         cart.clear();
         cartAttribution.clear();
         if (Array.isArray(rows)) {
@@ -218,9 +218,22 @@ async function refreshSharedCart() {
                 });
             });
         }
-        recentCartActivity = Array.isArray(activity) ? activity.slice(0, 12) : [];
+        let activityLoadError = false;
+        if (window.CartAdmin?.isAdmin()) {
+            try {
+                const activity = await callSharedCartRpc('get_shared_cart_activity');
+                recentCartActivity = Array.isArray(activity) ? activity.slice(0, 12) : [];
+            } catch (error) {
+                recentCartActivity = [];
+                activityLoadError = true;
+            }
+        } else {
+            recentCartActivity = [];
+        }
         renderCart();
-        updateCartSyncStatus('Shared cart is up to date.');
+        updateCartSyncStatus(activityLoadError
+            ? 'Shared cart is up to date, but the administrator change history could not be loaded.'
+            : 'Shared cart is up to date.', activityLoadError);
     } catch (error) {
         updateCartSyncStatus('Could not sync the shared cart. Run the updated Supabase setup SQL and check the connection.', true);
     }
@@ -428,6 +441,7 @@ emailCart.addEventListener('click', () => {
     if (cart.size === 0) return;
 
     const lines = [];
+    const orderItems = [];
     cart.forEach((items, category) => {
         lines.push(`${category}:`);
         items.forEach((quantity, name) => {
@@ -435,24 +449,44 @@ emailCart.addEventListener('click', () => {
             const orderQuantity = minimumQuantity * quantity;
             const note = notes[category]?.[name];
             lines.push(`  ${name}${note ? ` (${note})` : ''} — quantity: ${orderQuantity}`);
+            orderItems.push({ category, item_name: name, quantity: orderQuantity, note: note || '' });
         });
         lines.push('');
     });
     const subject = 'Fastener parts request';
-    const body = `Hello,\\n\\nPlease, could I have the following parts:\\n\\n${lines.join('\\n')}\\nThank you.`;
+    const body = `Hello,\n\nPlease, could I have the following parts:\n\n${lines.join('\n')}\nThank you.`;
     pendingEmailUrl = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    pendingOrderItems = orderItems;
     emailConfirm.showModal();
 });
 
-emailYes.addEventListener('click', () => {
+emailYes.addEventListener('click', async () => {
     emailConfirm.close();
     if (!pendingEmailUrl) return;
-    window.location.href = pendingEmailUrl;
+    const emailUrl = pendingEmailUrl;
     pendingEmailUrl = '';
+    emailYes.disabled = true;
+    try {
+        if (!sharedCartEnabled) throw new Error('The shared order history is unavailable. Connect the shared cart before emailing an order.');
+        await callSharedCartRpc('log_cart_order_email', {
+            p_cart_type: 'mechanical',
+            p_actor_name: window.CartUser.getName(),
+            p_order_items: pendingOrderItems,
+            p_email_subject: 'Fastener parts request'
+        });
+        pendingOrderItems = [];
+        void window.CartAdmin?.refreshOrderEmailLog?.(true);
+        window.location.href = emailUrl;
+    } catch (error) {
+        updateCartSyncStatus(error.message || 'Could not record this order email, so its draft was not opened.', true);
+    } finally {
+        emailYes.disabled = false;
+    }
 });
 
 emailNo.addEventListener('click', () => {
     pendingEmailUrl = '';
+    pendingOrderItems = [];
     emailConfirm.close();
 });
 

@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Fastener List</title>
-    <link rel="stylesheet" href="ani.css?v=admin-owner-portal-1">
+    <link rel="stylesheet" href="ani.css?v=admin-order-log-1">
 </head>
 <body>
     <button class="admin-entry" type="button" aria-label="Open admin page" title="Admin">Admin</button>
@@ -24,7 +24,7 @@
         <p id="cart-sync-status" role="status" aria-live="polite"></p>
         <p class="cart-empty" id="cart-empty">Your cart is empty.</p>
         <ul class="cart-items" id="cart-items" aria-live="polite"></ul>
-        <section class="cart-activity" aria-labelledby="cart-activity-heading">
+        <section class="cart-activity" id="cart-activity-panel" aria-labelledby="cart-activity-heading" hidden>
             <h3 id="cart-activity-heading">Recent changes</h3>
             <ul id="cart-activity-list" aria-live="polite"></ul>
         </section>
@@ -44,6 +44,12 @@
                     <button type="submit">Save name</button>
                 </form>
                 <button id="clear-recent-changes" type="button">Clear recent changes</button>
+                <section class="cart-order-log" id="cart-order-log" hidden aria-labelledby="cart-order-log-heading">
+                    <h4 id="cart-order-log-heading">Order email history</h4>
+                    <p>Shows when someone confirms opening an order email draft. It cannot confirm the email was sent.</p>
+                    <ul id="cart-order-email-list" aria-live="polite"></ul>
+                    <button id="load-older-order-logs" type="button" hidden>Load older orders</button>
+                </section>
                 <section class="cart-admin-management" id="cart-admin-management" hidden aria-labelledby="cart-admin-management-heading">
                     <h4 id="cart-admin-management-heading">Manage administrators</h4>
                     <p>Add an existing verified Supabase account. Only the account owner can grant admin access.</p>
@@ -74,7 +80,7 @@
     </dialog>
     <dialog class="email-confirm" id="email-confirm" aria-labelledby="email-confirm-title">
         <h2 id="email-confirm-title">Create email?</h2>
-        <p>Open an email draft with the parts in your cart?</p>
+        <p>Record this order in the admin history and open an email draft? The history cannot confirm that the draft was sent.</p>
         <div class="email-confirm-actions">
             <button id="email-no" type="button">No</button>
             <button id="email-yes" type="button">Yes</button>
@@ -243,7 +249,7 @@
     <script src="inventory.js"></script>
     <script src="cart-user.js?v=cart-attribution-1"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="cart-admin.js?v=admin-owner-portal-1"></script>
-    <script src="ani.js?v=admin-access-1"></script>
+    <script src="cart-admin.js?v=admin-order-log-1"></script>
+    <script src="ani.js?v=admin-order-log-1"></script>
 </body>
 </html>
