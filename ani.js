@@ -225,7 +225,7 @@ function loadLocalCart() {
 }
 
 async function refreshSharedCart() {
-    if (!sharedCartEnabled) return;
+    if (!sharedCartEnabled) return false;
     try {
         const rows = await callSharedCartRpc('get_shared_cart');
         cart.clear();
@@ -248,7 +248,6 @@ async function refreshSharedCart() {
                 const activity = await callSharedCartRpc('get_shared_cart_activity');
                 recentCartActivity = Array.isArray(activity) ? activity.slice(0, 12) : [];
             } catch (error) {
-                recentCartActivity = [];
                 activityLoadError = true;
             }
         } else {
@@ -258,8 +257,10 @@ async function refreshSharedCart() {
         updateCartSyncStatus(activityLoadError
             ? 'Shared cart is up to date, but the administrator change history could not be loaded.'
             : 'Shared cart is up to date.', activityLoadError);
+        return !activityLoadError;
     } catch (error) {
         updateCartSyncStatus('Could not sync the shared cart. Run the updated Supabase setup SQL and check the connection.', true);
+        return false;
     }
 }
 

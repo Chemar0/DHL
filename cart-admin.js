@@ -556,7 +556,11 @@
         try {
             const { data, error } = await state.client.rpc('clear_shared_cart_activity');
             if (error) throw error;
-            await window.refreshSharedCart?.();
+            const historyRefreshed = await window.refreshSharedCart?.();
+            if (historyRefreshed === false) {
+                setStatus(`Cleared ${Number.isInteger(data) ? data : 'the existing'} recent changes, but could not reload the log. Reload the page to confirm.`, true);
+                return;
+            }
             setStatus(`Cleared ${Number.isInteger(data) ? data : 'the existing'} recent changes. The clear action remains in the log.`);
         } catch (error) {
             setStatus(`Could not clear recent changes: ${error.message || 'check the connection and try again.'}`, true);
