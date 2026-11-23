@@ -111,7 +111,7 @@
             // The direct admin sign-in URL remains available if storage is blocked.
         }
         updateControls();
-        if (state.isOwner) void refreshAdminList();
+        if (state.isOwner) void refreshAccountList();
         void refreshOrderEmailLog(true);
         void window.refreshSharedCart?.();
         if (profile.display_name) {
@@ -142,28 +142,87 @@
         return savedName;
     }
 
-    async function refreshAdminList() {
+    async function refreshAccountList() {
         if (!state.isOwner || !adminList) return;
-        const { data, error } = await state.client.rpc('get_cart_admins');
+        const { data, error } = await state.client.rpc('get_cart_auth_users');
         if (error) {
-            setStatus('Could not load administrators. Check the admin management SQL setup.', true);
+            setStatus('Could not load accounts. Check the admin account management SQL setup.', true);
             return;
         }
 
         adminList.replaceChildren();
-        (Array.isArray(data) ? data : []).forEach((administrator) => {
+        const accounts = Array.isArray(data) ? data : [];
+        if (accounts.length === 0) {
+            const empty = document.createElement('li');
+            empty.className = 'admin-account-empty';
+            empty.textContent = 'No Auth accounts found.';
+            adminList.append(empty);
+        }
+
+        accounts.forEach((account) => {
             const row = document.createElement('li');
+            const details = document.createElement('div');
             const name = document.createElement('span');
-            name.textContent = administrator.email || 'Verified account';
-            row.append(name);
-            if (administrator.is_owner) {
-                const owner = document.createElement('span');
-                owner.className = 'admin-owner-label';
-                owner.textContent = 'Owner';
-                row.append(owner);
+            const role = document.createElement('span');
+            const dates = document.createElement('span');
+            details.className = 'admin-account-details';
+            name.className = 'admin-account-name';
+            role.className = 'admin-owner-label';
+            name.textContent = account.email || 'Account without an email address';
+            role.textContent = account.is_owner ? 'Owner' : account.is_admin ? 'Admin' : account.email_confirmed_at ? 'Verified account' : 'Email not verified';
+            const createdAt = account.created_at ? new Date(account.created_at) : null;
+            const lastSignIn = account.last_sign_in_at ? new Date(account.last_sign_in_at) : null;
+            const createdLabel = createdAt && !Number.isNaN(createdAt.valueOf())
+                ? `Created ${createdAt.toLocaleDateString()}` : 'Creation date unavailable';
+            const signInLabel = lastSignIn && !Number.isNaN(lastSignIn.valueOf())
+                ? `Last sign-in ${lastSignIn.toLocaleDateString()}` : 'Never signed in';
+            dates.className = 'admin-account-dates';
+            dates.textContent = `${createdLabel} · ${signInLabel}`;
+            details.append(name, role, dates);
+            row.append(details);
+
+            if (!account.is_owner) {
+                const deleteButton = document.createElement('button');
+                deleteButton.type = 'button';
+                deleteButton.className = 'delete-auth-account';
+                deleteButton.textContent = 'Delete account';
+                deleteButton.addEventListener('click', async () => {
+                    const accountLabel = account.email || 'this account';
+                    const warning = `Permanently delete ${accountLabel} from Supabase Auth? This cannot be undone. Their existing session may remain valid until its token expires, and this does not block public cart access.`;
+                    if (!state.isOwner || !window.confirm(warning)) return;
+                    deleteButton.disabled = true;
+                    setStatus(`Deleting ${accountLabel}…`);
+                    const { data: deletedEmail, error: deleteError } = await state.client.rpc('delete_cart_auth_user', {
+                        p_user_id: account.user_id
+                    });
+                    if (deleteError) {
+                        deleteButton.disabled = false;
+                        setStatus(deleteError.message || 'Could not delete the account.', true);
+                        return;
+                    }
+                    setStatus(`Deleted Supabase account ${deletedEmail || accountLabel}.`);
+                    await refreshAccountList();
+                });
+                row.append(deleteButton);
             }
             adminList.append(row);
         });
+    }
+
+    async function revalidateAdminAccess() {
+        if (!state.isAdmin || !state.session) return;
+        const checkedSession = state.session;
+        const { data, error } = await state.client.rpc('get_cart_admin_profile');
+        if (error || state.session !== checkedSession) return;
+        const profile = Array.isArray(data) ? data[0] : null;
+        if (profile) return;
+
+        state.isAdmin = false;
+        state.isOwner = false;
+        state.loginOpen = false;
+        updateControls();
+        setStatus('Administrator access was removed for this account.');
+        void window.refreshSharedCart?.();
     }
 
     function renderOrderEmailLog() {
@@ -366,7 +425,7 @@
 
         addAdminEmailInput.value = '';
         setStatus(`Administrator access granted to ${data || email}.`);
-        await refreshAdminList();
+        await refreshAccountList();
     });
 
     clearHistoryButton.addEventListener('click', async () => {
@@ -402,4 +461,6 @@
         }
         void refreshAdminAccess(data.session);
     });
+
+    window.setInterval(() => { void revalidateAdminAccess(); }, 30000);
 })();

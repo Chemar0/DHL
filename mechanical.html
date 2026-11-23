@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Fastener List</title>
-    <link rel="stylesheet" href="ani.css?v=admin-order-log-1">
+    <link rel="stylesheet" href="ani.css?v=owner-account-management-1">
 </head>
 <body>
     <button class="admin-entry" type="button" aria-label="Open admin page" title="Admin">Admin</button>
@@ -51,8 +51,8 @@
                     <button id="load-older-order-logs" type="button" hidden>Load older orders</button>
                 </section>
                 <section class="cart-admin-management" id="cart-admin-management" hidden aria-labelledby="cart-admin-management-heading">
-                    <h4 id="cart-admin-management-heading">Manage administrators</h4>
-                    <p>Add an existing verified Supabase account. Only the account owner can grant admin access.</p>
+                    <h4 id="cart-admin-management-heading">Manage accounts</h4>
+                    <p>All Supabase Auth accounts appear here. You can grant admin access to verified accounts or permanently delete an account. Deleting an account does not block public cart access.</p>
                     <form id="add-cart-admin-form">
                         <label for="add-cart-admin-email">Verified account email</label>
                         <input id="add-cart-admin-email" type="email" autocomplete="off" required>
@@ -249,7 +249,7 @@
     <script src="inventory.js"></script>
     <script src="cart-user.js?v=cart-attribution-1"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="cart-admin.js?v=admin-order-log-1"></script>
-    <script src="ani.js?v=admin-order-log-1"></script>
+    <script src="cart-admin.js?v=owner-account-management-1"></script>
+    <script src="ani.js?v=owner-account-management-1"></script>
 </body>
 </html>

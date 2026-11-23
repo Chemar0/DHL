@@ -4,7 +4,7 @@ The mechanical and electrical pages share one cart through Supabase.
 
 ## Connect the project
 
-1. For a new project, run `supabase-setup.sql` in the SQL editor. For the existing project, run `supabase-admin-security.sql` to add admin protections without deleting cart data, then run `supabase-admin-visibility.sql`, `supabase-admin-management.sql`, and `supabase-admin-order-log.sql`. If the earlier security migrations are already installed, run the order log migration (and any other migration that has not yet been applied).
+1. For a new project, run `supabase-setup.sql` in the SQL editor. For the existing project, run `supabase-admin-security.sql` to add admin protections without deleting cart data, then run `supabase-admin-visibility.sql`, `supabase-admin-management.sql`, `supabase-admin-order-log.sql`, and `supabase-admin-account-management.sql`. If the earlier security migrations are already installed, run the account management migration (and any other migration that has not yet been applied).
 2. In the project's API settings, copy the Project URL and publishable key.
 3. Put those values in `supabase-config.js`. The publishable key is designed for browser use. Never put a service-role key in this repository.
 
@@ -41,11 +41,11 @@ end;
 $$;
 ```
 
-After sign-in, the database checks the authenticated user ID against `private.cart_admins`. The browser label and local storage cannot grant administrator access. Allowlisted admins can view recent cart changes, change the administrator display name, clear recent changes, review order email history, delete mistaken order entries, and clear the shared cart. Only the owner can grant admin access to other verified Supabase Auth accounts; the sign-in form never creates accounts. Clearing recent changes leaves a server-authenticated entry showing who cleared them.
+After sign-in, the database checks the authenticated user ID against `private.cart_admins`. The browser label and local storage cannot grant administrator access. Allowlisted admins can view recent cart changes, change the administrator display name, clear recent changes, review order email history, delete mistaken order entries, and clear the shared cart. Only the owner can grant admin access to verified Supabase Auth accounts, see the full Auth account list, and permanently delete other accounts. The owner account cannot be deleted from the site; the sign-in form never creates accounts. Clearing recent changes leaves a server-authenticated entry showing who cleared them.
 
 When an administrator is configured, the cart hides the administrator panel and sign-in entry from ordinary visitors. A browser that has previously signed in as an admin remembers the sign-in entry locally. On a new browser, an admin can open `mechanical.html?cartAdmin=signin` (or `electrical.html?cartAdmin=signin`) to sign in. This URL only opens the sign-in form; database checks still prevent non-admin accounts from using admin actions. The public setup check returns only whether an administrator exists; it does not expose account emails or IDs.
 
-To add another administrator, first invite or create that person in Supabase Auth and verify their email. Then sign in as the owner, open the cart, and use **Manage administrators** to add their verified email. Admin accounts added this way cannot grant admin access to others.
+To add another administrator, first invite or create that person in Supabase Auth and verify their email. Then sign in as the owner, open the cart, and use **Manage accounts** to add their verified email. Admin accounts added this way cannot grant admin access to others. The owner can remove an account from the same list. Deleting an Auth account does not ban someone from using the public cart anonymously, and any already issued access token remains valid until it expires.
 
 Other visitors still enter a display name for cart attribution. That name is self-entered and stored in that browser profile; it is not a verified identity or a MAC-address identity. Visitors cannot rename it through the site after the initial entry, and the database blocks use of the administrator's reserved display name in cart activity.
 
