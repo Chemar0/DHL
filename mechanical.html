@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Fastener List</title>
-    <link rel="stylesheet" href="ani.css?v=website-access-approval-1">
+    <link rel="stylesheet" href="ani.css?v=admin-activity-dropdown-1">
     <link rel="stylesheet" href="cart-groups.css?v=cart-groups-1">
     <link rel="stylesheet" href="site-access.css?v=access-gate-2">
     <style>
@@ -13,7 +13,7 @@
         .mechanical-layout .box { width: 100%; }
     </style>
 </head>
-<body data-site-access-scripts="inventory.js?v=mechanical-admin-fix-1|cart-user.js?v=verified-cart-users-1|cart-admin.js?v=admin-session-race-1|cart-groups.js?v=cart-groups-1|ani.js?v=cart-refresh-race-1">
+<body data-site-access-scripts="inventory.js?v=mechanical-admin-fix-1|cart-user.js?v=verified-cart-users-1|cart-admin.js?v=admin-activity-dropdown-1|cart-groups.js?v=cart-groups-1|ani.js?v=cart-refresh-race-1">
     <button class="cart-toggle" id="cart-toggle" type="button" aria-controls="cart-panel" aria-expanded="false">
         Cart <span class="cart-count" id="cart-count">0</span>
     </button>
@@ -62,11 +62,10 @@
                     <input id="cart-admin-name" type="text" maxlength="80" autocomplete="name" required>
                     <button type="submit">Save name</button>
                 </form>
-                <section class="cart-activity" id="cart-activity-panel" aria-labelledby="cart-activity-heading" hidden>
-                    <h3 id="cart-activity-heading">Recent changes</h3>
+                <details class="cart-activity" id="cart-activity-panel" hidden>
+                    <summary id="cart-activity-heading">Recent changes</summary>
                     <ul id="cart-activity-list" aria-live="polite"></ul>
-                </section>
-                <button id="clear-recent-changes" type="button">Clear recent changes</button>
+                </details>
                 <section class="cart-order-log" id="cart-order-log" hidden aria-labelledby="cart-order-log-heading">
                     <h4 id="cart-order-log-heading">Order email history</h4>
                     <p>Shows when someone confirms opening an order email draft. It cannot confirm the email was sent.</p>

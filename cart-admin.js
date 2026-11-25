@@ -26,7 +26,6 @@
     const cartUserList = document.getElementById('cart-user-list');
     const cartUserSection = document.getElementById('cart-user-management');
     const refreshCartUsersButton = document.getElementById('refresh-cart-users');
-    const clearHistoryButton = document.getElementById('clear-recent-changes');
     const activityPanel = document.getElementById('cart-activity-panel');
     const orderLogSection = document.getElementById('cart-order-log');
     const orderLogList = document.getElementById('cart-order-email-list');
@@ -745,27 +744,6 @@
         addAdminEmailInput.value = '';
         setStatus(`Administrator access granted to ${data || email}.`);
         await refreshAccountList();
-    });
-
-    clearHistoryButton.addEventListener('click', async () => {
-        if (!state.isAdmin || !window.confirm('Clear the existing recent changes? One entry recording this clear action will remain in the history.')) return;
-
-        clearHistoryButton.disabled = true;
-        setStatus('Clearing recent changes…');
-        try {
-            const { data, error } = await state.client.rpc('clear_shared_cart_activity');
-            if (error) throw error;
-            const historyRefreshed = await window.refreshSharedCart?.();
-            if (historyRefreshed === false) {
-                setStatus(`Cleared ${Number.isInteger(data) ? data : 'the existing'} recent changes, but could not reload the log. Reload the page to confirm.`, true);
-                return;
-            }
-            setStatus(`Cleared ${Number.isInteger(data) ? data : 'the existing'} recent changes. The clear action remains in the log.`);
-        } catch (error) {
-            setStatus(`Could not clear recent changes: ${error.message || 'check the connection and try again.'}`, true);
-        } finally {
-            clearHistoryButton.disabled = false;
-        }
     });
 
     signOutButton.addEventListener('click', async () => {

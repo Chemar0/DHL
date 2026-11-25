@@ -173,7 +173,8 @@ h1 { margin: 0 0 18px; font-size: 1.6rem; }
 .user-name-actions button:disabled { opacity: 0.65; cursor: progress; }
 .cart-activity { margin: 4px 0 18px; }
 .cart-activity[hidden] { display: none; }
-.cart-activity h3 { margin: 10px 0 4px; color: #01473d; font-size: 1rem; }
+.cart-activity summary { margin: 10px 0 4px; color: #01473d; font-size: 1rem; font-weight: 600; cursor: pointer; }
+.cart-activity summary:focus-visible { outline: 2px solid #01473d; outline-offset: 3px; }
 #cart-activity-list { margin: 0; padding: 0; list-style: none; }
 #cart-activity-list li { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; padding: 7px 0; border-bottom: 1px solid #e1e4e9; font-size: 0.86rem; }
 #cart-activity-list time { flex: 0 0 auto; color: #626a76; font-size: 0.78rem; }
@@ -194,8 +195,6 @@ h1 { margin: 0 0 18px; font-size: 1.6rem; }
 .cart-admin input { min-height: 40px; padding: 8px 10px; border: 1px solid #aeb5c0; border-radius: 6px; font: inherit; }
 .cart-admin button { min-height: 40px; margin: 8px 0 0; padding: 9px 12px; border: 1px solid #01473d; border-radius: 6px; background: #fff; color: #01473d; font: inherit; cursor: pointer; }
 .cart-admin button:hover { background: #edf5f3; }
-.cart-admin #clear-recent-changes { border-color: #a83232; color: #a83232; }
-.cart-admin #clear-recent-changes:hover { background: #fff1f1; }
 #cart-admin-actions[hidden], #cart-admin-sign-out[hidden], #cart-admin-login-form[hidden] { display: none; }
 .cart-admin-management { margin-top: 14px; padding-top: 12px; border-top: 1px solid #d5dae1; }
 .cart-admin-management h4 { margin: 0 0 6px; color: #01473d; font-size: 0.94rem; }
