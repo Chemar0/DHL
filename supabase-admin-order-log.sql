@@ -1,5 +1,5 @@
--- Make cart change history administrator-only and add an administrator-managed
--- history of order email drafts requested from the site.
+-- Keep cart change history administrator-only and log order email drafts only
+-- for verified accounts approved to use the site.
 
 create schema if not exists private;
 revoke all on schema private from public, anon, authenticated;
@@ -67,6 +67,7 @@ declare
     v_actor_name text := btrim(p_actor_name);
     v_log_id bigint;
 begin
+    perform private.require_verified_cart_user();
     if v_cart_type not in ('mechanical', 'electrical') then
         raise exception 'Invalid parts list.';
     end if;
@@ -159,8 +160,8 @@ $$;
 
 revoke all on function public.get_shared_cart_activity() from public, anon, authenticated;
 grant execute on function public.get_shared_cart_activity() to authenticated;
-revoke all on function public.log_cart_order_email(text, text, jsonb, text) from public;
-grant execute on function public.log_cart_order_email(text, text, jsonb, text) to anon, authenticated;
+revoke all on function public.log_cart_order_email(text, text, jsonb, text) from public, anon, authenticated;
+grant execute on function public.log_cart_order_email(text, text, jsonb, text) to authenticated;
 revoke all on function public.get_cart_order_email_log(bigint) from public, anon, authenticated;
 grant execute on function public.get_cart_order_email_log(bigint) to authenticated;
 revoke all on function public.delete_cart_order_email_log(bigint) from public, anon, authenticated;

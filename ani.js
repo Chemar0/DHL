@@ -167,6 +167,9 @@ async function callSharedCartRpc(functionName, payload = {}) {
 
 let lastCartUserRegistration = 0;
 let registeringCartUser = false;
+let cartRefreshSequence = 0;
+let cartMutationSequence = 0;
+let clearCartInProgress = false;
 async function registerCartUser(force = false, nameReentered = false) {
     if (!sharedCartEnabled || registeringCartUser || !window.CartUser?.getName()) return;
     if (!force && Date.now() - lastCartUserRegistration < 5 * 60 * 1000) return;
@@ -230,44 +233,55 @@ function loadLocalCart() {
 
 async function refreshSharedCart() {
     if (!sharedCartEnabled) return false;
+    if (clearCartInProgress) return true;
     if (!window.CartAdmin?.isVisitorVerified?.()) {
         updateCartSyncStatus('Verify your email to access the shared cart.');
         return false;
     }
+    const refreshSequence = ++cartRefreshSequence;
+    const mutationSequence = cartMutationSequence;
     try {
         const rows = await callSharedCartRpc('get_shared_cart');
-        cart.clear();
-        cartAttribution.clear();
+        const nextCart = new Map();
+        const nextAttribution = new Map();
         if (Array.isArray(rows)) {
             rows.forEach(({ category, item_name: name, quantity, added_by: addedBy, last_updated_by: updatedBy }) => {
                 if (typeof category !== 'string' || typeof name !== 'string' ||
                     !Number.isInteger(quantity) || quantity < 1) return;
-                if (!cart.has(category)) cart.set(category, new Map());
-                cart.get(category).set(name, quantity);
-                setCartAttribution(category, name, {
+                if (!nextCart.has(category)) nextCart.set(category, new Map());
+                nextCart.get(category).set(name, quantity);
+                if (!nextAttribution.has(category)) nextAttribution.set(category, new Map());
+                nextAttribution.get(category).set(name, {
                     added_by: typeof addedBy === 'string' && addedBy.trim() ? addedBy : 'Unknown device',
                     last_updated_by: typeof updatedBy === 'string' && updatedBy.trim() ? updatedBy : 'Unknown device'
                 });
             });
         }
         let activityLoadError = false;
+        let nextActivity = [];
         if (window.CartAdmin?.isAdmin()) {
             try {
                 const activity = await callSharedCartRpc('get_shared_cart_activity');
-                recentCartActivity = Array.isArray(activity) ? activity.slice(0, 12) : [];
+                nextActivity = Array.isArray(activity) ? activity.slice(0, 12) : [];
             } catch (error) {
                 activityLoadError = true;
             }
-        } else {
-            recentCartActivity = [];
         }
+        if (refreshSequence !== cartRefreshSequence || mutationSequence !== cartMutationSequence || clearCartInProgress) return true;
+        cart.clear();
+        cartAttribution.clear();
+        nextCart.forEach((items, category) => cart.set(category, items));
+        nextAttribution.forEach((items, category) => cartAttribution.set(category, items));
+        recentCartActivity = window.CartAdmin?.isAdmin() ? nextActivity : [];
         renderCart();
         updateCartSyncStatus(activityLoadError
             ? 'Shared cart is up to date, but the administrator change history could not be loaded.'
             : 'Shared cart is up to date.', activityLoadError);
         return !activityLoadError;
     } catch (error) {
-        updateCartSyncStatus('Could not sync the shared cart. Run the updated Supabase setup SQL and check the connection.', true);
+        if (refreshSequence === cartRefreshSequence && mutationSequence === cartMutationSequence && !clearCartInProgress) {
+            updateCartSyncStatus('Could not sync the shared cart. Run the updated Supabase setup SQL and check the connection.', true);
+        }
         return false;
     }
 }
@@ -464,10 +478,21 @@ async function clearSharedCart() {
     if (!window.CartAdmin?.getAccessToken?.()) {
         throw new Error('Your sign-in session is still loading. Wait a moment and try again.');
     }
-    await callSharedCartRpc('clear_shared_cart', { p_actor_name: window.CartUser.getName() });
+    clearCartInProgress = true;
+    cartMutationSequence += 1;
+    cartRefreshSequence += 1;
+    try {
+        await callSharedCartRpc('clear_shared_cart', { p_actor_name: window.CartUser.getName() });
+    } catch (error) {
+        clearCartInProgress = false;
+        cartMutationSequence += 1;
+        throw error;
+    }
     cart.clear();
     cartAttribution.clear();
     renderCart();
+    clearCartInProgress = false;
+    cartMutationSequence += 1;
     return await refreshSharedCart();
 }
 

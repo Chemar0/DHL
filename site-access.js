@@ -33,7 +33,11 @@
     let currentSession = null;
     let pollTimer = null;
     let checking = false;
-    let appStarted = false;
+    let accessCheckPending = false;
+    let authEventSeen = false;
+    let sessionVersion = 0;
+    let appLoadPromise = null;
+    const loadedAppScripts = new Set();
     let pageUnlocked = false;
 
     function setStatus(message, isError = false) {
@@ -72,19 +76,31 @@
         }
     }
 
-    async function loadAppScripts() {
-        if (!appStarted) {
-            appStarted = true;
-            for (const name of scriptNames) {
-                await new Promise((resolve, reject) => {
-                    const script = document.createElement('script');
-                    script.src = name;
-                    script.onload = resolve;
-                    script.onerror = () => reject(new Error(`Could not load ${name}.`));
-                    document.body.append(script);
-                });
-            }
+    async function loadAppScripts(authorizedUserId) {
+        if (!appLoadPromise) {
+            appLoadPromise = (async () => {
+                for (const name of scriptNames) {
+                    if (loadedAppScripts.has(name)) continue;
+                    await new Promise((resolve, reject) => {
+                        const script = document.createElement('script');
+                        script.src = name;
+                        script.onload = resolve;
+                        script.onerror = () => {
+                            script.remove();
+                            reject(new Error(`Could not load ${name}.`));
+                        };
+                        document.body.append(script);
+                    });
+                    loadedAppScripts.add(name);
+                }
+            })().catch((error) => {
+                appLoadPromise = null;
+                throw error;
+            });
         }
+        await appLoadPromise;
+        if (currentSession?.user?.id !== authorizedUserId) return false;
+        if (pageUnlocked) return true;
         pageUnlocked = true;
         document.body.classList.add('site-content-enter');
         window.setTimeout(() => {
@@ -93,6 +109,7 @@
             window.setTimeout(() => { root.hidden = true; }, 650);
         }, 850);
         if (!pollTimer) pollTimer = window.setInterval(() => { void checkAccess(); }, 30000);
+        return true;
     }
 
     function hasApprovedSessionHint(session) {
@@ -118,6 +135,7 @@
         currentSession = session;
         if (needsAdmin) {
             const { data, error } = await client.rpc('get_cart_admin_profile');
+            if (currentSession?.user?.id !== session.user.id) return false;
             if (error || !Array.isArray(data) || !data.length) {
                 clearApprovedSessionHint();
                 return false;
@@ -128,10 +146,10 @@
         root.hidden = true;
         document.documentElement.classList.remove('site-access-locked');
         try {
-            await loadAppScripts();
+            const loaded = await loadAppScripts(session.user.id);
+            if (!loaded) return false;
             return true;
         } catch (error) {
-            appStarted = false;
             pageUnlocked = false;
             root.hidden = false;
             document.documentElement.classList.add('site-access-locked');
@@ -140,10 +158,11 @@
         }
     }
 
-    async function grantAccess() {
+    async function grantAccess(approvedUserId = currentSession?.user?.id) {
         if (pageUnlocked) return;
         if (needsAdmin) {
             const { data: adminProfile, error: adminError } = await client.rpc('get_cart_admin_profile');
+            if (currentSession?.user?.id !== approvedUserId) return;
             if (adminError || !Array.isArray(adminProfile) || !adminProfile.length) {
                 title.textContent = 'Administrator access required';
                 copy.textContent = 'This page is only available to website administrators.';
@@ -161,24 +180,37 @@
         root.dataset.mode = 'approved';
         root.classList.add('is-approved');
         try {
-            await loadAppScripts();
+            await loadAppScripts(approvedUserId);
         } catch (error) {
-            appStarted = false;
             setMode('error', error.message);
         }
     }
 
     async function checkAccess() {
-        if (!client || checking || !currentSession) return;
+        if (!client || !currentSession) return;
+        if (checking) {
+            accessCheckPending = true;
+            return;
+        }
         checking = true;
+        accessCheckPending = false;
+        const userId = currentSession.user?.id;
+        const checkedSessionVersion = sessionVersion;
+        function isCurrentSession() {
+            return checkedSessionVersion === sessionVersion && currentSession?.user?.id === userId;
+        }
         try {
             const { data, error } = await client.rpc('get_website_access_status');
+            if (!isCurrentSession()) {
+                accessCheckPending = true;
+                return;
+            }
             if (error) throw error;
             if (data === 'approved') {
                 rememberApprovedSession(currentSession);
                 if (pollTimer) window.clearInterval(pollTimer);
                 pollTimer = null;
-                await grantAccess();
+                await grantAccess(userId);
                 if (pageUnlocked && !pollTimer) pollTimer = window.setInterval(() => { void checkAccess(); }, 30000);
             } else if (data === 'pending') {
                 clearApprovedSessionHint();
@@ -211,8 +243,12 @@
                 }
                 setMode('verifying', 'Submitting your request for administrator review…');
                 const { data: requestStatus, error: requestError } = await client.rpc('submit_website_access_request');
+                if (!isCurrentSession()) {
+                    accessCheckPending = true;
+                    return;
+                }
                 if (requestError) throw requestError;
-                if (requestStatus === 'approved') await grantAccess();
+                if (requestStatus === 'approved') await grantAccess(userId);
                 else {
                     setMode(requestStatus === 'denied' ? 'denied' : 'pending');
                     if (requestStatus === 'pending' && !pollTimer) pollTimer = window.setInterval(() => { void checkAccess(); }, 8000);
@@ -226,10 +262,24 @@
                     document.documentElement.classList.add('site-access-locked');
                 }
                 setMode('signed-out', 'Verify your email using the link we sent, then return here.');
+            } else if (data === 'signed_out') {
+                clearApprovedSessionHint();
+                currentSession = null;
+                if (pollTimer) window.clearInterval(pollTimer);
+                pollTimer = null;
+                pageUnlocked = false;
+                root.hidden = false;
+                root.classList.remove('is-leaving', 'is-approved');
+                document.documentElement.classList.add('site-access-locked');
+                setMode('signed-out', 'Your sign-in session ended. Enter your email to request a new verification link.');
             } else {
                 setMode('error', 'The access service returned an unexpected status. Reload to try again.');
             }
         } catch (error) {
+            if (!isCurrentSession()) {
+                accessCheckPending = true;
+                return;
+            }
             if (pageUnlocked) {
                 pageUnlocked = false;
                 root.hidden = false;
@@ -239,6 +289,10 @@
             setMode('error', error.message || 'Could not check your request. Reload to try again.');
         } finally {
             checking = false;
+            if (accessCheckPending && currentSession) {
+                accessCheckPending = false;
+                window.setTimeout(() => { void checkAccess(); }, 0);
+            }
         }
     }
 
@@ -309,8 +363,12 @@
     });
 
     client.auth.onAuthStateChange((_event, session) => {
+        authEventSeen = true;
+        sessionVersion += 1;
+        const previousUserId = currentSession?.user?.id;
         currentSession = session || null;
         if (!currentSession) {
+            accessCheckPending = false;
             clearApprovedSessionHint();
             if (pollTimer) window.clearInterval(pollTimer);
             pollTimer = null;
@@ -322,9 +380,12 @@
         } else {
             if (hasApprovedSessionHint(currentSession)) {
                 void resumeApprovedSession(currentSession).then(() => { void checkAccess(); });
+            } else if (pageUnlocked && previousUserId === currentSession.user?.id) {
+                void checkAccess();
             } else {
+                pageUnlocked = false;
                 root.hidden = false;
-                root.classList.remove('is-leaving');
+                root.classList.remove('is-leaving', 'is-approved');
                 document.documentElement.classList.add('site-access-locked');
                 setMode('verifying');
                 window.setTimeout(() => { void checkAccess(); }, 0);
@@ -333,6 +394,7 @@
     });
 
     client.auth.getSession().then(({ data, error }) => {
+        if (authEventSeen) return;
         if (error) {
             setMode('error', error.message);
             return;

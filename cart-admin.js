@@ -156,7 +156,9 @@
         }
 
         setStatus('Checking administrator access…');
+        const checkedSession = state.session;
         const { data, error } = await state.client.rpc('get_cart_admin_profile');
+        if (state.session !== checkedSession) return;
         if (error) {
             setStatus('Admin setup is incomplete. Run the updated Supabase SQL and allowlist the account.', true);
             updateControls();

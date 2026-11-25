@@ -101,6 +101,15 @@ function copyObject(value) {
     return JSON.parse(JSON.stringify(value));
 }
 
+function cleanRecord(value, isAllowed) {
+    const cleaned = {};
+    if (!value || typeof value !== 'object' || Array.isArray(value)) return cleaned;
+    Object.entries(value).forEach(([key, entry]) => {
+        if (typeof key === 'string' && isAllowed(entry)) cleaned[key] = entry;
+    });
+    return cleaned;
+}
+
 const inventoryStore = {
     storageKey: 'electrical-list-inventory',
     groupsKey: 'electrical-list-item-groups',
@@ -144,13 +153,13 @@ const inventoryStore = {
             const savedLabels = readSavedValue(this.labelsKey);
             if (savedGroups && typeof savedGroups === 'object') {
                 Object.entries(savedGroups).forEach(([category, values]) => {
-                    if (!data.itemGroups[category] || !values || typeof values !== 'object') return;
+                    if (!data.itemGroups[category] || !values || typeof values !== 'object' || Array.isArray(values)) return;
                     Object.assign(data.itemGroups[category], values);
                 });
             }
             if (savedLabels && typeof savedLabels === 'object') {
                 Object.entries(savedLabels).forEach(([category, values]) => {
-                    if (!data.itemLabels[category] || !values || typeof values !== 'object') return;
+                    if (!data.itemLabels[category] || !values || typeof values !== 'object' || Array.isArray(values)) return;
                     Object.assign(data.itemLabels[category], values);
                 });
             }
@@ -186,22 +195,29 @@ const inventoryStore = {
             });
             migrateMetadata(data, legacyTargets, 'minimumsKey', 'minimums');
             migrateMetadata(data, legacyTargets, 'manufacturersKey', 'manufacturers');
-            this.saveData(data);
-            try {
-                localStorage.setItem(versionKey, 'done');
-            } catch (error) {
-                // The migration can be retried on a later page load.
+            if (this.saveData(data)) {
+                try {
+                    localStorage.setItem(versionKey, 'done');
+                } catch (error) {
+                    // The migration can be retried on a later page load.
+                }
             }
         }
 
         if (migrated) {
-            data.minimums = readSavedValue(this.minimumsKey) || {};
-            data.manufacturers = readSavedValue(this.manufacturersKey) || {};
+            const savedMinimums = readSavedValue(this.minimumsKey);
+            const savedManufacturers = readSavedValue(this.manufacturersKey);
+            Object.keys(data.inventory).forEach((category) => {
+                data.minimums[category] = cleanRecord(savedMinimums?.[category], (value) => Number.isInteger(value) && value >= 1);
+                data.manufacturers[category] = cleanRecord(savedManufacturers?.[category], (value) => typeof value === 'string' && value.trim());
+            });
             const savedPartNumbers = readSavedValue(this.partNumbersKey);
-            if (savedPartNumbers && typeof savedPartNumbers === 'object') {
+            if (savedPartNumbers && typeof savedPartNumbers === 'object' && !Array.isArray(savedPartNumbers)) {
                 Object.entries(savedPartNumbers).forEach(([category, values]) => {
                     if (!data.partNumbers[category]) data.partNumbers[category] = {};
-                    if (values && typeof values === 'object') Object.assign(data.partNumbers[category], values);
+                    if (values && typeof values === 'object' && !Array.isArray(values)) {
+                        Object.assign(data.partNumbers[category], cleanRecord(values, (value) => typeof value === 'string' && value.trim()));
+                    }
                 });
             }
         }
@@ -210,6 +226,9 @@ const inventoryStore = {
             if (!data.itemGroups[category]) data.itemGroups[category] = {};
             if (!data.itemLabels[category]) data.itemLabels[category] = {};
             if (!data.groups[category]) data.groups[category] = [];
+            data.minimums[category] = cleanRecord(data.minimums[category], (value) => Number.isInteger(value) && value >= 1);
+            data.manufacturers[category] = cleanRecord(data.manufacturers[category], (value) => typeof value === 'string' && value.trim());
+            data.partNumbers[category] = cleanRecord(data.partNumbers[category], (value) => typeof value === 'string' && value.trim());
             data.inventory[category].forEach((item) => {
                 if (!data.itemGroups[category][item]) data.itemGroups[category][item] = 'Other items';
                 if (!data.itemLabels[category][item]) data.itemLabels[category][item] = item;
@@ -227,8 +246,9 @@ const inventoryStore = {
             localStorage.setItem(this.minimumsKey, JSON.stringify(data.minimums));
             localStorage.setItem(this.manufacturersKey, JSON.stringify(data.manufacturers));
             localStorage.setItem(this.partNumbersKey, JSON.stringify(data.partNumbers));
+            return true;
         } catch (error) {
-            // Pages report storage failures through their own status message.
+            return false;
         }
     }
 };

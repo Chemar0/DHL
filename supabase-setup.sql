@@ -399,10 +399,10 @@ revoke all on function public.adjust_shared_cart_item(text, text, integer, text)
 revoke all on function public.clear_shared_cart() from public;
 revoke all on function public.clear_shared_cart(text) from public;
 
-grant execute on function public.get_shared_cart() to anon, authenticated;
-grant execute on function public.get_shared_cart_activity() to anon, authenticated;
-grant execute on function public.adjust_shared_cart_item(text, text, integer) to anon, authenticated;
-grant execute on function public.adjust_shared_cart_item(text, text, integer, text) to anon, authenticated;
+grant execute on function public.get_shared_cart() to authenticated;
+grant execute on function public.get_shared_cart_activity() to authenticated;
+grant execute on function public.adjust_shared_cart_item(text, text, integer) to authenticated;
+grant execute on function public.adjust_shared_cart_item(text, text, integer, text) to authenticated;
 revoke all on function public.clear_shared_cart() from public, anon, authenticated;
 revoke all on function public.clear_shared_cart(text) from public, anon, authenticated;
 grant execute on function public.clear_shared_cart() to authenticated;
@@ -572,6 +572,7 @@ declare
     v_actor_name text := btrim(p_actor_name);
     v_log_id bigint;
 begin
+    perform private.require_verified_cart_user();
     if v_cart_type not in ('mechanical', 'electrical') then
         raise exception 'Invalid parts list.';
     end if;
@@ -664,8 +665,8 @@ $$;
 
 revoke all on function public.get_shared_cart_activity() from public, anon, authenticated;
 grant execute on function public.get_shared_cart_activity() to authenticated;
-revoke all on function public.log_cart_order_email(text, text, jsonb, text) from public;
-grant execute on function public.log_cart_order_email(text, text, jsonb, text) to anon, authenticated;
+revoke all on function public.log_cart_order_email(text, text, jsonb, text) from public, anon, authenticated;
+grant execute on function public.log_cart_order_email(text, text, jsonb, text) to authenticated;
 revoke all on function public.get_cart_order_email_log(bigint) from public, anon, authenticated;
 grant execute on function public.get_cart_order_email_log(bigint) to authenticated;
 revoke all on function public.delete_cart_order_email_log(bigint) from public, anon, authenticated;
@@ -896,6 +897,7 @@ as $$
 declare
     v_name text := btrim(regexp_replace(coalesce(p_display_name, ''), '\s+', ' ', 'g'));
 begin
+    perform private.require_verified_cart_user();
     if p_device_id is null then
         raise exception 'A browser ID is required.';
     end if;
@@ -968,7 +970,7 @@ end;
 $$;
 
 revoke all on function public.register_shared_cart_user(uuid, text) from public, anon, authenticated;
-grant execute on function public.register_shared_cart_user(uuid, text) to anon, authenticated;
+grant execute on function public.register_shared_cart_user(uuid, text) to authenticated;
 revoke all on function public.get_shared_cart_users() from public, anon, authenticated;
 grant execute on function public.get_shared_cart_users() to authenticated;
 revoke all on function public.remove_shared_cart_user(uuid) from public, anon, authenticated;
@@ -1056,8 +1058,8 @@ begin
 end;
 $$;
 
--- Any visitor can clear the shared cart. The page asks for confirmation, and
--- this RPC records the browser's entered name (or the verified admin name).
+-- An approved, verified visitor can clear the shared cart. The page asks for
+-- confirmation, and this RPC records the browser's entered name or admin name.
 create or replace function public.clear_shared_cart(p_actor_name text)
 returns void
 language plpgsql
@@ -1067,6 +1069,7 @@ as $$
 declare
     v_actor_name text := btrim(regexp_replace(coalesce(p_actor_name, ''), '\s+', ' ', 'g'));
 begin
+    perform private.require_verified_cart_user();
     if char_length(v_actor_name) not between 1 and 80 then
         v_actor_name := 'Unknown device';
     end if;
@@ -1098,17 +1101,17 @@ as $$
 $$;
 
 revoke all on function public.register_shared_cart_user(uuid, text, boolean) from public, anon, authenticated;
-grant execute on function public.register_shared_cart_user(uuid, text, boolean) to anon, authenticated;
+grant execute on function public.register_shared_cart_user(uuid, text, boolean) to authenticated;
 revoke all on function public.remove_shared_cart_user(uuid) from public, anon, authenticated;
 grant execute on function public.remove_shared_cart_user(uuid) to authenticated;
 revoke all on function public.clear_shared_cart(text) from public, anon, authenticated;
 revoke all on function public.clear_shared_cart() from public, anon, authenticated;
-grant execute on function public.clear_shared_cart(text) to anon, authenticated;
-grant execute on function public.clear_shared_cart() to anon, authenticated;
+grant execute on function public.clear_shared_cart(text) to authenticated;
+grant execute on function public.clear_shared_cart() to authenticated;
 
 notify pgrst, 'reload schema';
 
--- Require a confirmed Supabase email for shared cart reads and writes, and
+-- Require a confirmed email and administrator approval for shared-cart access, and
 -- link each named browser to the verified Auth account that registered it.
 create or replace function private.require_verified_cart_user()
 returns text
@@ -1132,6 +1135,10 @@ begin
 
     if v_email is null then
         raise exception using errcode = '42501', message = 'Verify your email before using the shared cart.';
+    end if;
+
+    if not private.user_has_website_access(auth.uid()) then
+        raise exception using errcode = '42501', message = 'Administrator approval is required to access this website.';
     end if;
 
     return v_email;
@@ -1319,7 +1326,7 @@ as $$
     select public.clear_shared_cart('Unknown device');
 $$;
 
--- Keep the SQL endpoints themselves aligned with the on-page email gate.
+-- Keep the SQL endpoints aligned with the verified, approved access gate.
 revoke all on function public.get_shared_cart() from public, anon, authenticated;
 grant execute on function public.get_shared_cart() to authenticated;
 revoke all on function public.adjust_shared_cart_item(text, text, integer) from public, anon, authenticated;

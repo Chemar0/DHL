@@ -1,5 +1,43 @@
 const store = window.FastenerInventory;
-const data = store.loadData();
+const isElectricalInventory = typeof store.loadData === 'function';
+function readSavedObject(key) {
+    try {
+        const value = JSON.parse(localStorage.getItem(key) || 'null');
+        return value && typeof value === 'object' && !Array.isArray(value) ? value : {};
+    } catch (error) {
+        return {};
+    }
+}
+
+function cleanRecord(value, isAllowed) {
+    const cleaned = {};
+    if (!value || typeof value !== 'object' || Array.isArray(value)) return cleaned;
+    Object.entries(value).forEach(([key, entry]) => {
+        if (typeof key === 'string' && isAllowed(entry)) cleaned[key] = entry;
+    });
+    return cleaned;
+}
+
+function loadMechanicalData() {
+    const inventory = JSON.parse(JSON.stringify(store.defaults));
+    const savedInventory = readSavedObject(store.storageKey);
+    Object.keys(inventory).forEach((category) => {
+        if (Array.isArray(savedInventory[category])) {
+            inventory[category] = savedInventory[category].filter((item) => typeof item === 'string' && item.trim());
+        }
+    });
+    return {
+        inventory,
+        minimums: readSavedObject(store.minimumsKey),
+        manufacturers: readSavedObject(store.notesKey),
+        partNumbers: {},
+        groups: Object.fromEntries(Object.keys(inventory).map((category) => [category, []])),
+        itemGroups: Object.fromEntries(Object.keys(inventory).map((category) => [category, {}])),
+        itemLabels: Object.fromEntries(Object.keys(inventory).map((category) => [category, {}]))
+    };
+}
+
+const data = isElectricalInventory ? store.loadData() : loadMechanicalData();
 const { inventory, minimums, manufacturers, partNumbers, groups, itemGroups, itemLabels } = data;
 const categorySelect = document.getElementById('category-select');
 const groupSelect = document.getElementById('group-select');
@@ -9,9 +47,12 @@ const newItemInput = document.getElementById('new-item');
 const status = document.getElementById('admin-status');
 
 Object.keys(inventory).forEach((category) => {
-    if (!minimums[category]) minimums[category] = {};
-    if (!manufacturers[category]) manufacturers[category] = {};
-    if (!partNumbers[category]) partNumbers[category] = {};
+    minimums[category] = cleanRecord(minimums[category], (value) => Number.isInteger(value) && value >= 1);
+    manufacturers[category] = cleanRecord(manufacturers[category], (value) => typeof value === 'string' && value.trim());
+    partNumbers[category] = cleanRecord(partNumbers[category], (value) => typeof value === 'string' && value.trim());
+    itemGroups[category] = cleanRecord(itemGroups[category], (value) =>
+        typeof value === 'string' && (groups[category] || []).includes(value));
+    itemLabels[category] = cleanRecord(itemLabels[category], (value) => typeof value === 'string' && value.trim());
 });
 
 Object.keys(inventory).forEach((category) => {
@@ -22,6 +63,7 @@ Object.keys(inventory).forEach((category) => {
 });
 
 function renderGroupOptions(selectedGroup) {
+    if (!groupSelect) return;
     groupSelect.replaceChildren();
     (groups[categorySelect.value] || []).forEach((group) => {
         const option = document.createElement('option');
@@ -36,7 +78,11 @@ function renderGroupOptions(selectedGroup) {
 
 function saveInventory() {
     try {
-        store.saveData(data);
+        if (isElectricalInventory) {
+            if (store.saveData(data) === false) throw new Error('Storage unavailable.');
+        } else {
+            localStorage.setItem(store.storageKey, JSON.stringify(inventory));
+        }
         status.textContent = 'Changes saved.';
     } catch (error) {
         status.textContent = 'Could not save changes in this browser.';
@@ -54,14 +100,15 @@ function saveMinimums() {
 
 function saveManufacturers() {
     try {
-        localStorage.setItem(store.manufacturersKey, JSON.stringify(manufacturers));
-        status.textContent = 'Manufacturer saved.';
+        localStorage.setItem(isElectricalInventory ? store.manufacturersKey : store.notesKey, JSON.stringify(manufacturers));
+            status.textContent = isElectricalInventory ? 'Manufacturer saved.' : 'Note saved.';
     } catch (error) {
         status.textContent = 'Could not save this value in this browser.';
     }
 }
 
 function savePartNumbers() {
+    if (!isElectricalInventory) return;
     try {
         localStorage.setItem(store.partNumbersKey, JSON.stringify(partNumbers));
         status.textContent = 'Part number saved.';
@@ -74,7 +121,9 @@ function renderItems() {
     itemList.replaceChildren();
     const category = categorySelect.value;
     const orderedItems = [...inventory[category]].sort((first, second) => {
-        const groupOrder = groups[category].indexOf(itemGroups[category][first]) - groups[category].indexOf(itemGroups[category][second]);
+        const groupOrder = groupSelect
+            ? groups[category].indexOf(itemGroups[category][first]) - groups[category].indexOf(itemGroups[category][second])
+            : 0;
         return groupOrder || (itemLabels[category][first] || first).localeCompare(itemLabels[category][second] || second, undefined, {
             numeric: true,
             sensitivity: 'base'
@@ -84,8 +133,8 @@ function renderItems() {
         const row = document.createElement('li');
         const itemName = document.createElement('span');
         const details = document.createElement('div');
-        const groupLabel = document.createElement('label');
-        const itemGroupSelect = document.createElement('select');
+        const groupLabel = groupSelect ? document.createElement('label') : null;
+        const itemGroupSelect = groupSelect ? document.createElement('select') : null;
         const minimumLabel = document.createElement('label');
         const minimumInput = document.createElement('input');
         const manufacturerLabel = document.createElement('label');
@@ -93,22 +142,24 @@ function renderItems() {
         const removeButton = document.createElement('button');
         itemName.textContent = itemLabels[category][name] || name;
         details.className = 'item-details';
-        groupLabel.className = 'group-field';
-        groupLabel.append(document.createTextNode('Electrical group'));
-        (groups[category] || []).forEach((group) => {
-            const option = document.createElement('option');
-            option.value = group;
-            option.textContent = group;
-            itemGroupSelect.append(option);
-        });
-        itemGroupSelect.value = itemGroups[category][name] || 'Other items';
-        itemGroupSelect.setAttribute('aria-label', `Group for ${itemLabels[category][name] || name}`);
-        itemGroupSelect.addEventListener('change', () => {
-            itemGroups[category][name] = itemGroupSelect.value;
-            saveInventory();
-            renderItems();
-        });
-        groupLabel.append(itemGroupSelect);
+        if (groupSelect) {
+            groupLabel.className = 'group-field';
+            groupLabel.append(document.createTextNode('Electrical group'));
+            (groups[category] || []).forEach((group) => {
+                const option = document.createElement('option');
+                option.value = group;
+                option.textContent = group;
+                itemGroupSelect.append(option);
+            });
+            itemGroupSelect.value = itemGroups[category][name] || 'Other items';
+            itemGroupSelect.setAttribute('aria-label', `Group for ${itemLabels[category][name] || name}`);
+            itemGroupSelect.addEventListener('change', () => {
+                itemGroups[category][name] = itemGroupSelect.value;
+                saveInventory();
+                renderItems();
+            });
+            groupLabel.append(itemGroupSelect);
+        }
         minimumLabel.className = 'minimum-field';
         minimumLabel.append(document.createTextNode('Minimum quantity'));
         minimumInput.type = 'number';
@@ -178,7 +229,7 @@ function renderItems() {
             savePartNumbers();
             renderItems();
         });
-        details.append(itemName, groupLabel, ...itemFields);
+        details.append(itemName, ...(groupLabel ? [groupLabel] : []), ...itemFields);
         row.append(details, removeButton);
         itemList.append(row);
     });
@@ -197,10 +248,11 @@ addForm.addEventListener('submit', (event) => {
     event.preventDefault();
     const name = newItemInput.value.trim();
     const category = categorySelect.value;
-    const group = groupSelect.value;
+    const group = groupSelect?.value || '';
     if (!name) return;
     if (inventory[category].some((item) =>
-        (itemLabels[category][item] || item).toLowerCase() === name.toLowerCase() && itemGroups[category][item] === group
+        (itemLabels[category][item] || item).toLowerCase() === name.toLowerCase() &&
+        (!groupSelect || itemGroups[category][item] === group)
     )) {
         status.textContent = 'That item is already in this group.';
         return;
@@ -208,9 +260,9 @@ addForm.addEventListener('submit', (event) => {
     const duplicateLabel = inventory[category].some((item) =>
         (itemLabels[category][item] || item).toLowerCase() === name.toLowerCase()
     );
-    const key = duplicateLabel ? `${group} — ${name}` : name;
+    const key = duplicateLabel && groupSelect ? `${group} — ${name}` : name;
     inventory[category].push(key);
-    itemGroups[category][key] = group;
+    if (groupSelect) itemGroups[category][key] = group;
     itemLabels[category][key] = name;
     saveInventory();
     newItemInput.value = '';

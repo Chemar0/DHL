@@ -10,6 +10,12 @@ create table if not exists private.shared_cart_users (
 
 alter table private.shared_cart_users enable row level security;
 revoke all on table private.shared_cart_users from public, anon, authenticated;
+alter table private.shared_cart_users
+    add column if not exists user_id uuid references auth.users(id) on delete cascade;
+alter table private.shared_cart_users
+    add column if not exists email text;
+create index if not exists shared_cart_users_user_id_idx
+    on private.shared_cart_users (user_id);
 
 -- Seed legacy names from existing cart attribution and activity rows. Earlier
 -- records did not include a browser ID, so use a stable per-name legacy ID.
@@ -56,6 +62,8 @@ set search_path = pg_catalog, auth, private
 as $$
 declare
     v_name text := btrim(regexp_replace(coalesce(p_display_name, ''), '\s+', ' ', 'g'));
+    v_user_id uuid := auth.uid();
+    v_email text := private.require_verified_cart_user();
 begin
     if p_device_id is null then
         raise exception 'A browser ID is required.';
@@ -76,10 +84,12 @@ begin
         raise exception using errcode = '42501', message = 'That display name is reserved for a cart administrator.';
     end if;
 
-    insert into private.shared_cart_users (device_id, display_name, last_seen_at)
-    values (p_device_id, v_name, now())
+    insert into private.shared_cart_users (device_id, display_name, user_id, email, last_seen_at)
+    values (p_device_id, v_name, v_user_id, v_email, now())
     on conflict (device_id) do update
         set display_name = excluded.display_name,
+            user_id = excluded.user_id,
+            email = excluded.email,
             last_seen_at = now();
 end;
 $$;
@@ -129,7 +139,7 @@ end;
 $$;
 
 revoke all on function public.register_shared_cart_user(uuid, text) from public, anon, authenticated;
-grant execute on function public.register_shared_cart_user(uuid, text) to anon, authenticated;
+grant execute on function public.register_shared_cart_user(uuid, text) to authenticated;
 revoke all on function public.get_shared_cart_users() from public, anon, authenticated;
 grant execute on function public.get_shared_cart_users() to authenticated;
 revoke all on function public.remove_shared_cart_user(uuid) from public, anon, authenticated;

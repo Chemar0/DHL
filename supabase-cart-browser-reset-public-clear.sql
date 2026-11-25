@@ -1,3 +1,5 @@
+-- Legacy filename retained. This script requires the current website access
+-- approval migration and does not grant anonymous access to shared-cart data.
 -- When an owner removes a visitor browser, its old saved name must not be
 -- silently registered again. That browser must submit a name again first.
 create table if not exists private.shared_cart_user_reset_required (
@@ -7,6 +9,13 @@ create table if not exists private.shared_cart_user_reset_required (
 
 alter table private.shared_cart_user_reset_required enable row level security;
 revoke all on table private.shared_cart_user_reset_required from public, anon, authenticated;
+
+alter table private.shared_cart_users
+    add column if not exists user_id uuid references auth.users(id) on delete cascade;
+alter table private.shared_cart_users
+    add column if not exists email text;
+create index if not exists shared_cart_users_user_id_idx
+    on private.shared_cart_users (user_id);
 
 drop function if exists public.register_shared_cart_user(uuid, text);
 create function public.register_shared_cart_user(
@@ -21,6 +30,8 @@ set search_path = pg_catalog, auth, private
 as $$
 declare
     v_name text := btrim(regexp_replace(coalesce(p_display_name, ''), '\s+', ' ', 'g'));
+    v_user_id uuid := auth.uid();
+    v_email text := private.require_verified_cart_user();
 begin
     if p_device_id is null then
         raise exception 'A browser ID is required.';
@@ -48,10 +59,12 @@ begin
     end if;
 
     delete from private.shared_cart_user_reset_required where device_id = p_device_id;
-    insert into private.shared_cart_users (device_id, display_name, last_seen_at)
-    values (p_device_id, v_name, now())
+    insert into private.shared_cart_users (device_id, display_name, user_id, email, last_seen_at)
+    values (p_device_id, v_name, v_user_id, v_email, now())
     on conflict (device_id) do update
         set display_name = excluded.display_name,
+            user_id = excluded.user_id,
+            email = excluded.email,
             last_seen_at = now();
 end;
 $$;
@@ -80,8 +93,8 @@ begin
 end;
 $$;
 
--- Any visitor can clear the shared cart. The page asks for confirmation, and
--- this RPC records the browser's entered name (or the verified admin name).
+-- An approved, verified visitor can clear the shared cart. The page asks for
+-- confirmation, and this RPC records the browser's entered name or admin name.
 create or replace function public.clear_shared_cart(p_actor_name text)
 returns void
 language plpgsql
@@ -91,6 +104,7 @@ as $$
 declare
     v_actor_name text := btrim(regexp_replace(coalesce(p_actor_name, ''), '\s+', ' ', 'g'));
 begin
+    perform private.require_verified_cart_user();
     if char_length(v_actor_name) not between 1 and 80 then
         v_actor_name := 'Unknown device';
     end if;
@@ -122,12 +136,12 @@ as $$
 $$;
 
 revoke all on function public.register_shared_cart_user(uuid, text, boolean) from public, anon, authenticated;
-grant execute on function public.register_shared_cart_user(uuid, text, boolean) to anon, authenticated;
+grant execute on function public.register_shared_cart_user(uuid, text, boolean) to authenticated;
 revoke all on function public.remove_shared_cart_user(uuid) from public, anon, authenticated;
 grant execute on function public.remove_shared_cart_user(uuid) to authenticated;
 revoke all on function public.clear_shared_cart(text) from public, anon, authenticated;
 revoke all on function public.clear_shared_cart() from public, anon, authenticated;
-grant execute on function public.clear_shared_cart(text) to anon, authenticated;
-grant execute on function public.clear_shared_cart() to anon, authenticated;
+grant execute on function public.clear_shared_cart(text) to authenticated;
+grant execute on function public.clear_shared_cart() to authenticated;
 
 notify pgrst, 'reload schema';

@@ -1,5 +1,5 @@
--- Require a confirmed Supabase email for shared cart reads and writes, and
--- link each named browser to the verified Auth account that registered it.
+-- Require a confirmed email and approved website access for shared cart use,
+-- and link each named browser to the verified Auth account that registered it.
 create or replace function private.require_verified_cart_user()
 returns text
 language plpgsql
@@ -22,6 +22,10 @@ begin
 
     if v_email is null then
         raise exception using errcode = '42501', message = 'Verify your email before using the shared cart.';
+    end if;
+
+    if not private.user_has_website_access(auth.uid()) then
+        raise exception using errcode = '42501', message = 'Administrator approval is required to access this website.';
     end if;
 
     return v_email;
@@ -209,7 +213,7 @@ as $$
     select public.clear_shared_cart('Unknown device');
 $$;
 
--- Keep the SQL endpoints themselves aligned with the on-page email gate.
+-- Keep the SQL endpoints aligned with the verified, approved access gate.
 revoke all on function public.get_shared_cart() from public, anon, authenticated;
 grant execute on function public.get_shared_cart() to authenticated;
 revoke all on function public.adjust_shared_cart_item(text, text, integer) from public, anon, authenticated;
