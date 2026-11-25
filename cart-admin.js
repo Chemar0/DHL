@@ -570,9 +570,10 @@
             visitorAuthSubmit.disabled = false;
         }
         if (error) {
-            if (error.status === 429 || error.code === 'over_email_send_rate_limit' ||
-                error.code === 'over_request_rate_limit') {
-                setVisitorAuthStatus('Please wait before requesting another link, and check your inbox and junk folder.', true);
+            if (error.code === 'over_email_send_rate_limit') {
+                setVisitorAuthStatus('Supabase has reached this project’s email sending limit. The built-in mailer allows 2 emails per hour and only sends to project team addresses. Set up custom SMTP in Supabase to send links to other addresses.', true);
+            } else if (error.code === 'over_request_rate_limit' || error.status === 429) {
+                setVisitorAuthStatus('Too many link requests were made recently. Wait at least 60 seconds before trying again, then check your inbox and junk folder.', true);
             } else if (error.code === 'email_address_not_authorized') {
                 setVisitorAuthStatus('Supabase email delivery is not configured for this address. Configure custom SMTP in Authentication → Emails → SMTP Settings.', true);
             } else if (error.code === 'otp_disabled') {
@@ -610,9 +611,10 @@
             }
         });
         if (error) {
-            if (error.status === 429 || error.code === 'over_email_send_rate_limit' ||
-                error.code === 'over_request_rate_limit') {
-                setStatus('Supabase is rate limiting sign-in requests. Wait at least 60 seconds before trying again, and check your inbox and junk folder for the previous link.', true);
+            if (error.code === 'over_email_send_rate_limit') {
+                setStatus('Supabase has reached this project’s email sending limit. The built-in mailer allows 2 emails per hour and only sends to project team addresses. Set up custom SMTP in Supabase to send links to other addresses.', true);
+            } else if (error.code === 'over_request_rate_limit' || error.status === 429) {
+                setStatus('Too many link requests were made recently. Wait at least 60 seconds before trying again, then check your inbox and junk folder.', true);
             } else if (error.code === 'email_address_not_authorized') {
                 setStatus('Supabase’s built-in email service only sends to project team members. Configure custom SMTP in Authentication → Emails → SMTP Settings.', true);
             } else if (error.code === 'otp_disabled') {
