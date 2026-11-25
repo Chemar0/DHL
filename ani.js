@@ -457,9 +457,18 @@ function renderCart() {
 }
 
 async function clearSharedCart() {
+    await window.CartAdmin?.whenAccessChecked?.();
+    if (!window.CartAdmin?.isVisitorVerified?.()) {
+        throw new Error('Verify your email and wait for website approval before clearing the shared cart.');
+    }
+    if (!window.CartAdmin?.getAccessToken?.()) {
+        throw new Error('Your sign-in session is still loading. Wait a moment and try again.');
+    }
     await callSharedCartRpc('clear_shared_cart', { p_actor_name: window.CartUser.getName() });
-    const refreshed = await refreshSharedCart();
-    if (refreshed === false) throw new Error('The cart was cleared, but this page could not reload the shared cart. Refresh the page to confirm.');
+    cart.clear();
+    cartAttribution.clear();
+    renderCart();
+    return await refreshSharedCart();
 }
 
 clearCartButton.addEventListener('click', async () => {
@@ -470,8 +479,10 @@ clearCartButton.addEventListener('click', async () => {
     try {
         if (sharedCartEnabled) {
             updateCartSyncStatus('Clearing shared cart for everyone…');
-            await clearSharedCart();
-            updateCartSyncStatus('The shared cart was cleared for everyone.');
+            const refreshed = await clearSharedCart();
+            updateCartSyncStatus(refreshed
+                ? 'The shared cart was cleared for everyone.'
+                : 'The cart was cleared, but this page could not confirm the latest shared state. Reload to check.', !refreshed);
         } else {
             if (cart.size > 0) recordCartActivity('cart_cleared', '', '', 0, 0, window.CartUser.getName());
             cart.clear();
