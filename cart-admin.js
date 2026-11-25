@@ -34,11 +34,19 @@
     const config = window.SUPABASE_CONFIG || {};
     const publicApiKey = config.publishableKey || config.anonKey || '';
     const adminDeviceKey = 'dhl-cart-admin-portal';
+    const approvedAdminSessionKey = 'dhl-approved-admin-session-user';
     const adminPortalRequested = new URLSearchParams(window.location.search).get('cartAdmin') === 'signin';
     let hasAdminDeviceMarker = false;
     let resolveAccessReady;
     let accessReadyResolved = false;
     const accessReady = new Promise((resolve) => { resolveAccessReady = resolve; });
+    function rememberApprovedAdminSession(userId) {
+        if (!userId) return;
+        try { sessionStorage.setItem(approvedAdminSessionKey, userId); } catch (error) { /* Storage can be disabled. */ }
+    }
+    function clearApprovedAdminSession() {
+        try { sessionStorage.removeItem(approvedAdminSessionKey); } catch (error) { /* Storage can be disabled. */ }
+    }
     try {
         hasAdminDeviceMarker = localStorage.getItem(adminDeviceKey) === 'true';
     } catch (error) {
@@ -140,6 +148,7 @@
         updateControls();
 
         if (!state.session) {
+            clearApprovedAdminSession();
             if (wasVisitorVerified) notifyVisitorSignedOut();
             setVisitorAuthStatus('Enter your email to receive a verification link.');
             setStatus('Admin controls require a verified, allowlisted Supabase account.');
@@ -148,6 +157,7 @@
         }
 
         if (!state.isVisitorVerified) {
+            clearApprovedAdminSession();
             setVisitorAuthStatus('Open the verification link in your email to continue.');
             setStatus('Email verification is required to use the shared cart.');
             finishAccessCheck();
@@ -159,6 +169,7 @@
         const { data, error } = await state.client.rpc('get_cart_admin_profile');
         if (state.session !== checkedSession) return;
         if (error) {
+            clearApprovedAdminSession();
             setStatus('Admin setup is incomplete. Run the updated Supabase SQL and allowlist the account.', true);
             updateControls();
             notifyVisitorVerified();
@@ -168,6 +179,7 @@
 
         const profile = Array.isArray(data) ? data[0] : null;
         if (!profile) {
+            clearApprovedAdminSession();
             state.loginOpen = false;
             state.adminMenuOpen = false;
             setStatus('This verified account is not on the cart administrator allowlist.');
@@ -178,6 +190,7 @@
         }
 
         state.isAdmin = true;
+        rememberApprovedAdminSession(state.session.user.id);
         state.isOwner = profile.is_owner === true;
         window.CartUser?.setVerifiedEmail(state.session.user.email || '');
         hasAdminDeviceMarker = true;

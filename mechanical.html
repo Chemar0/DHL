@@ -1,19 +1,36 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-site-access-scripts="inventory.js?v=mechanical-admin-fix-1|cart-user.js?v=verified-cart-users-1|cart-admin.js?v=admin-activity-dropdown-1|cart-groups.js?v=cart-groups-1|ani.js?v=cart-refresh-race-1">
 <head>
-    <script>document.documentElement.classList.add('site-access-locked');</script>
+    <script>
+        (() => {
+            const page = document.documentElement;
+            let resume = false;
+            try { resume = Boolean(sessionStorage.getItem('dhl-approved-session-user')); } catch (error) { /* Storage can be disabled. */ }
+            page.classList.add(resume ? 'site-access-resuming' : 'site-access-locked');
+            for (const src of (page.dataset.siteAccessScripts || '').split('|').filter(Boolean)) {
+                const preload = document.createElement('link');
+                preload.rel = 'preload';
+                preload.as = 'script';
+                preload.href = src;
+                document.head.append(preload);
+            }
+        })();
+    </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Fastener List</title>
     <link rel="stylesheet" href="ani.css?v=admin-activity-dropdown-1">
     <link rel="stylesheet" href="cart-groups.css?v=cart-groups-1">
-    <link rel="stylesheet" href="site-access.css?v=access-gate-2">
+    <link rel="stylesheet" href="site-access.css?v=access-smooth-transition-1">
     <style>
         .mechanical-layout { width: min(760px, 100%); max-width: 760px; }
         .mechanical-layout .box { width: 100%; }
     </style>
+    <script defer src="supabase-config.js?v=shared-cart-4"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script defer src="site-access.js?v=access-smooth-transition-1"></script>
 </head>
-<body data-site-access-scripts="inventory.js?v=mechanical-admin-fix-1|cart-user.js?v=verified-cart-users-1|cart-admin.js?v=admin-activity-dropdown-1|cart-groups.js?v=cart-groups-1|ani.js?v=cart-refresh-race-1">
+<body>
     <button class="cart-toggle" id="cart-toggle" type="button" aria-controls="cart-panel" aria-expanded="false">
         Cart <span class="cart-count" id="cart-count">0</span>
     </button>
@@ -286,8 +303,5 @@
         <section class="tab-panel" id="panel-12" role="tabpanel" aria-labelledby="tab-12" hidden><div class="inner-box"><p class="hint">Add things for tab 12 here.</p></div></section>
         </main>
     </div>
-    <script src="supabase-config.js?v=shared-cart-4"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="site-access.js?v=access-session-reset-1"></script>
 </body>
 </html>

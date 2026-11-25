@@ -4,6 +4,15 @@ html.site-access-locked body {
     background: #050505 !important;
 }
 
+@view-transition { navigation: auto; }
+::view-transition-old(root) { animation: page-transition-out 140ms ease-in both; }
+::view-transition-new(root) { animation: page-transition-in 180ms ease-out both; }
+
+html.site-access-resuming body > :not(.site-access-overlay) {
+    pointer-events: none !important;
+    cursor: progress;
+}
+
 html.site-access-locked body { overflow: hidden !important; }
 html.site-access-locked body > :not(.site-access-overlay) {
     visibility: hidden !important;
@@ -96,8 +105,10 @@ body.site-content-enter > :not(.site-access-overlay) { animation: site-content-a
 @keyframes access-card-pulse { 50% { box-shadow: 0 24px 95px #000c, 0 0 0 1px #ffffff10 inset; } }
 @keyframes access-approved { from { opacity: .45; transform: translateY(12px) scale(.97); } to { opacity: 1; transform: translateY(0) scale(1); } }
 @keyframes site-content-arrive { from { opacity: .65; } to { opacity: 1; } }
+@keyframes page-transition-out { to { opacity: 0; } }
+@keyframes page-transition-in { from { opacity: 0; } to { opacity: 1; } }
 
 @media (max-width: 480px) { .site-access-card { padding: 28px 20px 24px; } }
 @media (prefers-reduced-motion: reduce) {
-    .site-access-overlay, .site-access-card, .site-access-form button, body.site-content-enter > :not(.site-access-overlay) { transition-duration: .01ms !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; }
+    .site-access-overlay, .site-access-card, .site-access-form button, body.site-content-enter > :not(.site-access-overlay), ::view-transition-old(root), ::view-transition-new(root) { transition-duration: .01ms !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; }
 }
