@@ -34,6 +34,8 @@ html.site-access-locked body > :not(.site-access-overlay) {
     transition: opacity 650ms ease, background-color 850ms ease;
 }
 
+.site-access-overlay[hidden] { display: none !important; }
+
 .site-access-card {
     width: min(430px, 100%);
     padding: 34px 30px 28px;
