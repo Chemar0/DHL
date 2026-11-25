@@ -8,6 +8,16 @@ The mechanical and electrical pages share one cart through Supabase.
 2. In the project's API settings, copy the Project URL and publishable key.
 3. Put those values in `supabase-config.js`. The publishable key is designed for browser use. Never put a service-role key in this repository.
 
+## Authentication email delivery
+
+The access-request page uses Supabase Auth email links. The project can send these with a custom **Send Email** Auth Hook instead of its default sender or SMTP.
+
+The current Microsoft Graph setup needs an Entra app registration that supports personal Microsoft accounts, the delegated `Mail.Send` permission, and a one-time authorization for `DTXparts@hotmail.com`. Store `MICROSOFT_CLIENT_ID`, `MICROSOFT_SENDER_EMAIL`, `MICROSOFT_MAIL_SETUP_KEY`, and `SEND_EMAIL_HOOK_SECRET` as Supabase Edge Function secrets. The rotating Microsoft refresh token is stored in the private `microsoft_graph_email_state` table and is accessible only to the server-side service role.
+
+Deploy `supabase/functions/send-auth-email` and `supabase/functions/microsoft-mail-setup` with JWT verification disabled; both functions verify their own request signatures or setup key. In Authentication → Hooks, select the **Send Email** HTTP hook and use the deployed `send-auth-email` function URL with the same `SEND_EMAIL_HOOK_SECRET`. Keep the email provider enabled and set the project email limit under Authentication → Rate Limits. The default sender permits 2 emails/hour; with a custom hook, that hourly limit is configurable. The per-address 60-second request cooldown is a separate limit.
+
+Do not enable the hook until Microsoft authorization and the Edge Function secrets are in place; otherwise new verification requests will fail.
+
 ## Set up the sole administrator
 
 Visitors enter their email on the landing or cart page and open the verification link on the same device. Supabase Auth creates or signs in the account. An administrator must then approve the verified request before the shared cart is available. Approved users can read and change the shared cart, clear it after the on-page confirmation, and request an order email. Anonymous, unverified, and unapproved sessions cannot read or change shared cart data.

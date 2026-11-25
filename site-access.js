@@ -368,9 +368,9 @@
             form.hidden = true;
         } catch (error) {
             const detail = error.code === 'over_email_send_rate_limit'
-                ? 'Supabase’s built-in sender has reached its 2-email hourly project limit. Custom SMTP is needed for normal visitor access.'
+                ? 'The project email limit has been reached. Please wait before requesting another link.'
                 : error.code === 'email_address_not_authorized'
-                    ? 'Supabase’s built-in sender only delivers to project team addresses. Custom SMTP is needed for visitor verification.'
+                    ? 'The email provider is not authorized to send to this address. Please contact an administrator.'
                     : error.code === 'over_request_rate_limit' || error.status === 429
                         ? 'Too many link requests were made recently. Wait at least 60 seconds, then try again.'
                         : error.code === 'signup_disabled' || error.code === 'signups_disabled'
