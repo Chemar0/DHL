@@ -35,7 +35,7 @@ h1 { margin: 0 0 18px; font-size: 1.6rem; }
 /* Tab grid, selected state, and keyboard focus. */
 .tabs {
     display: grid;
-    grid-template-columns: repeat(6, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 8px;
     margin-bottom: 16px;
 }
@@ -62,7 +62,7 @@ h1 { margin: 0 0 18px; font-size: 1.6rem; }
     padding: 14px;
     border: 1px solid #b9bec7;
     border-radius: 8px;
-    text-align: center;
+    text-align: left;
     overflow-y: auto;
 }
 
@@ -70,16 +70,25 @@ h1 { margin: 0 0 18px; font-size: 1.6rem; }
 
 /* Fastener item buttons and empty-tab helper text. */
 .item {
-    display: block;
-    width: min(90%, 420px);
-    margin: 6px auto;
+    display: flex;
+    width: 100%;
+    min-height: 42px;
+    margin: 0;
     padding: 10px;
+    align-items: center;
+    justify-content: center;
     border: 1px solid #8b929d;
     border-radius: 8px;
     background: #fff;
     font-size: 1rem;
+    text-align: center;
     transition: transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease;
 }
+
+.item-group { margin: 0 0 18px; }
+.item-group:last-child { margin-bottom: 0; }
+.item-group-heading { margin: 0 0 8px; padding-bottom: 6px; border-bottom: 1px solid #d9dde3; color: #01473d; font-size: 1rem; }
+.item-group-items { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; }
 
 .item:hover { transform: translateY(-1px); border-color: #01473d; box-shadow: 0 3px 9px #20212418; }
 .item:active { transform: translateY(0); }
@@ -293,6 +302,7 @@ body.cart-open { overflow: hidden; }
 @media (max-width: 420px) {
     .box { padding: 14px; }
     .tabs { gap: 6px; }
+    .item-group-items { grid-template-columns: minmax(0, 1fr); }
     .cart-toggle { top: 10px; right: 10px; }
     h1 { padding-top: 40px; }
 }

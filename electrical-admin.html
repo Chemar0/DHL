@@ -4,30 +4,32 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Manage Electrical Items</title>
-    <link rel="stylesheet" href="admin.css?v=admin-overflow-1">
+    <link rel="stylesheet" href="admin.css?v=electrical-admin-groups-1">
 </head>
 <body>
     <main class="admin-card">
         <a class="back-link" href="electrical.html">← Back to electrical list</a>
         <h1>Manage electrical items</h1>
-        <p class="intro">Choose a tab to add or remove its items, set each minimum order quantity, and enter a manufacturer and part number. Changes are saved in this browser. The email quantity is the minimum multiplied by the number added to the cart. Manufacturer and part number appear beside the item in the email.</p>
+        <p class="intro">Choose an electrical category and group to add an item. Each item appears under that group on the electrical list. Changes are saved in this browser. Set the minimum order quantity and any optional manufacturer or part number used in order emails.</p>
 
-        <label for="category-select">Tab category</label>
+        <label for="category-select">Electrical category</label>
         <select id="category-select"></select>
 
         <form id="add-form">
             <label for="new-item">Add an item</label>
+            <label for="group-select">Group</label>
+            <select id="group-select" required></select>
             <div class="add-row">
-                <input id="new-item" name="item" type="text" maxlength="100" required placeholder="For example, M4 x 20">
+                <input id="new-item" name="item" type="text" maxlength="100" required placeholder="For example, 4mm Black Tri Rated">
                 <button type="submit">Add item</button>
             </div>
         </form>
 
-        <h2>Items in this tab</h2>
+        <h2>Items in this category</h2>
         <ul id="item-list" class="item-list"></ul>
         <p id="admin-status" class="status" role="status" aria-live="polite"></p>
     </main>
-    <script src="electrical-inventory.js"></script>
-    <script src="admin.js"></script>
+    <script src="electrical-inventory.js?v=electrical-admin-groups-1"></script>
+    <script src="admin.js?v=electrical-admin-groups-1"></script>
 </body>
 </html>

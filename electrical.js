@@ -1,77 +1,8 @@
 const tabs = Array.from(document.querySelectorAll('[role="tab"]'));
 const panels = Array.from(document.querySelectorAll('[role="tabpanel"]'));
 const inventoryStore = window.FastenerInventory;
-const inventory = JSON.parse(JSON.stringify(inventoryStore.defaults));
-const minimums = {};
-const manufacturers = {};
-const partNumbers = JSON.parse(JSON.stringify(inventoryStore.partNumbers || {}));
-const manufacturersStorageKey = inventoryStore.manufacturersKey || inventoryStore.notesKey;
-
-try {
-    const savedInventory = JSON.parse(localStorage.getItem(inventoryStore.storageKey) || 'null');
-    if (savedInventory && typeof savedInventory === 'object' && !Array.isArray(savedInventory)) {
-        tabs.forEach((tab) => {
-            const category = tab.textContent.trim();
-            if (Array.isArray(savedInventory[category])) {
-                inventory[category] = savedInventory[category].filter((item) => typeof item === 'string' && item.trim());
-            }
-        });
-    }
-} catch (error) {
-    // Use the built-in list if browser storage is unavailable or invalid.
-}
-
-try {
-    const savedMinimums = JSON.parse(localStorage.getItem(inventoryStore.minimumsKey) || 'null');
-    if (savedMinimums && typeof savedMinimums === 'object' && !Array.isArray(savedMinimums)) {
-        Object.entries(savedMinimums).forEach(([category, values]) => {
-            if (!values || typeof values !== 'object' || Array.isArray(values)) return;
-            minimums[category] = {};
-            Object.entries(values).forEach(([name, value]) => {
-                if (Number.isInteger(value) && value >= 1) minimums[category][name] = value;
-            });
-        });
-    }
-} catch (error) {
-    // Default each item's minimum order quantity to 1 when storage is unavailable.
-}
-
-try {
-    const legacyNotes = inventoryStore.manufacturersKey && inventoryStore.notesKey
-        ? localStorage.getItem(inventoryStore.notesKey)
-        : null;
-    const savedManufacturers = JSON.parse(localStorage.getItem(manufacturersStorageKey) || legacyNotes || 'null');
-    if (savedManufacturers && typeof savedManufacturers === 'object' && !Array.isArray(savedManufacturers)) {
-        Object.entries(savedManufacturers).forEach(([category, values]) => {
-            if (!values || typeof values !== 'object' || Array.isArray(values)) return;
-            manufacturers[category] = {};
-            Object.entries(values).forEach(([name, manufacturer]) => {
-                if (typeof manufacturer === 'string' && manufacturer.trim()) {
-                    manufacturers[category][name] = manufacturer.trim();
-                }
-            });
-        });
-    }
-} catch (error) {
-    // Manufacturer values are optional when browser storage is unavailable or malformed.
-}
-
-try {
-    const savedPartNumbers = JSON.parse(localStorage.getItem(inventoryStore.partNumbersKey) || 'null');
-    if (savedPartNumbers && typeof savedPartNumbers === 'object' && !Array.isArray(savedPartNumbers)) {
-        Object.entries(savedPartNumbers).forEach(([category, values]) => {
-            if (!values || typeof values !== 'object' || Array.isArray(values)) return;
-            if (!partNumbers[category]) partNumbers[category] = {};
-            Object.entries(values).forEach(([name, partNumber]) => {
-                if (typeof partNumber === 'string' && partNumber.trim()) {
-                    partNumbers[category][name] = partNumber.trim();
-                }
-            });
-        });
-    }
-} catch (error) {
-    // Part numbers are optional when browser storage is unavailable or malformed.
-}
+const inventoryData = inventoryStore.loadData();
+const { inventory, minimums, manufacturers, partNumbers, groups, itemGroups, itemLabels } = inventoryData;
 
 panels.forEach((panel) => {
     const tab = document.getElementById(panel.getAttribute('aria-labelledby'));
@@ -84,12 +15,29 @@ panels.forEach((panel) => {
         hint.textContent = 'No items in this tab yet. Add items from the admin page.';
         itemBox.append(hint);
     } else {
-        inventory[category].forEach((name) => {
-            const button = document.createElement('button');
-            button.type = 'button';
-            button.className = 'item';
-            button.textContent = name;
-            itemBox.append(button);
+        const orderedGroups = [...groups[category]];
+        const otherItems = inventory[category].some((name) => !orderedGroups.includes(itemGroups[category][name]));
+        if (otherItems && !orderedGroups.includes('Other items')) orderedGroups.push('Other items');
+        orderedGroups.forEach((group) => {
+            const items = inventory[category].filter((name) => (itemGroups[category][name] || 'Other items') === group);
+            if (!items.length) return;
+            const section = document.createElement('section');
+            const heading = document.createElement('h2');
+            const itemGrid = document.createElement('div');
+            section.className = 'item-group';
+            heading.className = 'item-group-heading';
+            heading.textContent = group;
+            itemGrid.className = 'item-group-items';
+            items.forEach((name) => {
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.className = 'item';
+                button.dataset.itemName = name;
+                button.textContent = itemLabels[category][name] || name;
+                itemGrid.append(button);
+            });
+            section.append(heading, itemGrid);
+            itemBox.append(section);
         });
     }
 });
@@ -581,7 +529,7 @@ document.querySelector('.box').addEventListener('click', (event) => {
     const panel = button.closest('[role="tabpanel"]');
     const categoryTab = panel && document.getElementById(panel.getAttribute('aria-labelledby'));
     const category = categoryTab ? categoryTab.textContent.trim() : 'Other parts';
-    const name = button.textContent.trim();
+    const name = button.dataset.itemName || button.textContent.trim();
     pendingCartItem = { category, name };
     quantityItemName.textContent = `${category} — ${name}`;
     quantityInput.value = '1';

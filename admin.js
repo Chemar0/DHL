@@ -1,79 +1,18 @@
 const store = window.FastenerInventory;
-const inventory = JSON.parse(JSON.stringify(store.defaults));
-const minimums = {};
-const manufacturers = {};
-const partNumbers = JSON.parse(JSON.stringify(store.partNumbers || {}));
-const manufacturersStorageKey = store.manufacturersKey || store.notesKey;
+const data = store.loadData();
+const { inventory, minimums, manufacturers, partNumbers, groups, itemGroups, itemLabels } = data;
 const categorySelect = document.getElementById('category-select');
+const groupSelect = document.getElementById('group-select');
 const itemList = document.getElementById('item-list');
 const addForm = document.getElementById('add-form');
 const newItemInput = document.getElementById('new-item');
 const status = document.getElementById('admin-status');
 
 Object.keys(inventory).forEach((category) => {
-    minimums[category] = {};
-    manufacturers[category] = {};
+    if (!minimums[category]) minimums[category] = {};
+    if (!manufacturers[category]) manufacturers[category] = {};
     if (!partNumbers[category]) partNumbers[category] = {};
 });
-try {
-    const savedMinimums = JSON.parse(localStorage.getItem(store.minimumsKey) || 'null');
-    if (savedMinimums && typeof savedMinimums === 'object' && !Array.isArray(savedMinimums)) {
-        Object.keys(inventory).forEach((category) => {
-            const values = savedMinimums[category];
-            if (!values || typeof values !== 'object' || Array.isArray(values)) return;
-            Object.entries(values).forEach(([name, value]) => {
-                const quantity = Number(value);
-                if (Number.isInteger(quantity) && quantity >= 1) minimums[category][name] = quantity;
-            });
-        });
-    }
-} catch (error) {
-    status.textContent = 'Could not read saved minimum quantities. Each item defaults to 1.';
-}
-
-try {
-    const legacyNotes = store.manufacturersKey && store.notesKey ? localStorage.getItem(store.notesKey) : null;
-    const savedManufacturers = JSON.parse(localStorage.getItem(manufacturersStorageKey) || legacyNotes || 'null');
-    if (savedManufacturers && typeof savedManufacturers === 'object' && !Array.isArray(savedManufacturers)) {
-        Object.keys(inventory).forEach((category) => {
-            const values = savedManufacturers[category];
-            if (!values || typeof values !== 'object' || Array.isArray(values)) return;
-            Object.entries(values).forEach(([name, manufacturer]) => {
-                if (typeof manufacturer === 'string') manufacturers[category][name] = manufacturer;
-            });
-        });
-    }
-} catch (error) {
-    status.textContent = 'Could not read saved manufacturer values.';
-}
-
-try {
-    const savedPartNumbers = JSON.parse(localStorage.getItem(store.partNumbersKey) || 'null');
-    if (savedPartNumbers && typeof savedPartNumbers === 'object' && !Array.isArray(savedPartNumbers)) {
-        Object.keys(inventory).forEach((category) => {
-            const values = savedPartNumbers[category];
-            if (!values || typeof values !== 'object' || Array.isArray(values)) return;
-            Object.entries(values).forEach(([name, partNumber]) => {
-                if (typeof partNumber === 'string') partNumbers[category][name] = partNumber;
-            });
-        });
-    }
-} catch (error) {
-    status.textContent = 'Could not read saved part numbers.';
-}
-
-try {
-    const savedInventory = JSON.parse(localStorage.getItem(store.storageKey) || 'null');
-    if (savedInventory && typeof savedInventory === 'object' && !Array.isArray(savedInventory)) {
-        Object.keys(inventory).forEach((category) => {
-            if (Array.isArray(savedInventory[category])) {
-                inventory[category] = savedInventory[category].filter((item) => typeof item === 'string' && item.trim());
-            }
-        });
-    }
-} catch (error) {
-    status.textContent = 'Could not read saved changes. The default item list is shown.';
-}
 
 Object.keys(inventory).forEach((category) => {
     const option = document.createElement('option');
@@ -82,9 +21,22 @@ Object.keys(inventory).forEach((category) => {
     categorySelect.append(option);
 });
 
+function renderGroupOptions(selectedGroup) {
+    groupSelect.replaceChildren();
+    (groups[categorySelect.value] || []).forEach((group) => {
+        const option = document.createElement('option');
+        option.value = group;
+        option.textContent = group;
+        groupSelect.append(option);
+    });
+    if (selectedGroup && groups[categorySelect.value].includes(selectedGroup)) {
+        groupSelect.value = selectedGroup;
+    }
+}
+
 function saveInventory() {
     try {
-        localStorage.setItem(store.storageKey, JSON.stringify(inventory));
+        store.saveData(data);
         status.textContent = 'Changes saved.';
     } catch (error) {
         status.textContent = 'Could not save changes in this browser.';
@@ -102,8 +54,8 @@ function saveMinimums() {
 
 function saveManufacturers() {
     try {
-        localStorage.setItem(manufacturersStorageKey, JSON.stringify(manufacturers));
-        status.textContent = store.manufacturersKey ? 'Manufacturer saved.' : 'Item note saved.';
+        localStorage.setItem(store.manufacturersKey, JSON.stringify(manufacturers));
+        status.textContent = 'Manufacturer saved.';
     } catch (error) {
         status.textContent = 'Could not save this value in this browser.';
     }
@@ -121,17 +73,42 @@ function savePartNumbers() {
 function renderItems() {
     itemList.replaceChildren();
     const category = categorySelect.value;
-    inventory[category].forEach((name, index) => {
+    const orderedItems = [...inventory[category]].sort((first, second) => {
+        const groupOrder = groups[category].indexOf(itemGroups[category][first]) - groups[category].indexOf(itemGroups[category][second]);
+        return groupOrder || (itemLabels[category][first] || first).localeCompare(itemLabels[category][second] || second, undefined, {
+            numeric: true,
+            sensitivity: 'base'
+        });
+    });
+    orderedItems.forEach((name) => {
         const row = document.createElement('li');
         const itemName = document.createElement('span');
         const details = document.createElement('div');
+        const groupLabel = document.createElement('label');
+        const itemGroupSelect = document.createElement('select');
         const minimumLabel = document.createElement('label');
         const minimumInput = document.createElement('input');
         const manufacturerLabel = document.createElement('label');
         const manufacturerInput = document.createElement('input');
         const removeButton = document.createElement('button');
-        itemName.textContent = name;
+        itemName.textContent = itemLabels[category][name] || name;
         details.className = 'item-details';
+        groupLabel.className = 'group-field';
+        groupLabel.append(document.createTextNode('Electrical group'));
+        (groups[category] || []).forEach((group) => {
+            const option = document.createElement('option');
+            option.value = group;
+            option.textContent = group;
+            itemGroupSelect.append(option);
+        });
+        itemGroupSelect.value = itemGroups[category][name] || 'Other items';
+        itemGroupSelect.setAttribute('aria-label', `Group for ${itemLabels[category][name] || name}`);
+        itemGroupSelect.addEventListener('change', () => {
+            itemGroups[category][name] = itemGroupSelect.value;
+            saveInventory();
+            renderItems();
+        });
+        groupLabel.append(itemGroupSelect);
         minimumLabel.className = 'minimum-field';
         minimumLabel.append(document.createTextNode('Minimum quantity'));
         minimumInput.type = 'number';
@@ -189,11 +166,19 @@ function renderItems() {
         removeButton.textContent = 'Remove';
         removeButton.setAttribute('aria-label', `Remove ${name} from ${category}`);
         removeButton.addEventListener('click', () => {
-            inventory[category].splice(index, 1);
+            inventory[category] = inventory[category].filter((item) => item !== name);
+            delete itemGroups[category][name];
+            delete itemLabels[category][name];
+            delete minimums[category][name];
+            delete manufacturers[category][name];
+            delete partNumbers[category][name];
             saveInventory();
+            saveMinimums();
+            saveManufacturers();
+            savePartNumbers();
             renderItems();
         });
-        details.append(itemName, ...itemFields);
+        details.append(itemName, groupLabel, ...itemFields);
         row.append(details, removeButton);
         itemList.append(row);
     });
@@ -204,25 +189,34 @@ function renderItems() {
     }
 }
 
-categorySelect.addEventListener('change', renderItems);
+categorySelect.addEventListener('change', () => {
+    renderGroupOptions();
+    renderItems();
+});
 addForm.addEventListener('submit', (event) => {
     event.preventDefault();
     const name = newItemInput.value.trim();
     const category = categorySelect.value;
+    const group = groupSelect.value;
     if (!name) return;
-    if (inventory[category].some((item) => item.toLowerCase() === name.toLowerCase())) {
-        status.textContent = 'That item is already in this tab.';
+    if (inventory[category].some((item) =>
+        (itemLabels[category][item] || item).toLowerCase() === name.toLowerCase() && itemGroups[category][item] === group
+    )) {
+        status.textContent = 'That item is already in this group.';
         return;
     }
-    inventory[category].push(name);
-    inventory[category].sort((first, second) => first.localeCompare(second, undefined, {
-        numeric: true,
-        sensitivity: 'base'
-    }));
+    const duplicateLabel = inventory[category].some((item) =>
+        (itemLabels[category][item] || item).toLowerCase() === name.toLowerCase()
+    );
+    const key = duplicateLabel ? `${group} — ${name}` : name;
+    inventory[category].push(key);
+    itemGroups[category][key] = group;
+    itemLabels[category][key] = name;
     saveInventory();
     newItemInput.value = '';
     renderItems();
     newItemInput.focus();
 });
 
+renderGroupOptions();
 renderItems();

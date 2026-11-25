@@ -93,7 +93,7 @@
             adminPanel.hidden = !state.adminMenuOpen && !state.loginOpen && state.adminConfigured !== false;
         }
         if (adminToolsToggle) {
-            adminToolsToggle.hidden = state.adminConfigured !== true || (!state.isAdmin && !hasAdminDeviceMarker);
+            adminToolsToggle.hidden = state.adminConfigured !== true || !state.isAdmin;
             adminToolsToggle.setAttribute('aria-expanded', String(Boolean(adminPanel && !adminPanel.hidden)));
         }
         window.CartUser?.setAdminAccess(state.isAdmin);

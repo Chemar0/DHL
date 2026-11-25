@@ -15,6 +15,8 @@ h2 { margin-top: 26px; font-size: 1.15rem; }
 .item-list li { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid #e1e4e9; }
 .item-details { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); flex: 1; min-width: 0; gap: 8px 12px; }
 .item-details > span { grid-column: 1 / -1; min-width: 0; overflow-wrap: anywhere; }
+.group-field { display: flex; min-width: 0; flex-direction: column; gap: 5px; margin: 0; color: #626a76; font-size: 0.86rem; }
+.group-field select { min-width: 0; min-height: 36px; padding: 6px 8px; font-size: 0.88rem; }
 .minimum-field { display: flex; min-width: 0; align-items: center; justify-content: space-between; gap: 7px; color: #626a76; font-size: 0.9rem; }
 .minimum-field input { width: 82px; min-width: 0; min-height: 36px; flex: 0 0 82px; }
 .note-field { display: flex; min-width: 0; align-items: center; gap: 7px; margin: 0; color: #626a76; font-size: 0.9rem; }
@@ -23,4 +25,4 @@ h2 { margin-top: 26px; font-size: 1.15rem; }
 .status { min-height: 1.3em; color: #01473d; }
 button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible { outline: 3px solid #f0a72e; outline-offset: 2px; }
 @media (max-width: 600px) { .item-details { grid-template-columns: minmax(0, 1fr); } .item-details > span { grid-column: 1; } .minimum-field, .note-field { justify-content: space-between; } }
-@media (max-width: 460px) { .admin-card { padding: 17px; } .add-row { flex-direction: column; } .add-row button { min-height: 42px; } }
+@media (max-width: 460px) { .admin-card { padding: 17px; } .add-row { grid-template-columns: minmax(0, 1fr); } .add-row button { min-height: 42px; } }
