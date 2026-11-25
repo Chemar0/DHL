@@ -1,3 +1,4 @@
+(() => {
 // Keep these category and group names in sync with electrical.html.
 const categoryGroups = {
     'Cable & Wire': {
@@ -261,3 +262,4 @@ function migrateMetadata(data, legacyTargets, key, property) {
 }
 
 window.FastenerInventory = inventoryStore;
+})();
