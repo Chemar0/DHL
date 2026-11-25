@@ -29,7 +29,7 @@ h1 { margin: 0 0 18px; font-size: 1.6rem; }
 
 /* Logo centered above the main page title. */
 .site-logo-link { display: block; width: fit-content; margin: 0 auto 32px; }
-.site-logo { display: block; width: min(180px, 55vw); max-height: 90px; margin: 0 auto; object-fit: contain; }
+.site-logo { display: block; width: min(142px, 55vw); max-height: 90px; margin: 0 auto; object-fit: contain; }
 .site-logo-link:focus-visible { outline: 3px solid #f0a72e; outline-offset: 4px; }
 
 /* Tab grid, selected state, and keyboard focus. */
