@@ -1,8 +1,5 @@
-/* Global sizing and the hidden top-left admin shortcut. */
+/* Global sizing and shared page styles. */
 * { box-sizing: border-box; }
-
-.admin-entry { position: fixed; z-index: 6; top: 0; left: 0; width: 30px; height: 30px; margin: 0; padding: 0; border: 0; background: transparent; color: transparent; opacity: 0; }
-.admin-entry:focus-visible { width: auto; height: auto; padding: 8px 12px; background: #01473d; color: #fff; opacity: 1; }
 
 /* Page background and centered fastener-list card. */
 body {
@@ -176,6 +173,8 @@ h1 { margin: 0 0 18px; font-size: 1.6rem; }
 .admin-tools-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .admin-tools-header h2 { margin: 0; color: #01473d; font-size: 1.1rem; }
 .admin-tools-header button { width: 38px; min-height: 38px; margin: 0; padding: 0; border: 0; background: transparent; color: #202124; font-size: 1.6rem; cursor: pointer; }
+.admin-manage-link { display: inline-flex; align-items: center; min-height: 40px; margin-top: 8px; padding: 9px 12px; border: 1px solid #01473d; border-radius: 6px; background: #01473d; color: #fff; font: inherit; text-decoration: none; }
+.admin-manage-link:hover, .admin-manage-link:focus-visible { background: #00372f; }
 .cart-admin { margin: 8px 0 0; padding: 12px; border: 1px solid #d5dae1; border-radius: 8px; text-align: left; }
 .cart-admin h3 { margin: 0 0 8px; color: #01473d; font-size: 1rem; }
 .cart-admin p { margin: 0 0 10px; color: #626a76; font-size: 0.84rem; }

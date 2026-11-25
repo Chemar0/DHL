@@ -94,10 +94,6 @@ panels.forEach((panel) => {
     }
 });
 
-document.querySelector('.admin-entry').addEventListener('click', () => {
-    window.location.href = 'electrical-admin.html';
-});
-
 function selectTab(tab, moveFocus = false) {
     const panelId = tab.getAttribute('aria-controls');
 
