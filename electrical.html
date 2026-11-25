@@ -1,13 +1,15 @@
 <!doctype html>
 <html lang="en">
 <head>
+    <script>document.documentElement.classList.add('site-access-locked');</script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Electrical Parts List</title>
-    <link rel="stylesheet" href="ani.css?v=electrical-grouped-catalog-1">
+    <link rel="stylesheet" href="ani.css?v=website-access-approval-1">
     <link rel="stylesheet" href="cart-groups.css?v=cart-groups-1">
+    <link rel="stylesheet" href="site-access.css?v=access-gate-1">
 </head>
-<body>
+<body data-site-access-scripts="electrical-inventory.js?v=marathon-consumables-2|cart-user.js?v=verified-cart-users-1|cart-admin.js?v=website-access-approval-1|cart-groups.js?v=cart-groups-1|electrical.js?v=marathon-consumables-2">
     <button class="cart-toggle" id="cart-toggle" type="button" aria-controls="cart-panel" aria-expanded="false">
         Cart <span class="cart-count" id="cart-count">0</span>
     </button>
@@ -45,6 +47,12 @@
                 <button type="submit">Send sign-in link</button>
             </form>
             <div id="cart-admin-actions" hidden>
+                <section class="website-access-requests" id="website-access-requests" hidden aria-labelledby="website-access-heading">
+                    <h3 id="website-access-heading">Website access requests</h3>
+                    <p>Review verified email addresses before they can open the parts lists.</p>
+                    <button id="refresh-website-access" type="button">Refresh requests</button>
+                    <ul id="website-access-request-list" aria-live="polite"></ul>
+                </section>
                 <form id="cart-admin-name-form">
                     <label for="cart-admin-name">Admin display name</label>
                     <input id="cart-admin-name" type="text" maxlength="80" autocomplete="name" required>
@@ -149,11 +157,7 @@
         </main>
     </div>
     <script src="supabase-config.js?v=shared-cart-clear-1"></script>
-    <script src="electrical-inventory.js?v=marathon-consumables-2"></script>
-    <script src="cart-user.js?v=verified-cart-users-1"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="cart-admin.js?v=auth-email-limit-guidance-1"></script>
-    <script src="cart-groups.js?v=cart-groups-1"></script>
-    <script src="electrical.js?v=marathon-consumables-2"></script>
+    <script src="site-access.js?v=access-gate-1"></script>
 </body>
 </html>

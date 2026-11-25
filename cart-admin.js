@@ -12,6 +12,9 @@
     const visitorAuthSubmit = document.getElementById('cart-visitor-send-link');
     const visitorSignOutButton = document.getElementById('cart-user-sign-out');
     const adminActions = document.getElementById('cart-admin-actions');
+    const websiteAccessSection = document.getElementById('website-access-requests');
+    const websiteAccessList = document.getElementById('website-access-request-list');
+    const refreshWebsiteAccessButton = document.getElementById('refresh-website-access');
     const nameForm = document.getElementById('cart-admin-name-form');
     const nameInput = document.getElementById('cart-admin-name');
     const adminManagement = document.getElementById('cart-admin-management');
@@ -77,6 +80,7 @@
         const hasSession = Boolean(state.session);
         if (loginForm) loginForm.hidden = hasSession;
         if (adminActions) adminActions.hidden = !state.isAdmin;
+        if (websiteAccessSection) websiteAccessSection.hidden = !state.isAdmin;
         if (adminManagement) adminManagement.hidden = !state.isAdmin;
         if (cartUserSection) cartUserSection.hidden = !state.isAdmin;
         if (ownerActions) ownerActions.hidden = !state.isOwner;
@@ -184,6 +188,7 @@
         updateControls();
         finishAccessCheck();
         void refreshAccountList();
+        void refreshWebsiteAccessRequests();
         void refreshCartUsers();
         void refreshOrderEmailLog(true);
         void window.refreshSharedCart?.();
@@ -288,6 +293,85 @@
                 row.append(deleteButton);
             }
             adminList.append(row);
+        });
+    }
+
+    async function refreshWebsiteAccessRequests() {
+        if (!state.isAdmin || !state.client || !websiteAccessList) return;
+        if (refreshWebsiteAccessButton) refreshWebsiteAccessButton.disabled = true;
+        let data;
+        let error;
+        try {
+            ({ data, error } = await state.client.rpc('list_website_access_requests'));
+        } catch (requestError) {
+            error = requestError;
+        } finally {
+            if (refreshWebsiteAccessButton) refreshWebsiteAccessButton.disabled = false;
+        }
+        if (error) {
+            setStatus('Could not load website access requests. Check the access approval setup.', true);
+            return;
+        }
+
+        websiteAccessList.replaceChildren();
+        const requests = Array.isArray(data) ? data : [];
+        if (!requests.length) {
+            const empty = document.createElement('li');
+            empty.className = 'admin-account-empty';
+            empty.textContent = 'No access requests yet.';
+            websiteAccessList.append(empty);
+            return;
+        }
+
+        requests.forEach((request) => {
+            const row = document.createElement('li');
+            const details = document.createElement('div');
+            const email = document.createElement('span');
+            const date = document.createElement('span');
+            email.className = 'website-access-request-email';
+            email.textContent = request.email || 'Email unavailable';
+            date.className = 'website-access-request-meta';
+            const timestamp = request.requested_at ? new Date(request.requested_at) : null;
+            date.textContent = timestamp && !Number.isNaN(timestamp.valueOf())
+                ? `Requested ${timestamp.toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}`
+                : 'Request date unavailable';
+            details.append(email, date);
+            row.append(details);
+
+            if (request.status === 'pending') {
+                const actions = document.createElement('div');
+                actions.className = 'website-access-request-actions';
+                ['approved', 'denied'].forEach((decision) => {
+                    const button = document.createElement('button');
+                    button.type = 'button';
+                    button.dataset.decision = decision;
+                    button.textContent = decision === 'approved' ? 'Approve' : 'Deny';
+                    button.addEventListener('click', async () => {
+                        if (!state.isAdmin || !request.user_id) return;
+                        actions.querySelectorAll('button').forEach((action) => { action.disabled = true; });
+                        setStatus(`${decision === 'approved' ? 'Approving' : 'Denying'} ${request.email}…`);
+                        const { data: reviewedEmail, error: reviewError } = await state.client.rpc('review_website_access_request', {
+                            p_user_id: request.user_id,
+                            p_status: decision
+                        });
+                        if (reviewError) {
+                            actions.querySelectorAll('button').forEach((action) => { action.disabled = false; });
+                            setStatus(reviewError.message || 'Could not update the access request.', true);
+                            return;
+                        }
+                        setStatus(`${reviewedEmail || request.email} ${decision}.`);
+                        await refreshWebsiteAccessRequests();
+                    });
+                    actions.append(button);
+                });
+                row.append(actions);
+            } else {
+                const badge = document.createElement('span');
+                badge.className = 'website-access-request-status';
+                badge.textContent = request.status;
+                row.append(badge);
+            }
+            websiteAccessList.append(row);
         });
     }
 
@@ -484,6 +568,7 @@
 
     loadOlderOrderLogsButton?.addEventListener('click', () => { void refreshOrderEmailLog(false); });
     refreshAccountsButton?.addEventListener('click', () => { void refreshAccountList(); });
+    refreshWebsiteAccessButton?.addEventListener('click', () => { void refreshWebsiteAccessRequests(); });
     refreshCartUsersButton?.addEventListener('click', () => { void refreshCartUsers(); });
 
     if (!config.url || !publicApiKey || !window.supabase?.createClient) {

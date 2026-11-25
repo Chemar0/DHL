@@ -1,12 +1,14 @@
 <!doctype html>
 <html lang="en">
 <head>
+    <script>document.documentElement.classList.add('site-access-locked');</script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Manage Fastener Items</title>
     <link rel="stylesheet" href="admin.css?v=admin-overflow-1">
+    <link rel="stylesheet" href="site-access.css?v=access-gate-1">
 </head>
-<body>
+<body data-site-access-admin-only="true" data-site-access-scripts="inventory.js|admin.js">
     <main class="admin-card">
         <a class="back-link" href="mechanical.html">← Back to fastener list</a>
         <h1>Manage items</h1>
@@ -27,7 +29,8 @@
         <ul id="item-list" class="item-list"></ul>
         <p id="admin-status" class="status" role="status" aria-live="polite"></p>
     </main>
-    <script src="inventory.js"></script>
-    <script src="admin.js"></script>
+    <script src="supabase-config.js?v=shared-cart-4"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="site-access.js?v=access-gate-1"></script>
 </body>
 </html>

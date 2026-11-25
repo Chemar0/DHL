@@ -210,6 +210,19 @@ h1 { margin: 0 0 18px; font-size: 1.6rem; }
 .cart-admin-management .delete-auth-account:hover { background: #fff1f1; }
 .cart-admin-management .admin-owner-label { flex: 0 0 auto; color: #626a76; font-size: 0.78rem; }
 .cart-admin-management[hidden] { display: none; }
+.website-access-requests { margin: 0 0 14px; padding: 0 0 14px; border-bottom: 1px solid #d5dae1; }
+.website-access-requests[hidden] { display: none; }
+.website-access-requests h3 { margin: 0 0 6px; color: #01473d; font-size: .98rem; }
+.website-access-requests > p { margin: 0 0 8px; color: #626a76; font-size: .84rem; }
+.website-access-requests > ul { max-height: 260px; overflow: auto; margin: 10px 0 0; padding: 0; list-style: none; }
+.website-access-requests > ul > li { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; padding: 9px 0; border-bottom: 1px solid #e1e4e9; }
+.website-access-request-email { min-width: 0; flex: 1 1 180px; overflow-wrap: anywhere; font-size: .87rem; font-weight: 600; }
+.website-access-request-meta { display: block; margin-top: 3px; color: #626a76; font-size: .75rem; font-weight: 400; }
+.website-access-request-actions { display: flex; gap: 6px; }
+.website-access-request-actions button { min-height: 34px; padding: 6px 10px; border: 1px solid #01473d; border-radius: 6px; background: #01473d; color: #fff; font: inherit; font-size: .8rem; cursor: pointer; }
+.website-access-request-actions button[data-decision="denied"] { border-color: #a83232; background: #fff; color: #a83232; }
+.website-access-request-actions button:disabled { cursor: wait; opacity: .55; }
+.website-access-request-status { flex: 0 0 auto; color: #626a76; font-size: .78rem; text-transform: capitalize; }
 .cart-user-management { margin-top: 14px; padding-top: 12px; border-top: 1px solid #d5dae1; }
 .cart-user-management[hidden] { display: none; }
 .cart-user-management h4 { margin: 0 0 6px; color: #01473d; font-size: 0.94rem; }

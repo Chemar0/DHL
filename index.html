@@ -1,12 +1,14 @@
 <!doctype html>
 <html lang="en">
 <head>
+    <script>document.documentElement.classList.add('site-access-locked');</script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Select a parts list</title>
     <link rel="stylesheet" href="landing.css">
+    <link rel="stylesheet" href="site-access.css?v=access-gate-1">
 </head>
-<body>
+<body data-site-access-scripts="landing.js">
     <main class="landing-card">
         <img class="site-logo" src="logo.svg" alt="">
         <h1>Select a parts list</h1>
@@ -15,6 +17,8 @@
             <button type="button" id="electrical-button">Electrical</button>
         </div>
     </main>
-    <script src="landing.js"></script>
+    <script src="supabase-config.js?v=shared-cart-clear-1"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="site-access.js?v=access-gate-1"></script>
 </body>
 </html>
