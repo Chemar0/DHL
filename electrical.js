@@ -354,48 +354,55 @@ function renderCart() {
     cartItems.replaceChildren();
     let total = 0;
 
-    cart.forEach((items, category) => {
-        const heading = document.createElement('li');
-        heading.className = 'cart-category';
-        heading.textContent = category;
-        cartItems.append(heading);
+    window.CartGrouping.byType(cart).forEach((categories, type) => {
+        if (!categories.length) return;
+        const typeHeading = document.createElement('li');
+        typeHeading.className = 'cart-type-heading';
+        typeHeading.textContent = type;
+        cartItems.append(typeHeading);
 
-        items.forEach((quantity, name) => {
-            total += quantity;
-            const row = document.createElement('li');
-            const itemDetails = document.createElement('div');
-            const itemName = document.createElement('span');
-            const attribution = document.createElement('span');
-            const itemQuantity = document.createElement('span');
-            const controls = document.createElement('div');
-            const decrease = document.createElement('button');
-            const increase = document.createElement('button');
-            itemDetails.className = 'cart-item-details';
-            itemName.className = 'cart-item-name';
-            itemName.textContent = name;
-            attribution.className = 'cart-item-attribution';
-            const details = cartAttribution.get(category)?.get(name);
-            if (!details) attribution.textContent = 'Attribution unavailable';
-            else if (details.added_by === details.last_updated_by) {
-                attribution.textContent = 'Added by ' + details.added_by;
-            } else {
-                attribution.textContent = 'Added by ' + details.added_by + ' · last changed by ' + details.last_updated_by;
-            }
-            itemDetails.append(itemName, attribution);
-            itemQuantity.className = 'cart-item-quantity';
-            itemQuantity.textContent = String(quantity);
-            itemQuantity.setAttribute('aria-label', `Quantity: ${quantity}`);
-            controls.className = 'quantity-controls';
-            decrease.type = 'button';
-            decrease.className = 'quantity-button';
-            decrease.textContent = '−';
-            decrease.setAttribute('aria-label', `Remove one ${name}`);
-            increase.type = 'button';
-            increase.className = 'quantity-button';
-            increase.textContent = '+';
-            increase.setAttribute('aria-label', `Add one ${name}`);
-            decrease.addEventListener('click', () => {
-                updateCartItem(category, name, -1);
+        categories.forEach(([category, items]) => {
+            const heading = document.createElement('li');
+            heading.className = 'cart-category';
+            heading.textContent = category;
+            cartItems.append(heading);
+
+            items.forEach((quantity, name) => {
+                total += quantity;
+                const row = document.createElement('li');
+                const itemDetails = document.createElement('div');
+                const itemName = document.createElement('span');
+                const attribution = document.createElement('span');
+                const itemQuantity = document.createElement('span');
+                const controls = document.createElement('div');
+                const decrease = document.createElement('button');
+                const increase = document.createElement('button');
+                itemDetails.className = 'cart-item-details';
+                itemName.className = 'cart-item-name';
+                itemName.textContent = name;
+                attribution.className = 'cart-item-attribution';
+                const details = cartAttribution.get(category)?.get(name);
+                if (!details) attribution.textContent = 'Attribution unavailable';
+                else if (details.added_by === details.last_updated_by) {
+                    attribution.textContent = 'Added by ' + details.added_by;
+                } else {
+                    attribution.textContent = 'Added by ' + details.added_by + ' · last changed by ' + details.last_updated_by;
+                }
+                itemDetails.append(itemName, attribution);
+                itemQuantity.className = 'cart-item-quantity';
+                itemQuantity.textContent = String(quantity);
+                itemQuantity.setAttribute('aria-label', `Quantity: ${quantity}`);
+                controls.className = 'quantity-controls';
+                decrease.type = 'button';
+                decrease.className = 'quantity-button';
+                decrease.textContent = '−';
+                decrease.setAttribute('aria-label', `Remove one ${name}`);
+                increase.type = 'button';
+                increase.className = 'quantity-button';
+                increase.textContent = '+';
+                increase.setAttribute('aria-label', `Add one ${name}`);
+                decrease.addEventListener('click', () => {
+                    updateCartItem(category, name, -1);
             });
             increase.addEventListener('click', () => {
                 updateCartItem(category, name, 1);
@@ -403,6 +410,7 @@ function renderCart() {
             controls.append(decrease, itemQuantity, increase);
             row.append(itemDetails, controls);
             cartItems.append(row);
+            });
         });
     });
 

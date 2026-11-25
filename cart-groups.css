@@ -1,0 +1,20 @@
+.cart-items li.cart-type-heading {
+    display: block;
+    margin-top: 4px;
+    padding: 14px 0 6px;
+    border-bottom: 1px solid #d5dae1;
+    color: #202124;
+    font-size: 1.05rem;
+    font-weight: 700;
+}
+
+.cart-items li.cart-type-heading:first-child { margin-top: 0; }
+
+.cart-items li.cart-category {
+    display: block;
+    padding: 10px 0 5px 10px;
+    border-bottom: 0;
+    color: #01473d;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
