@@ -28,6 +28,7 @@
     const signOutButton = root.querySelector('#site-access-signout');
     const scriptNames = (document.body.dataset.siteAccessScripts || '').split('|').filter(Boolean);
     const needsAdmin = document.body.dataset.siteAccessAdminOnly === 'true';
+    const approvedSessionKey = 'dhl-approved-session-user';
     let client = null;
     let currentSession = null;
     let pollTimer = null;
@@ -94,6 +95,51 @@
         if (!pollTimer) pollTimer = window.setInterval(() => { void checkAccess(); }, 30000);
     }
 
+    function hasApprovedSessionHint(session) {
+        if (!session?.user?.id) return false;
+        try {
+            return sessionStorage.getItem(approvedSessionKey) === session.user.id;
+        } catch (error) {
+            return false;
+        }
+    }
+
+    function clearApprovedSessionHint() {
+        try { sessionStorage.removeItem(approvedSessionKey); } catch (error) { /* Storage can be disabled. */ }
+    }
+
+    function rememberApprovedSession(session) {
+        if (!session?.user?.id) return;
+        try { sessionStorage.setItem(approvedSessionKey, session.user.id); } catch (error) { /* Storage can be disabled. */ }
+    }
+
+    async function resumeApprovedSession(session) {
+        if (!hasApprovedSessionHint(session)) return false;
+        currentSession = session;
+        if (needsAdmin) {
+            const { data, error } = await client.rpc('get_cart_admin_profile');
+            if (error || !Array.isArray(data) || !data.length) {
+                clearApprovedSessionHint();
+                return false;
+            }
+        }
+        form.hidden = true;
+        signOutButton.hidden = false;
+        root.hidden = true;
+        document.documentElement.classList.remove('site-access-locked');
+        try {
+            await loadAppScripts();
+            return true;
+        } catch (error) {
+            appStarted = false;
+            pageUnlocked = false;
+            root.hidden = false;
+            document.documentElement.classList.add('site-access-locked');
+            setMode('error', error.message);
+            return true;
+        }
+    }
+
     async function grantAccess() {
         if (pageUnlocked) return;
         if (needsAdmin) {
@@ -129,11 +175,13 @@
             const { data, error } = await client.rpc('get_website_access_status');
             if (error) throw error;
             if (data === 'approved') {
+                rememberApprovedSession(currentSession);
                 if (pollTimer) window.clearInterval(pollTimer);
                 pollTimer = null;
                 await grantAccess();
                 if (pageUnlocked && !pollTimer) pollTimer = window.setInterval(() => { void checkAccess(); }, 30000);
             } else if (data === 'pending') {
+                clearApprovedSessionHint();
                 if (pageUnlocked) {
                     pageUnlocked = false;
                     root.hidden = false;
@@ -143,6 +191,7 @@
                 setMode('pending');
                 if (!pollTimer) pollTimer = window.setInterval(() => { void checkAccess(); }, 8000);
             } else if (data === 'denied') {
+                clearApprovedSessionHint();
                 if (pageUnlocked) {
                     pageUnlocked = false;
                     root.hidden = false;
@@ -153,6 +202,7 @@
                 pollTimer = null;
                 setMode('denied');
             } else if (data === 'not_requested') {
+                clearApprovedSessionHint();
                 if (pageUnlocked) {
                     pageUnlocked = false;
                     root.hidden = false;
@@ -168,6 +218,7 @@
                     if (requestStatus === 'pending' && !pollTimer) pollTimer = window.setInterval(() => { void checkAccess(); }, 8000);
                 }
             } else if (data === 'unverified') {
+                clearApprovedSessionHint();
                 if (pageUnlocked) {
                     pageUnlocked = false;
                     root.hidden = false;
@@ -179,6 +230,12 @@
                 setMode('error', 'The access service returned an unexpected status. Reload to try again.');
             }
         } catch (error) {
+            if (pageUnlocked) {
+                pageUnlocked = false;
+                root.hidden = false;
+                root.classList.remove('is-leaving', 'is-approved');
+                document.documentElement.classList.add('site-access-locked');
+            }
             setMode('error', error.message || 'Could not check your request. Reload to try again.');
         } finally {
             checking = false;
@@ -254,6 +311,7 @@
     client.auth.onAuthStateChange((_event, session) => {
         currentSession = session || null;
         if (!currentSession) {
+            clearApprovedSessionHint();
             if (pollTimer) window.clearInterval(pollTimer);
             pollTimer = null;
             pageUnlocked = false;
@@ -262,11 +320,15 @@
             document.documentElement.classList.add('site-access-locked');
             setMode('signed-out');
         } else {
-            root.hidden = false;
-            root.classList.remove('is-leaving');
-            document.documentElement.classList.add('site-access-locked');
-            setMode('verifying');
-            window.setTimeout(() => { void checkAccess(); }, 0);
+            if (hasApprovedSessionHint(currentSession)) {
+                void resumeApprovedSession(currentSession).then(() => { void checkAccess(); });
+            } else {
+                root.hidden = false;
+                root.classList.remove('is-leaving');
+                document.documentElement.classList.add('site-access-locked');
+                setMode('verifying');
+                window.setTimeout(() => { void checkAccess(); }, 0);
+            }
         }
     });
 
@@ -277,8 +339,12 @@
         }
         currentSession = data.session || null;
         if (currentSession) {
-            setMode('verifying');
-            void checkAccess();
+            if (hasApprovedSessionHint(currentSession)) {
+                void resumeApprovedSession(currentSession).then(() => { void checkAccess(); });
+            } else {
+                setMode('verifying');
+                void checkAccess();
+            }
         } else {
             setMode('signed-out');
         }
