@@ -1,3 +1,5 @@
+// File purpose: Admin-only Microsoft Graph authorization flow: requests a device code, polls consent, and stores mail-token state through protected database RPCs.
+
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const CLIENT_ID = Deno.env.get("MICROSOFT_CLIENT_ID") ?? "";
 const SETUP_KEY = Deno.env.get("MICROSOFT_MAIL_SETUP_KEY") ?? "";

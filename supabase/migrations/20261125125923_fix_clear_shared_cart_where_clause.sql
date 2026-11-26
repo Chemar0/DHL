@@ -1,3 +1,5 @@
+-- File purpose: Migration replacing the cart-clear RPC with an explicit safe DELETE condition required by Postgres.
+
 create or replace function public.clear_shared_cart(p_actor_name text)
 returns void
 language plpgsql

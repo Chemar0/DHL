@@ -1,3 +1,5 @@
+// File purpose: Electrical page behavior: tab navigation, shared-cart synchronization, item quantities and activity, cart rendering, and clear-cart/email-draft actions.
+
 const tabs = Array.from(document.querySelectorAll('[role="tab"]'));
 const panels = Array.from(document.querySelectorAll('[role="tabpanel"]'));
 const inventoryStore = window.FastenerInventory;

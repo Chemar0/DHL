@@ -1,3 +1,5 @@
+-- File purpose: Database RPC that exposes Auth account listings to authorized cart admins while keeping deletion owner-restricted.
+
 -- Allow every allowlisted cart admin to view Supabase Auth accounts.
 -- Account deletion remains restricted to the owner by delete_cart_auth_user.
 

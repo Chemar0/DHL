@@ -1,3 +1,5 @@
+// File purpose: Mechanical inventory editor: reads saved data, renders item controls, and persists edits to labels, groups, minimums, manufacturers, and part numbers.
+
 const store = window.FastenerInventory;
 const isElectricalInventory = typeof store.loadData === 'function';
 function readSavedObject(key) {

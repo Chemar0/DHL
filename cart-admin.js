@@ -1,3 +1,5 @@
+// File purpose: Shared cart administration controller: verifies admin access, controls visitor/admin views, and loads or manages order email history.
+
 (() => {
     const status = document.getElementById('cart-admin-status');
     const adminPanel = document.getElementById('admin-tools-panel');

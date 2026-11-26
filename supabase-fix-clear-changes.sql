@@ -1,3 +1,5 @@
+-- File purpose: Replacement cart-clear and activity-clear RPC definitions that preserve audit behavior and use explicit DELETE predicates.
+
 -- Supabase requires an explicit WHERE clause on DELETE statements. Keep the
 -- existing clear-all behavior while making both cart clear RPCs executable.
 begin;

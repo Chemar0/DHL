@@ -1,3 +1,5 @@
+// File purpose: Shared access gate: restores approved sessions, submits/reviews access requests, verifies account approval, and loads protected page scripts.
+
 (() => {
     let siteConfirmId = 0;
     let siteConfirmOpen = false;

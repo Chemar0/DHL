@@ -1,3 +1,5 @@
+<!-- File purpose: Operational guide for configuring, deploying, and troubleshooting the Supabase backend used by this parts-list site. -->
+
 # Configure the shared cart and administrator
 
 The mechanical and electrical pages share one cart through Supabase.

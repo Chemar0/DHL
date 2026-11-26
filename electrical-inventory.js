@@ -1,3 +1,5 @@
+// File purpose: Electrical catalog schema, defaults, browser-storage recovery, and migrations for electrical groups, item labels, and metadata.
+
 (() => {
 // Keep these category and group names in sync with electrical.html.
 const categoryGroups = {

@@ -1,3 +1,5 @@
+-- File purpose: Database access enforcement requiring verified, approved accounts for cart operations and associating browser registry rows with users.
+
 -- Require a confirmed email and approved website access for shared cart use,
 -- and link each named browser to the verified Auth account that registered it.
 create or replace function private.require_verified_cart_user()

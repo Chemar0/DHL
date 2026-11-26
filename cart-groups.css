@@ -1,3 +1,5 @@
+/* File purpose: Small layout overrides that visually separate mechanical and electrical groups inside the shared cart. */
+
 .cart-items li.cart-type-heading {
     display: block;
     margin-top: 4px;

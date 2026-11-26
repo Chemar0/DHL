@@ -1,3 +1,5 @@
+-- File purpose: Private registry and RPCs for recording visitor-selected cart names and allowing admins to review or remove browser entries.
+
 -- Store the self-entered name for each browser so every cart admin can see
 -- the names that have used the shared cart. These are labels, not identities.
 

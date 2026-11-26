@@ -1,3 +1,5 @@
+-- File purpose: Migration creating website access requests, approval checks, and gated cart/order RPCs.
+
 create table if not exists public.website_access_requests (
     user_id uuid primary key references auth.users(id) on delete cascade,
     email text not null,

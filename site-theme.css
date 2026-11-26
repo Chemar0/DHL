@@ -1,3 +1,5 @@
+/* File purpose: Design tokens and shared base rules for colors, typography, surfaces, focus rings, and consistent box sizing. */
+
 :root {
     color-scheme: light;
     --brand: #005850;

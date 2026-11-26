@@ -1,3 +1,5 @@
+-- File purpose: Migration adding private storage and admin-only management for Microsoft Graph mail authorization tokens.
+
 create table if not exists private.microsoft_graph_email_state (
     singleton boolean primary key default true check (singleton),
     refresh_token text,

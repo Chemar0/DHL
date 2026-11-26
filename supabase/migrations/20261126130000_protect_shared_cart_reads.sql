@@ -1,3 +1,5 @@
+-- File purpose: Migration requiring approved verified users for shared-cart reads and restricting access to the underlying helper.
+
 -- Cart reads must enforce the same approved-account gate as cart writes.
 -- A valid Supabase session alone is not sufficient for website access.
 

@@ -1,3 +1,5 @@
+// File purpose: Account administration controller: loads and reviews access requests, manages invited access codes and cart users, and updates admin profile controls.
+
 (() => {
     const config = window.SUPABASE_CONFIG || {};
     const apiKey = config.publishableKey || config.anonKey || '';

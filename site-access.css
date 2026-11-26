@@ -1,3 +1,5 @@
+/* File purpose: Shared loading, access-request, verification, and transition screens shown before protected site pages load. */
+
 html.site-access-locked,
 html.site-access-locked body {
     min-height: 100%;

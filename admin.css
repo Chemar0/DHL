@@ -1,3 +1,5 @@
+/* File purpose: Shared visual layout for the general and electrical inventory administration pages, including forms, item rows, and responsive behavior. */
+
 * { box-sizing: border-box; }
 
 body {

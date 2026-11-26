@@ -1,3 +1,5 @@
+// File purpose: Mechanical parts-list behavior: tab navigation, shared-cart sync, item quantities and activity, cart rendering, clear-cart flow, and email-draft actions.
+
 const tabs = Array.from(document.querySelectorAll('[role="tab"]'));
 const panels = Array.from(document.querySelectorAll('[role="tabpanel"]'));
 const inventoryStore = window.FastenerInventory;

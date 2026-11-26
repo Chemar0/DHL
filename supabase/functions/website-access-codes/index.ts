@@ -1,3 +1,5 @@
+// File purpose: Website access-code API: creates, lists, and redeems admin-issued codes using authorization checks and protected RPCs.
+
 const SUPABASE_URL = (Deno.env.get("SUPABASE_URL") ?? "").replace(/\/$/, "");
 const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";

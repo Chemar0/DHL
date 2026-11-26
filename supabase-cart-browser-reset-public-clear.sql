@@ -1,3 +1,5 @@
+-- File purpose: Database changes for admin removal of remembered cart browsers and approved-user cart clearing with audit attribution.
+
 -- Legacy filename retained. This script requires the current website access
 -- approval migration and does not grant anonymous access to shared-cart data.
 -- When an owner removes a visitor browser, its old saved name must not be

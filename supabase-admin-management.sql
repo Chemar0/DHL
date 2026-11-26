@@ -1,3 +1,5 @@
+-- File purpose: Database setup and RPCs for owner/admin roles, administrator management, Auth account visibility, and protected account deletion.
+
 -- Allow the existing sole admin to manage additional verified administrators.
 -- The earliest existing allowlisted user becomes the owner if none is marked yet.
 

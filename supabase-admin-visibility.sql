@@ -1,3 +1,5 @@
+-- File purpose: Public-safe status RPC that reports whether admin features are configured without exposing administrator identities.
+
 -- Expose only whether an administrator is configured so the site can hide
 -- the administrator panel from ordinary visitors.
 create or replace function public.cart_admin_is_configured()

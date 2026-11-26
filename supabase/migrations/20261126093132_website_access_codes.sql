@@ -1,3 +1,5 @@
+-- File purpose: Migration adding encrypted website access invites and admin/redeem management RPCs.
+
 create table if not exists private.website_access_invites (
     id uuid primary key default gen_random_uuid(),
     email text not null,

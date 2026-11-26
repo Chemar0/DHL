@@ -1,3 +1,5 @@
+// File purpose: Collects and remembers a visitor-provided cart display name and browser ID, then notifies cart scripts when identity state changes.
+
 (() => {
     const storageKey = 'dhl-cart-user-name';
     const deviceStorageKey = 'dhl-cart-device-id';

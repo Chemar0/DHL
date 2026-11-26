@@ -1,3 +1,5 @@
+// File purpose: Supabase Auth email hook: obtains/refreshes Microsoft Graph credentials, builds safe verification messages, and sends them through Graph.
+
 import { Webhook } from "standardwebhooks";
 
 type AuthEvent = {

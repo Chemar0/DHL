@@ -1,3 +1,5 @@
+-- File purpose: Private order-email audit table and administrator-only RPCs to append, list, and delete order-draft log entries.
+
 -- Keep cart change history administrator-only and log order email drafts only
 -- for verified accounts approved to use the site.
 
