@@ -477,8 +477,8 @@ function renderCart() {
     renderCartActivity();
 }
 
-async // Cart clearing and order handoff: clear through the server, then prepare an email draft when requested.
-function clearSharedCart() {
+// Cart clearing and order handoff: clear through the server, then prepare an email draft when requested.
+async function clearSharedCart() {
     await window.CartAdmin?.whenAccessChecked?.();
     if (!window.CartAdmin?.isVisitorVerified?.()) {
         throw new Error('Verify your email and wait for website approval before clearing the shared cart.');
