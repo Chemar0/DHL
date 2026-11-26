@@ -1,4 +1,79 @@
 (() => {
+    let siteConfirmId = 0;
+    let siteConfirmOpen = false;
+
+    window.siteConfirm = (options = {}) => {
+        if (siteConfirmOpen) return Promise.resolve(false);
+        siteConfirmOpen = true;
+
+        const titleText = options.title || 'Confirm action';
+        const messageText = options.message || 'Are you sure you want to continue?';
+        const confirmText = options.confirmText || 'Continue';
+        const cancelText = options.cancelText || 'Cancel';
+        const variant = options.variant === 'warning' ? 'warning' : 'danger';
+        const id = ++siteConfirmId;
+        const dialog = document.createElement('dialog');
+        dialog.className = `site-confirm-dialog site-confirm-dialog--${variant}`;
+        dialog.setAttribute('aria-labelledby', `site-confirm-title-${id}`);
+        dialog.setAttribute('aria-describedby', `site-confirm-message-${id}`);
+
+        const panel = document.createElement('div');
+        panel.className = 'site-confirm-dialog__panel';
+        const mark = document.createElement('span');
+        mark.className = 'site-confirm-dialog__mark';
+        mark.setAttribute('aria-hidden', 'true');
+        mark.textContent = variant === 'warning' ? '!' : '×';
+        const heading = document.createElement('h2');
+        heading.className = 'site-confirm-dialog__title';
+        heading.id = `site-confirm-title-${id}`;
+        heading.textContent = titleText;
+        const message = document.createElement('p');
+        message.className = 'site-confirm-dialog__message';
+        message.id = `site-confirm-message-${id}`;
+        message.textContent = messageText;
+        const actions = document.createElement('div');
+        actions.className = 'site-confirm-dialog__actions';
+        const cancelButton = document.createElement('button');
+        cancelButton.type = 'button';
+        cancelButton.className = 'site-confirm-dialog__cancel';
+        cancelButton.textContent = cancelText;
+        const confirmButton = document.createElement('button');
+        confirmButton.type = 'button';
+        confirmButton.className = 'site-confirm-dialog__confirm';
+        confirmButton.textContent = confirmText;
+        actions.append(cancelButton, confirmButton);
+        panel.append(mark, heading, message, actions);
+        dialog.append(panel);
+
+        const finish = (confirmed) => {
+            if (dialog.open) dialog.close(confirmed ? 'confirm' : 'cancel');
+        };
+        dialog.addEventListener('close', () => {
+            siteConfirmOpen = false;
+            dialog.remove();
+            resolveConfirmation(dialog.returnValue === 'confirm');
+        }, { once: true });
+        dialog.addEventListener('cancel', () => { dialog.returnValue = 'cancel'; });
+        dialog.addEventListener('click', (event) => {
+            if (event.target === dialog) finish(false);
+        });
+        cancelButton.addEventListener('click', () => finish(false));
+        confirmButton.addEventListener('click', () => finish(true));
+
+        let resolveConfirmation;
+        const result = new Promise((resolve) => { resolveConfirmation = resolve; });
+        document.body.append(dialog);
+        try {
+            dialog.showModal();
+            cancelButton.focus();
+        } catch (error) {
+            siteConfirmOpen = false;
+            dialog.remove();
+            resolveConfirmation(false);
+        }
+        return result;
+    };
+
     const config = window.SUPABASE_CONFIG || {};
     const apiKey = config.publishableKey || config.anonKey || '';
     let preflightResume = document.documentElement.classList.contains('site-access-resuming');

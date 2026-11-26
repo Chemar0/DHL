@@ -261,7 +261,13 @@
             deleteButton.className = 'delete-order-log';
             deleteButton.textContent = 'Delete this entry';
             deleteButton.addEventListener('click', async () => {
-                if (!state.isAdmin || !window.confirm('Delete this order email entry? This cannot be undone.')) return;
+                if (!state.isAdmin) return;
+                const confirmed = await window.siteConfirm({
+                    title: 'Delete order email entry?',
+                    message: 'Delete this saved order email entry? This cannot be undone.',
+                    confirmText: 'Delete entry'
+                });
+                if (!confirmed) return;
                 deleteButton.disabled = true;
                 const { error } = await state.client.rpc('delete_cart_order_email_log', { p_log_id: entry.id });
                 if (error) {

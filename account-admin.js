@@ -103,7 +103,13 @@
                 deleteButton.addEventListener('click', async () => {
                     const label = account.email || 'this account';
                     const warning = `Permanently delete ${label} from Supabase Auth? This cannot be undone. Their session will no longer pass the website access check.`;
-                    if (!isOwner || !window.confirm(warning)) return;
+                    if (!isOwner) return;
+                    const confirmed = await window.siteConfirm({
+                        title: 'Delete account?',
+                        message: warning,
+                        confirmText: 'Delete account'
+                    });
+                    if (!confirmed) return;
                     deleteButton.disabled = true;
                     setStatus(`Deleting ${label}…`);
                     const { data: deletedEmail, error: deleteError } = await client.rpc('delete_cart_auth_user', {
@@ -281,7 +287,14 @@
             reissueButton.type = 'button';
             reissueButton.textContent = 'Make new number';
             reissueButton.addEventListener('click', async () => {
-                if (!isAdmin || !window.confirm(`Make a new number for ${invite.email}? The current number will stop working.`)) return;
+                if (!isAdmin) return;
+                const confirmed = await window.siteConfirm({
+                    title: 'Make a new access number?',
+                    message: `Make a new number for ${invite.email}? The current number will stop working.`,
+                    confirmText: 'Make new number',
+                    variant: 'warning'
+                });
+                if (!confirmed) return;
                 reissueButton.disabled = true;
                 try {
                     await issueWebsiteAccessInvite(invite.email);
@@ -373,7 +386,13 @@
                 removeButton.textContent = 'Remove browser';
                 removeButton.addEventListener('click', async () => {
                     const warning = `Remove ${user.display_name || 'this browser'} from the cart user list? It will need to enter a name again before it can be listed.`;
-                    if (!isOwner || !window.confirm(warning)) return;
+                    if (!isOwner) return;
+                    const confirmed = await window.siteConfirm({
+                        title: 'Remove browser?',
+                        message: warning,
+                        confirmText: 'Remove browser'
+                    });
+                    if (!confirmed) return;
                     removeButton.disabled = true;
                     const { error: removeError } = await client.rpc('remove_shared_cart_user', {
                         p_device_id: user.device_id

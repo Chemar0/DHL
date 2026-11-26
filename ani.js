@@ -497,9 +497,15 @@ async function clearSharedCart() {
 }
 
 clearCartButton.addEventListener('click', async () => {
-    if (clearCartButton.disabled || !window.confirm(sharedCartEnabled
-        ? 'Clear the shared cart for everyone? This cannot be undone.'
-        : 'Clear this cart? This cannot be undone.')) return;
+    if (clearCartButton.disabled) return;
+    const confirmed = await window.siteConfirm({
+        title: sharedCartEnabled ? 'Clear the shared cart?' : 'Clear this cart?',
+        message: sharedCartEnabled
+            ? 'This clears the shared cart for everyone. This cannot be undone.'
+            : 'This clears the items in this cart. This cannot be undone.',
+        confirmText: 'Clear cart'
+    });
+    if (!confirmed) return;
     clearCartButton.disabled = true;
     try {
         if (sharedCartEnabled) {

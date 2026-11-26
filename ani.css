@@ -62,8 +62,11 @@ h1 { margin: 0 0 20px; color: var(--brand-deep, #102c28); font-size: clamp(1.55r
 .tab:focus-visible, .item:focus-visible { outline: 3px solid #f0a72e; outline-offset: 2px; }
 
 .inner-box {
-    height: min(440px, 54vh);
-    min-height: 340px;
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    min-height: 0;
+    max-height: min(440px, 54vh);
     padding: 16px;
     border: 1px solid #dce5e0;
     border-radius: 13px;
