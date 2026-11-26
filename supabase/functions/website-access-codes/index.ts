@@ -2,6 +2,7 @@ const SUPABASE_URL = (Deno.env.get("SUPABASE_URL") ?? "").replace(/\/$/, "");
 const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
 const ALLOWED_ORIGINS = new Set(["https://chemar0.github.io"]);
+const MAX_REQUEST_BYTES = 4_096;
 const encoder = new TextEncoder();
 
 type InviteRow = {
@@ -32,6 +33,40 @@ function jsonResponse(origin: string, payload: Record<string, unknown>, status =
 
 function normalizeEmail(value: unknown): string {
   return typeof value === "string" ? value.trim().toLowerCase() : "";
+}
+
+async function readJsonBody(request: Request): Promise<Record<string, unknown>> {
+  const contentType = request.headers.get("Content-Type")?.split(";", 1)[0].trim().toLowerCase();
+  if (contentType !== "application/json") throw new TypeError("A JSON request is required.");
+
+  const reader = request.body?.getReader();
+  if (!reader) throw new TypeError("A request body is required.");
+
+  const chunks: Uint8Array[] = [];
+  let totalBytes = 0;
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    totalBytes += value.byteLength;
+    if (totalBytes > MAX_REQUEST_BYTES) {
+      await reader.cancel();
+      throw new RangeError("The request is too large.");
+    }
+    chunks.push(value);
+  }
+
+  const payload = new Uint8Array(totalBytes);
+  let offset = 0;
+  for (const chunk of chunks) {
+    payload.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+
+  const body: unknown = JSON.parse(new TextDecoder().decode(payload));
+  if (typeof body !== "object" || body === null || Array.isArray(body)) {
+    throw new TypeError("The JSON request must be an object.");
+  }
+  return body as Record<string, unknown>;
 }
 
 function validEmail(email: string): boolean {
@@ -266,9 +301,9 @@ Deno.serve(async (request: Request) => {
     return jsonResponse(origin, { error: "Access code service is not configured." }, 503);
   }
 
-  let body: { action?: string; email?: string; code?: string; invite_id?: string };
+  let body: Record<string, unknown>;
   try {
-    body = await request.json();
+    body = await readJsonBody(request);
   } catch {
     return jsonResponse(origin, { error: "Invalid request." }, 400);
   }

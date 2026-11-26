@@ -4,7 +4,7 @@ The mechanical and electrical pages share one cart through Supabase.
 
 ## Connect the project
 
-1. For a new project, run `supabase-setup.sql` first. Then apply every file in `supabase/migrations/` in filename order. For an existing project, apply any missing migrations in that same order. These migrations add the website approval gate, the current clear-cart function, and administrator-issued access numbers. Do not rerun the older one-off SQL snippets as a substitute for migrations.
+1. For a new project, run `supabase-setup.sql` first. Then apply every file in `supabase/migrations/` in filename order. For an existing project, apply any missing migrations in that same order. These migrations add the website approval gate, the current clear-cart function, administrator-issued access numbers, and approved-user checks for reading cart contents and activity. Do not rerun the older one-off SQL snippets as a substitute for migrations.
 2. In the project's API settings, copy the Project URL and publishable key.
 3. Put those values in `supabase-config.js`. The publishable key is designed for browser use. Never put a service-role key in this repository.
 
@@ -65,5 +65,7 @@ When an administrator is configured, the cart hides the administrator panel and 
 To add another administrator, first register that person through the cart or create their account in Supabase Auth and verify their email. Then sign in as the owner, open **Admin features → Manage accounts**, and grant admin access to their verified email under **Registered accounts**. Admin accounts added this way cannot grant admin access to others. The owner can delete accounts from the same list. Deleted or unverified accounts cannot access shared cart data.
 
 After the request is approved, each browser enters a display name for cart attribution. The name is a self-entered label linked to the verified Auth account, not a legal identity or a MAC-address identity. Admins can see registered email accounts and each browser name beside its verified email on **Manage accounts** under **Registered accounts** and **Cart usernames**. If the owner removes a browser, it must enter a name again before it can reappear.
+
+The Supabase cart read and write RPCs enforce approval server-side; a signed-in but unapproved account cannot read the shared cart or recent activity. The mechanical and electrical item catalog defaults are still shipped as static JavaScript with this GitHub Pages site, so those item names can be fetched by anyone who knows the public site URL. Keep confidential product or supplier information out of those static files; hiding the interface does not make static assets private.
 
 Recent cart changes and order email history are available only to signed-in administrators. The order history records each confirmed request to open an email draft and its item details. Because the site opens the visitor's email app, the log cannot confirm whether the draft was actually sent. Admins can delete mistaken entries. Any approved user can clear the shared cart after confirming; the activity log records who did it. If Supabase settings, email verification, or approval checks are unavailable, shared-cart access stays locked.
