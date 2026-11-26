@@ -10,12 +10,12 @@
         <div class="site-access-card">
             <span class="site-access-mark" aria-hidden="true">D</span>
             <h1 id="site-access-title">Request website access</h1>
-            <p class="site-access-copy" id="site-access-copy">Ask an administrator for a six-digit access number. They will enter your email here and relay the number to you; Supabase will not email it.</p>
+            <p class="site-access-copy" id="site-access-copy">Ask an administrator for an eight-digit access number. They will enter your email here and relay the number to you; Supabase will not email it.</p>
             <form class="site-access-form" id="site-access-form">
                 <label for="site-access-email">Email address</label>
                 <input id="site-access-email" name="email" type="email" autocomplete="email" required maxlength="254" placeholder="you@example.com">
-                <label for="site-access-code">Six-digit access number</label>
-                <input id="site-access-code" name="code" type="text" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" required placeholder="000000">
+                <label for="site-access-code">Eight-digit access number</label>
+                <input id="site-access-code" name="code" type="text" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{8}" maxlength="8" required placeholder="00000000">
                 <button type="submit" id="site-access-submit">Enter access number</button>
             </form>
             <p class="site-access-status" id="site-access-status" role="status"></p>
@@ -57,7 +57,7 @@
         signOutButton.hidden = !currentSession;
         if (mode === 'signed-out') {
             title.textContent = 'Enter your access number';
-            copy.textContent = 'An administrator must add your email and give you a six-digit number. Supabase will not email this number.';
+            copy.textContent = 'An administrator must add your email and give you an eight-digit number. Supabase will not email this number.';
             submitButton.textContent = 'Enter access number';
             emailInput.value = currentSession?.user?.email || emailInput.value;
             setStatus(message || '');
@@ -339,7 +339,7 @@
         const email = emailInput.value.trim().toLowerCase();
         const code = codeInput.value.trim();
         if (!email) return emailInput.reportValidity();
-        if (!/^\d{6}$/.test(code)) return codeInput.reportValidity();
+        if (!/^\d{8}$/.test(code)) return codeInput.reportValidity();
         submitButton.disabled = true;
         setMode('verifying', 'Checking your access number…');
         try {

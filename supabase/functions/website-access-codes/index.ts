@@ -164,7 +164,7 @@ async function createInvite(email: string, adminId: string): Promise<Record<stri
   // those values in properties and user when it normalizes the response.
   const code = generated?.email_otp ?? generated?.properties?.email_otp;
   const userId = generated?.id ?? generated?.user?.id;
-  if (typeof code !== "string" || !/^\d{6}$/.test(code) || typeof userId !== "string") {
+  if (typeof code !== "string" || !/^\d{8}$/.test(code) || typeof userId !== "string") {
     console.error("Supabase returned an incomplete access code response.");
     throw new Error("Supabase returned an incomplete access code response.");
   }
@@ -277,8 +277,8 @@ Deno.serve(async (request: Request) => {
     if (body.action === "redeem") {
       const email = normalizeEmail(body.email);
       const code = typeof body.code === "string" ? body.code.trim() : "";
-      if (!validEmail(email) || !/^\d{6}$/.test(code)) {
-        return jsonResponse(origin, { error: "Enter the email and six-digit number from your administrator." }, 400);
+      if (!validEmail(email) || !/^\d{8}$/.test(code)) {
+        return jsonResponse(origin, { error: "Enter the email and eight-digit number from your administrator." }, 400);
       }
       return jsonResponse(origin, await redeemCode(email, code));
     }

@@ -142,7 +142,7 @@
         if (!state.session) {
             clearApprovedAdminSession();
             if (wasVisitorVerified) notifyVisitorSignedOut();
-            setVisitorAuthStatus('Enter your email and the six-digit number from an administrator.');
+            setVisitorAuthStatus('Enter your email and the eight-digit number from an administrator.');
             setStatus('Admin controls require a verified, allowlisted Supabase account.');
             finishAccessCheck();
             return;
@@ -381,7 +381,7 @@
             visitorAuthEmailInput.reportValidity();
             return;
         }
-        if (!/^\d{6}$/.test(code)) {
+        if (!/^\d{8}$/.test(code)) {
             visitorAuthCodeInput?.reportValidity();
             return;
         }

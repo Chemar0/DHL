@@ -10,7 +10,7 @@ The mechanical and electrical pages share one cart through Supabase.
 
 ## Authentication email delivery and visitor access numbers
 
-Visitors enter a six-digit access number with their email. An administrator creates it under **Admin features → Manage accounts → Issue an access number**. Supabase Auth generates the number without sending an email. The administrator relays it, and it remains visible on the account management page until it is used or revoked. Making a replacement invalidates the previous number. The number expires according to the Supabase Auth OTP expiration setting and can be tried five times before it must be replaced.
+Visitors enter an eight-digit access number with their email. An administrator creates it under **Admin features → Manage accounts → Issue an access number**. Supabase Auth generates the number without sending an email. The administrator relays it, and it remains visible on the account management page until it is used or revoked. Making a replacement invalidates the previous number. The number expires according to the Supabase Auth OTP expiration setting and can be tried five times before it must be replaced.
 
 This visitor access flow sends no email and does not use the email sending quota. Administrator sign-in still uses a Supabase email link and remains subject to the project's existing rate limit.
 

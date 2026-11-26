@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" data-site-access-scripts="electrical-inventory.js?v=inventory-storage-guard-1|cart-user.js?v=account-admin-page-1|cart-admin.js?v=account-admin-page-1|cart-groups.js?v=cart-groups-1|electrical.js?v=cart-refresh-race-1">
+<html lang="en" data-site-access-scripts="electrical-inventory.js?v=inventory-storage-guard-1|cart-user.js?v=account-admin-page-1|cart-admin.js?v=account-admin-page-2|cart-groups.js?v=cart-groups-1|electrical.js?v=cart-refresh-race-1">
 <head>
     <script>
         (() => {
@@ -25,7 +25,7 @@
     <link rel="stylesheet" href="site-access.css?v=access-number-flow-1">
     <script defer src="supabase-config.js?v=shared-cart-clear-1"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script defer src="site-access.js?v=access-number-flow-1"></script>
+    <script defer src="site-access.js?v=access-number-flow-2"></script>
 </head>
 <body>
     <button class="cart-toggle" id="cart-toggle" type="button" aria-controls="cart-panel" aria-expanded="false">
@@ -82,11 +82,11 @@
     <dialog class="user-name-dialog" id="cart-visitor-auth-dialog" aria-labelledby="cart-visitor-auth-title">
         <form id="cart-visitor-auth-form">
             <h2 id="cart-visitor-auth-title">Enter your access number</h2>
-            <p>An administrator must add your email and relay a six-digit number. Supabase does not email access numbers.</p>
+            <p>An administrator must add your email and relay an eight-digit number. Supabase does not email access numbers.</p>
             <label for="cart-visitor-email">Email address</label>
             <input id="cart-visitor-email" type="email" autocomplete="email" required>
-            <label for="cart-visitor-access-code">Six-digit access number</label>
-            <input id="cart-visitor-access-code" type="text" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" required>
+            <label for="cart-visitor-access-code">Eight-digit access number</label>
+            <input id="cart-visitor-access-code" type="text" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{8}" maxlength="8" required>
             <p id="cart-visitor-auth-status" role="status" aria-live="polite"></p>
             <div class="user-name-actions">
                 <button id="cart-visitor-send-link" type="submit">Enter access number</button>
