@@ -209,6 +209,18 @@ h1 { margin: 0 0 18px; font-size: 1.6rem; }
 .cart-admin-management .delete-auth-account:hover { background: #fff1f1; }
 .cart-admin-management .admin-owner-label { flex: 0 0 auto; color: #626a76; font-size: 0.78rem; }
 .cart-admin-management[hidden] { display: none; }
+.website-access-invites { margin: 12px 0; padding: 12px 0; border-top: 1px solid #d5dae1; border-bottom: 1px solid #d5dae1; }
+.website-access-invites h4 { margin: 0 0 6px; color: #01473d; font-size: .94rem; }
+.website-access-invites > p { margin: 0 0 8px; color: #626a76; font-size: .82rem; line-height: 1.45; }
+.website-access-invites form { display: grid; gap: 7px; }
+.website-access-invite-code { display: inline-block; padding: 5px 8px; border: 1px solid #cbd5d1; border-radius: 6px; background: #f1f6f4; color: #01473d; font: 700 1.05rem/1.2 ui-monospace, SFMono-Regular, Consolas, monospace; letter-spacing: .1em; }
+.website-access-invite-meta { color: #626a76; font-size: .76rem; }
+.website-access-invite-actions { display: flex; flex: 0 0 auto; flex-wrap: wrap; gap: 5px; }
+.website-access-invite-actions button { min-height: 34px; margin: 0; padding: 6px 8px; font-size: .78rem; }
+.website-access-invites .website-access-invite-remove { border-color: #a83232; color: #a83232; }
+.website-access-invites .website-access-invite-remove:hover { background: #fff1f1; }
+.website-access-invites .admin-account-empty { color: #626a76; }
+.website-access-invites[hidden] { display: none; }
 .website-access-requests { margin: 0 0 14px; padding: 0 0 14px; border-bottom: 1px solid #d5dae1; }
 .website-access-requests[hidden] { display: none; }
 .website-access-requests h3 { margin: 0 0 6px; color: #01473d; font-size: .98rem; }

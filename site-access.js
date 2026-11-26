@@ -10,11 +10,13 @@
         <div class="site-access-card">
             <span class="site-access-mark" aria-hidden="true">D</span>
             <h1 id="site-access-title">Request website access</h1>
-            <p class="site-access-copy" id="site-access-copy">Enter your email. We’ll verify it, then an administrator can approve or deny your request.</p>
+            <p class="site-access-copy" id="site-access-copy">Ask an administrator for a six-digit access number. They will enter your email here and relay the number to you; Supabase will not email it.</p>
             <form class="site-access-form" id="site-access-form">
                 <label for="site-access-email">Email address</label>
                 <input id="site-access-email" name="email" type="email" autocomplete="email" required maxlength="254" placeholder="you@example.com">
-                <button type="submit" id="site-access-submit">Send verification link</button>
+                <label for="site-access-code">Six-digit access number</label>
+                <input id="site-access-code" name="code" type="text" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" required placeholder="000000">
+                <button type="submit" id="site-access-submit">Enter access number</button>
             </form>
             <p class="site-access-status" id="site-access-status" role="status"></p>
             <button class="site-access-secondary" id="site-access-signout" type="button" hidden>Use a different email</button>
@@ -25,6 +27,7 @@
     const copy = root.querySelector('#site-access-copy');
     const form = root.querySelector('#site-access-form');
     const emailInput = root.querySelector('#site-access-email');
+    const codeInput = root.querySelector('#site-access-code');
     const submitButton = root.querySelector('#site-access-submit');
     const status = root.querySelector('#site-access-status');
     const signOutButton = root.querySelector('#site-access-signout');
@@ -50,26 +53,27 @@
 
     function setMode(mode, message = '') {
         root.dataset.mode = mode;
-        form.hidden = !['signed-out', 'denied'].includes(mode);
+        form.hidden = !['signed-out', 'denied', 'pending'].includes(mode);
         signOutButton.hidden = !currentSession;
         if (mode === 'signed-out') {
-            title.textContent = 'Request website access';
-            copy.textContent = 'Enter your email. We’ll verify it, then an administrator can approve or deny your request.';
-            submitButton.textContent = 'Send verification link';
+            title.textContent = 'Enter your access number';
+            copy.textContent = 'An administrator must add your email and give you a six-digit number. Supabase will not email this number.';
+            submitButton.textContent = 'Enter access number';
             emailInput.value = currentSession?.user?.email || emailInput.value;
             setStatus(message || '');
         } else if (mode === 'verifying') {
-            title.textContent = 'Checking your email';
-            copy.textContent = 'Your verification is being checked securely.';
+            title.textContent = 'Verifying your access number';
+            copy.textContent = 'Your number is being checked securely.';
             setStatus(message || 'Please wait…');
         } else if (mode === 'pending') {
-            title.textContent = 'Request sent';
-            copy.textContent = 'Your email is verified. An administrator must approve your request before you can enter.';
-            setStatus('We’ll check for a decision automatically. You can leave this page open.');
+            title.textContent = 'Waiting for access';
+            copy.textContent = 'An administrator must approve this account. If they have given you an access number, enter it below.';
+            submitButton.textContent = 'Enter access number';
+            setStatus(message || 'We’ll check for an administrator decision automatically.');
         } else if (mode === 'denied') {
             title.textContent = 'Access not approved';
-            copy.textContent = 'An administrator denied this request. You can submit it again if you think this was a mistake.';
-            submitButton.textContent = 'Request review again';
+            copy.textContent = 'If an administrator has issued you a new access number, enter it below. Otherwise, contact an administrator.';
+            submitButton.textContent = 'Enter access number';
             setStatus(message || '');
         } else if (mode === 'error') {
             title.textContent = 'Could not verify access';
@@ -291,7 +295,7 @@
                 clearApprovedSessionHint();
                 clearApprovedAdminSessionHint();
                 if (pageUnlocked || preflightResume) lockPage();
-                setMode('signed-out', 'Verify your email using the link we sent, then return here.');
+                setMode('signed-out', 'This account needs a current administrator-issued number to verify and enter.');
             } else if (data === 'signed_out') {
                 clearApprovedSessionHint();
                 clearApprovedAdminSessionHint();
@@ -299,7 +303,7 @@
                 if (pollTimer) window.clearInterval(pollTimer);
                 pollTimer = null;
                 lockPage();
-                setMode('signed-out', 'Your sign-in session ended. Enter your email to request a new verification link.');
+                setMode('signed-out', 'Your sign-in session ended. Enter your email and the number from an administrator.');
             } else {
                 if (pageUnlocked || preflightResume) lockPage();
                 setMode('error', 'The access service returned an unexpected status. Reload to try again.');
@@ -332,50 +336,35 @@
 
     form.addEventListener('submit', async (event) => {
         event.preventDefault();
-        if (currentSession) {
-            submitButton.disabled = true;
-            setStatus('Submitting your request for administrator review…');
-            try {
-                const { data, error } = await client.rpc('submit_website_access_request');
-                if (error) throw error;
-                if (data === 'approved') await grantAccess();
-                else {
-                    setMode('pending');
-                    if (!pollTimer) pollTimer = window.setInterval(() => { void checkAccess(); }, 8000);
-                }
-            } catch (error) {
-                setStatus(error.message || 'Could not submit the request. Try again.', true);
-            } finally {
-                submitButton.disabled = false;
-            }
-            return;
-        }
         const email = emailInput.value.trim().toLowerCase();
+        const code = codeInput.value.trim();
         if (!email) return emailInput.reportValidity();
+        if (!/^\d{6}$/.test(code)) return codeInput.reportValidity();
         submitButton.disabled = true;
-        setStatus('Sending a secure verification link…');
+        setMode('verifying', 'Checking your access number…');
         try {
-            const { error } = await client.auth.signInWithOtp({
-                email,
-                options: {
-                    shouldCreateUser: true,
-                    emailRedirectTo: window.location.href.split('#')[0]
-                }
+            const { data, error } = await client.functions.invoke('website-access-codes', {
+                body: { action: 'redeem', email, code }
             });
             if (error) throw error;
-            copy.textContent = 'Open the verification link in your email on this device. Once verified, your access request will go to the administrators.';
-            setStatus('Verification link sent. Check your inbox and junk folder.');
-            form.hidden = true;
+            if (!data?.session?.access_token || !data?.session?.refresh_token) {
+                throw new Error('The access service returned an incomplete sign-in session.');
+            }
+            const { error: sessionError } = await client.auth.setSession(data.session);
+            if (sessionError) throw sessionError;
+            codeInput.value = '';
+            setMode('verifying', 'Access number accepted. Opening the website…');
         } catch (error) {
-            const detail = error.code === 'over_email_send_rate_limit'
-                ? 'The project email limit has been reached. Please wait before requesting another link.'
-                : error.code === 'email_address_not_authorized'
-                    ? 'The email provider is not authorized to send to this address. Please contact an administrator.'
-                    : error.code === 'over_request_rate_limit' || error.status === 429
-                        ? 'Too many link requests were made recently. Wait at least 60 seconds, then try again.'
-                        : error.code === 'signup_disabled' || error.code === 'signups_disabled'
-                            ? 'Visitor registration is disabled in Supabase Auth. An administrator must enable it.'
-                    : error.message || 'Could not send the verification link. Try again later.';
+            let detail = error.message || 'Could not verify this access number.';
+            try {
+                const response = error.context instanceof Response ? error.context.clone() : null;
+                const body = response ? await response.json() : null;
+                if (typeof body?.error === 'string') detail = body.error;
+            } catch (readError) {
+                // Use the general function error if its response body is unavailable.
+            }
+            if (currentSession) setMode('pending', detail);
+            else setMode('signed-out', detail);
             setStatus(detail, true);
         } finally {
             submitButton.disabled = false;

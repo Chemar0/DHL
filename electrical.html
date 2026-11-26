@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" data-site-access-scripts="electrical-inventory.js?v=inventory-storage-guard-1|cart-user.js?v=verified-cart-users-1|cart-admin.js?v=admin-activity-dropdown-1|cart-groups.js?v=cart-groups-1|electrical.js?v=cart-refresh-race-1">
+<html lang="en" data-site-access-scripts="electrical-inventory.js?v=inventory-storage-guard-1|cart-user.js?v=verified-cart-users-1|cart-admin.js?v=access-number-invites-1|cart-groups.js?v=cart-groups-1|electrical.js?v=cart-refresh-race-1">
 <head>
     <script>
         (() => {
@@ -19,12 +19,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Electrical Parts List</title>
-    <link rel="stylesheet" href="ani.css?v=admin-activity-dropdown-1">
+    <link rel="stylesheet" href="ani.css?v=access-number-invites-1">
     <link rel="stylesheet" href="cart-groups.css?v=cart-groups-1">
-    <link rel="stylesheet" href="site-access.css?v=access-overlay-hidden-fix-1">
+    <link rel="stylesheet" href="site-access.css?v=access-number-flow-1">
     <script defer src="supabase-config.js?v=shared-cart-clear-1"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script defer src="site-access.js?v=access-overlay-hidden-fix-1"></script>
+    <script defer src="site-access.js?v=access-number-flow-1"></script>
 </head>
 <body>
     <button class="cart-toggle" id="cart-toggle" type="button" aria-controls="cart-panel" aria-expanded="false">
@@ -87,7 +87,18 @@
                 </section>
                 <section class="cart-admin-management" id="cart-admin-management" hidden aria-labelledby="cart-admin-management-heading">
                     <h4 id="cart-admin-management-heading">Registered users</h4>
-                    <p>Visitor accounts appear here after they verify their email. All admins can see registered emails; cart browser names are listed separately below.</p>
+                    <p>All admins can see registered emails; cart browser names are listed separately below.</p>
+                    <section class="website-access-invites" id="website-access-invites" aria-labelledby="website-access-invites-heading">
+                        <h4 id="website-access-invites-heading">Allow someone onto the website</h4>
+                        <p>Add their email to generate a six-digit access number. Supabase will not email it. Relay the number yourself; it stays here until used or revoked. If it expires, make a replacement; that replaces the previous number.</p>
+                        <form id="website-access-invite-form">
+                            <label for="website-access-invite-email">Email address</label>
+                            <input id="website-access-invite-email" type="email" autocomplete="off" required maxlength="254">
+                            <button type="submit">Generate access number</button>
+                        </form>
+                        <button id="refresh-website-access-invites" type="button">Refresh access numbers</button>
+                        <ul id="website-access-invite-list" aria-live="polite"></ul>
+                    </section>
                     <div id="cart-admin-owner-actions" hidden>
                         <p>Only the owner can grant admin access or delete accounts. Deleting a visitor account removes its access to the shared cart.</p>
                         <form id="add-cart-admin-form">
@@ -111,13 +122,15 @@
     </aside>
     <dialog class="user-name-dialog" id="cart-visitor-auth-dialog" aria-labelledby="cart-visitor-auth-title">
         <form id="cart-visitor-auth-form">
-            <h2 id="cart-visitor-auth-title">Verify your email to use the cart</h2>
-            <p>Enter your email and open the verification link on this device. You must verify before using the shared cart; cart admins can see your registered email.</p>
+            <h2 id="cart-visitor-auth-title">Enter your access number</h2>
+            <p>An administrator must add your email and relay a six-digit number. Supabase does not email access numbers.</p>
             <label for="cart-visitor-email">Email address</label>
             <input id="cart-visitor-email" type="email" autocomplete="email" required>
+            <label for="cart-visitor-access-code">Six-digit access number</label>
+            <input id="cart-visitor-access-code" type="text" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" required>
             <p id="cart-visitor-auth-status" role="status" aria-live="polite"></p>
             <div class="user-name-actions">
-                <button id="cart-visitor-send-link" type="submit">Send verification link</button>
+                <button id="cart-visitor-send-link" type="submit">Enter access number</button>
             </div>
         </form>
     </dialog>

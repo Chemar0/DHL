@@ -8,6 +8,7 @@
     const visitorAuthDialog = document.getElementById('cart-visitor-auth-dialog');
     const visitorAuthForm = document.getElementById('cart-visitor-auth-form');
     const visitorAuthEmailInput = document.getElementById('cart-visitor-email');
+    const visitorAuthCodeInput = document.getElementById('cart-visitor-access-code');
     const visitorAuthStatus = document.getElementById('cart-visitor-auth-status');
     const visitorAuthSubmit = document.getElementById('cart-visitor-send-link');
     const visitorSignOutButton = document.getElementById('cart-user-sign-out');
@@ -15,6 +16,10 @@
     const websiteAccessSection = document.getElementById('website-access-requests');
     const websiteAccessList = document.getElementById('website-access-request-list');
     const refreshWebsiteAccessButton = document.getElementById('refresh-website-access');
+    const websiteAccessInviteForm = document.getElementById('website-access-invite-form');
+    const websiteAccessInviteEmail = document.getElementById('website-access-invite-email');
+    const websiteAccessInviteList = document.getElementById('website-access-invite-list');
+    const refreshWebsiteAccessInvitesButton = document.getElementById('refresh-website-access-invites');
     const nameForm = document.getElementById('cart-admin-name-form');
     const nameInput = document.getElementById('cart-admin-name');
     const adminManagement = document.getElementById('cart-admin-management');
@@ -64,7 +69,8 @@
         orderEmailEntries: [],
         orderEmailCursor: null,
         hasMoreOrderEmails: false,
-        loadingOrderEmails: false
+        loadingOrderEmails: false,
+        loadingAccessInvites: false
     };
 
     visitorAuthDialog?.addEventListener('cancel', (event) => {
@@ -116,6 +122,17 @@
         visitorAuthStatus.classList.toggle('error', isError);
     }
 
+    async function getFunctionErrorMessage(error, fallback) {
+        try {
+            const response = error?.context instanceof Response ? error.context.clone() : null;
+            const body = response ? await response.json() : null;
+            if (typeof body?.error === 'string') return body.error;
+        } catch (readError) {
+            // Fall back to the function client's message when its response cannot be read.
+        }
+        return error?.message || fallback;
+    }
+
     function notifyVisitorVerified() {
         if (!state.isVisitorVerified || state.isAdmin) return;
         const email = state.session?.user?.email || '';
@@ -150,7 +167,7 @@
         if (!state.session) {
             clearApprovedAdminSession();
             if (wasVisitorVerified) notifyVisitorSignedOut();
-            setVisitorAuthStatus('Enter your email to receive a verification link.');
+            setVisitorAuthStatus('Enter your email and the six-digit number from an administrator.');
             setStatus('Admin controls require a verified, allowlisted Supabase account.');
             finishAccessCheck();
             return;
@@ -158,7 +175,7 @@
 
         if (!state.isVisitorVerified) {
             clearApprovedAdminSession();
-            setVisitorAuthStatus('Open the verification link in your email to continue.');
+            setVisitorAuthStatus('Enter a current access number issued by an administrator.');
             setStatus('Email verification is required to use the shared cart.');
             finishAccessCheck();
             return;
@@ -203,6 +220,7 @@
         finishAccessCheck();
         void refreshAccountList();
         void refreshWebsiteAccessRequests();
+        void refreshWebsiteAccessInvites();
         void refreshCartUsers();
         void refreshOrderEmailLog(true);
         void window.refreshSharedCart?.();
@@ -386,6 +404,124 @@
                 row.append(badge);
             }
             websiteAccessList.append(row);
+        });
+    }
+
+    async function issueWebsiteAccessInvite(email) {
+        const { data, error } = await state.client.functions.invoke('website-access-codes', {
+            body: { action: 'issue', email }
+        });
+        if (error) throw new Error(await getFunctionErrorMessage(error, 'Could not generate the access number.'));
+        return data?.invite || null;
+    }
+
+    async function refreshWebsiteAccessInvites() {
+        if (!state.isAdmin || !state.client || !websiteAccessInviteList || state.loadingAccessInvites) return;
+        state.loadingAccessInvites = true;
+        if (refreshWebsiteAccessInvitesButton) refreshWebsiteAccessInvitesButton.disabled = true;
+        let data;
+        let error;
+        try {
+            ({ data, error } = await state.client.functions.invoke('website-access-codes', {
+                body: { action: 'list' }
+            }));
+        } catch (requestError) {
+            error = requestError;
+        } finally {
+            state.loadingAccessInvites = false;
+            if (refreshWebsiteAccessInvitesButton) refreshWebsiteAccessInvitesButton.disabled = false;
+        }
+        if (error) {
+            setStatus(await getFunctionErrorMessage(error, 'Could not load the website access numbers.'), true);
+            return;
+        }
+
+        websiteAccessInviteList.replaceChildren();
+        const invites = Array.isArray(data?.invites) ? data.invites : [];
+        if (!invites.length) {
+            const empty = document.createElement('li');
+            empty.className = 'admin-account-empty';
+            empty.textContent = 'No active access numbers.';
+            websiteAccessInviteList.append(empty);
+            return;
+        }
+
+        invites.forEach((invite) => {
+            const row = document.createElement('li');
+            const details = document.createElement('div');
+            const email = document.createElement('span');
+            const code = document.createElement('span');
+            const meta = document.createElement('span');
+            const actions = document.createElement('div');
+            details.className = 'admin-account-details';
+            email.className = 'admin-account-name';
+            email.textContent = invite.email || 'Email unavailable';
+            code.className = 'website-access-invite-code';
+            code.textContent = invite.code || 'Unavailable';
+            code.setAttribute('aria-label', `Access number for ${invite.email || 'invite'}`);
+            meta.className = 'website-access-invite-meta';
+            const createdAt = invite.created_at ? new Date(invite.created_at) : null;
+            const createdLabel = createdAt && !Number.isNaN(createdAt.valueOf())
+                ? `Created ${createdAt.toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}`
+                : 'Creation date unavailable';
+            const failedAttempts = Number(invite.failed_attempts) || 0;
+            meta.textContent = failedAttempts
+                ? `${createdLabel} · ${failedAttempts} incorrect attempt${failedAttempts === 1 ? '' : 's'}`
+                : createdLabel;
+            details.append(email, code, meta);
+            row.append(details);
+
+            actions.className = 'website-access-invite-actions';
+            const copyButton = document.createElement('button');
+            copyButton.type = 'button';
+            copyButton.textContent = 'Copy number';
+            copyButton.addEventListener('click', async () => {
+                try {
+                    await navigator.clipboard.writeText(String(invite.code || ''));
+                    setStatus(`Access number copied for ${invite.email}. It was not emailed.`);
+                } catch (copyError) {
+                    setStatus('Could not copy the number. Select it and copy it manually.', true);
+                }
+            });
+
+            const reissueButton = document.createElement('button');
+            reissueButton.type = 'button';
+            reissueButton.textContent = 'Make new number';
+            reissueButton.addEventListener('click', async () => {
+                if (!state.isAdmin || !window.confirm(`Make a new number for ${invite.email}? The current number will stop working.`)) return;
+                reissueButton.disabled = true;
+                try {
+                    await issueWebsiteAccessInvite(invite.email);
+                    setStatus(`New access number generated for ${invite.email}. Supabase did not email it.`);
+                    await refreshWebsiteAccessInvites();
+                } catch (issueError) {
+                    reissueButton.disabled = false;
+                    setStatus(issueError.message || 'Could not make a new number.', true);
+                }
+            });
+
+            const revokeButton = document.createElement('button');
+            revokeButton.type = 'button';
+            revokeButton.className = 'website-access-invite-remove';
+            revokeButton.textContent = 'Revoke';
+            revokeButton.addEventListener('click', async () => {
+                if (!state.isAdmin) return;
+                revokeButton.disabled = true;
+                const { error: revokeError } = await state.client.functions.invoke('website-access-codes', {
+                    body: { action: 'revoke', invite_id: invite.id }
+                });
+                if (revokeError) {
+                    revokeButton.disabled = false;
+                    setStatus(await getFunctionErrorMessage(revokeError, 'Could not revoke that number.'), true);
+                    return;
+                }
+                setStatus(`Access number revoked for ${invite.email}.`);
+                await refreshWebsiteAccessInvites();
+            });
+
+            actions.append(copyButton, reissueButton, revokeButton);
+            row.append(actions);
+            websiteAccessInviteList.append(row);
         });
     }
 
@@ -583,6 +719,7 @@
     loadOlderOrderLogsButton?.addEventListener('click', () => { void refreshOrderEmailLog(false); });
     refreshAccountsButton?.addEventListener('click', () => { void refreshAccountList(); });
     refreshWebsiteAccessButton?.addEventListener('click', () => { void refreshWebsiteAccessRequests(); });
+    refreshWebsiteAccessInvitesButton?.addEventListener('click', () => { void refreshWebsiteAccessInvites(); });
     refreshCartUsersButton?.addEventListener('click', () => { void refreshCartUsers(); });
 
     if (!config.url || !publicApiKey || !window.supabase?.createClient) {
@@ -646,46 +783,36 @@
 
     visitorAuthForm?.addEventListener('submit', async (event) => {
         event.preventDefault();
-        const email = visitorAuthEmailInput.value.trim();
+        const email = visitorAuthEmailInput.value.trim().toLowerCase();
+        const code = visitorAuthCodeInput?.value.trim() || '';
         if (!email) {
             visitorAuthEmailInput.reportValidity();
             return;
         }
-
-        visitorAuthSubmit.disabled = true;
-        setVisitorAuthStatus('Sending your verification link…');
-        let error;
-        try {
-            ({ error } = await state.client.auth.signInWithOtp({
-                email,
-                options: {
-                    shouldCreateUser: true,
-                    emailRedirectTo: `${window.location.origin}${window.location.pathname}`
-                }
-            }));
-        } catch (requestError) {
-            error = requestError;
-        } finally {
-            visitorAuthSubmit.disabled = false;
-        }
-        if (error) {
-            if (error.code === 'over_email_send_rate_limit') {
-                setVisitorAuthStatus('Supabase has reached this project’s email sending limit. The built-in mailer allows 2 emails per hour and only sends to project team addresses. Set up custom SMTP in Supabase to send links to other addresses.', true);
-            } else if (error.code === 'over_request_rate_limit' || error.status === 429) {
-                setVisitorAuthStatus('Too many link requests were made recently. Wait at least 60 seconds before trying again, then check your inbox and junk folder.', true);
-            } else if (error.code === 'email_address_not_authorized') {
-                setVisitorAuthStatus('Supabase email delivery is not configured for this address. Configure custom SMTP in Authentication → Emails → SMTP Settings.', true);
-            } else if (error.code === 'otp_disabled') {
-                setVisitorAuthStatus('Email verification links are disabled in Supabase. Enable Email OTP under Authentication → Sign In / Providers.', true);
-            } else if (error.code === 'signup_disabled' || error.code === 'signups_disabled') {
-                setVisitorAuthStatus('Visitor registration is disabled in Supabase Auth settings.', true);
-            } else {
-                setVisitorAuthStatus(error.message || 'Could not send the verification link. Check Supabase Auth email settings.', true);
-            }
+        if (!/^\d{6}$/.test(code)) {
+            visitorAuthCodeInput?.reportValidity();
             return;
         }
 
-        setVisitorAuthStatus('Verification link sent. Open it from your email to return to the cart.');
+        visitorAuthSubmit.disabled = true;
+        setVisitorAuthStatus('Checking your access number…');
+        try {
+            const { data, error } = await state.client.functions.invoke('website-access-codes', {
+                body: { action: 'redeem', email, code }
+            });
+            if (error) throw new Error(await getFunctionErrorMessage(error, 'Could not verify the access number.'));
+            if (!data?.session?.access_token || !data?.session?.refresh_token) {
+                throw new Error('The access service returned an incomplete sign-in session.');
+            }
+            const { error: sessionError } = await state.client.auth.setSession(data.session);
+            if (sessionError) throw sessionError;
+            visitorAuthCodeInput.value = '';
+            setVisitorAuthStatus('Access number accepted. Opening the website…');
+        } catch (error) {
+            setVisitorAuthStatus(error.message || 'Could not verify the access number.', true);
+        } finally {
+            visitorAuthSubmit.disabled = false;
+        }
     });
 
     visitorSignOutButton?.addEventListener('click', async () => {
@@ -759,6 +886,30 @@
         await refreshAccountList();
     });
 
+    websiteAccessInviteForm?.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        if (!state.isAdmin || !websiteAccessInviteEmail) return;
+        const email = websiteAccessInviteEmail.value.trim().toLowerCase();
+        if (!email) {
+            websiteAccessInviteEmail.reportValidity();
+            return;
+        }
+
+        const submitButton = websiteAccessInviteForm.querySelector('button[type="submit"]');
+        if (submitButton) submitButton.disabled = true;
+        setStatus(`Generating an access number for ${email}…`);
+        try {
+            await issueWebsiteAccessInvite(email);
+            websiteAccessInviteEmail.value = '';
+            setStatus(`Access number generated for ${email}. Supabase did not email it; copy it from the list below.`);
+            await refreshWebsiteAccessInvites();
+        } catch (error) {
+            setStatus(error.message || 'Could not generate the access number.', true);
+        } finally {
+            if (submitButton) submitButton.disabled = false;
+        }
+    });
+
     signOutButton.addEventListener('click', async () => {
         const { error } = await state.client.auth.signOut();
         if (error) setStatus('Could not sign out. Reload the page and try again.', true);
@@ -780,4 +931,7 @@
     });
 
     window.setInterval(() => { void revalidateAdminAccess(); }, 30000);
+    window.setInterval(() => {
+        if (state.isAdmin && state.adminMenuOpen) void refreshWebsiteAccessInvites();
+    }, 15000);
 })();

@@ -76,6 +76,7 @@ html.site-access-locked body > :not(.site-access-overlay) {
     font: inherit;
 }
 .site-access-form input:focus-visible { outline: 3px solid #71b79f; outline-offset: 2px; }
+#site-access-code { text-align: center; font-variant-numeric: tabular-nums; letter-spacing: .22em; }
 .site-access-form button {
     min-height: 48px;
     margin-top: 5px;
