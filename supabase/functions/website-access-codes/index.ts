@@ -50,6 +50,10 @@ function base64UrlToBytes(value: string): Uint8Array {
   return Uint8Array.from(binary, (character) => character.charCodeAt(0));
 }
 
+function toArrayBuffer(bytes: Uint8Array): ArrayBuffer {
+  return Uint8Array.from(bytes).buffer;
+}
+
 async function digestCode(email: string, code: string): Promise<string> {
   const key = await crypto.subtle.importKey(
     "raw",
@@ -84,11 +88,11 @@ async function decryptCode(email: string, ciphertext: string, iv: string): Promi
   const cleartext = await crypto.subtle.decrypt(
     {
       name: "AES-GCM",
-      iv: base64UrlToBytes(iv),
+      iv: toArrayBuffer(base64UrlToBytes(iv)),
       additionalData: encoder.encode(email),
     },
     await encryptionKey(),
-    base64UrlToBytes(ciphertext),
+    toArrayBuffer(base64UrlToBytes(ciphertext)),
   );
   return new TextDecoder().decode(cleartext);
 }
