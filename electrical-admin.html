@@ -19,7 +19,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Manage Electrical Items</title>
-    <link rel="stylesheet" href="admin.css?v=electrical-admin-groups-2">
+    <link rel="stylesheet" href="site-theme.css?v=professional-1">
+    <link rel="stylesheet" href="admin.css?v=professional-1">
     <link rel="stylesheet" href="site-access.css?v=access-number-flow-1">
     <script defer src="supabase-config.js?v=shared-cart-4"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -27,7 +28,10 @@
 </head>
 <body>
     <main class="admin-card">
-        <a class="back-link" href="electrical.html">← Back to electrical list</a>
+        <nav class="admin-nav" aria-label="Page navigation">
+            <a class="admin-brand" href="index.html" aria-label="DHL home"><img src="logo.svg" alt=""></a>
+            <a class="back-link" href="electrical.html">← Back to electrical list</a>
+        </nav>
         <h1>Manage electrical items</h1>
         <p class="intro">Choose an electrical category and group to add an item. Each item appears under that group on the electrical list. Changes are saved in this browser. Set the minimum order quantity and any optional manufacturer or part number used in order emails.</p>
 

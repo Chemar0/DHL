@@ -19,7 +19,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Manage accounts</title>
-    <link rel="stylesheet" href="account-admin.css?v=account-admin-page-1">
+    <link rel="stylesheet" href="site-theme.css?v=professional-1">
+    <link rel="stylesheet" href="account-admin.css?v=professional-1">
     <link rel="stylesheet" href="site-access.css?v=access-number-flow-1">
     <script defer src="supabase-config.js?v=shared-cart-4"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -28,65 +29,77 @@
 <body>
     <main class="account-admin-page">
         <nav class="account-admin-nav" aria-label="Parts lists">
+            <a class="account-admin-brand" href="index.html" aria-label="DHL home"><img src="logo.svg" alt=""></a>
             <a href="mechanical.html">Mechanical list</a>
             <a href="electrical.html">Electrical list</a>
-            <button id="account-admin-sign-out" type="button">Sign out</button>
+            <button id="account-admin-sign-out" type="button"><span aria-hidden="true">↗</span> Sign out</button>
         </nav>
         <header class="account-admin-header">
-            <p class="account-admin-kicker">Admin features</p>
+            <p class="account-admin-kicker">Administration · Accounts</p>
             <h1>Manage accounts</h1>
-            <p>Website access, registered accounts, and cart usernames are managed here.</p>
+            <p>Review access, issue numbers, and manage the accounts that use your parts lists.</p>
             <p id="account-admin-status" class="account-admin-status" role="status" aria-live="polite">Checking administrator access…</p>
         </header>
 
-        <section class="account-admin-card" aria-labelledby="account-profile-heading">
-            <h2 id="account-profile-heading">Administrator profile</h2>
-            <form id="account-admin-name-form">
-                <label for="account-admin-name">Display name</label>
-                <input id="account-admin-name" type="text" maxlength="80" autocomplete="name" required>
-                <button type="submit">Save display name</button>
-            </form>
-        </section>
-
-        <section class="account-admin-card" aria-labelledby="website-access-heading">
-            <h2 id="website-access-heading">Website access requests</h2>
-            <p>Review verified email addresses that requested access before they can open the parts lists.</p>
-            <button id="refresh-website-access" type="button">Refresh requests</button>
-            <ul id="website-access-request-list" class="account-admin-list" aria-live="polite"></ul>
-        </section>
-
-        <section class="account-admin-card" aria-labelledby="access-invites-heading">
-            <h2 id="access-invites-heading">Issue an access number</h2>
-            <p>Enter an email to generate a six-digit number. Supabase does not email it. Relay it yourself; it remains visible until used, revoked, or expired. A replacement disables the previous number.</p>
-            <form id="website-access-invite-form">
-                <label for="website-access-invite-email">Email address</label>
-                <input id="website-access-invite-email" type="email" autocomplete="off" required maxlength="254">
-                <button type="submit">Generate access number</button>
-            </form>
-            <button id="refresh-website-access-invites" type="button">Refresh access numbers</button>
-            <ul id="website-access-invite-list" class="account-admin-list" aria-live="polite"></ul>
-        </section>
-
-        <section class="account-admin-card" aria-labelledby="registered-users-heading">
-            <h2 id="registered-users-heading">Registered accounts</h2>
-            <p>View the email accounts on the website. Only the owner can grant administrator access or delete accounts.</p>
-            <div id="account-admin-owner-actions" hidden>
-                <form id="add-cart-admin-form">
-                    <label for="add-cart-admin-email">Verified account email</label>
-                    <input id="add-cart-admin-email" type="email" autocomplete="off" required>
-                    <button type="submit">Grant admin access</button>
+        <div class="account-admin-grid">
+            <section class="account-admin-card" aria-labelledby="account-profile-heading">
+                <span class="account-admin-card-icon" aria-hidden="true">01</span>
+                <h2 id="account-profile-heading">Administrator profile</h2>
+                <p>Your display name appears beside changes made to the shared cart.</p>
+                <form id="account-admin-name-form">
+                    <label for="account-admin-name">Display name</label>
+                    <input id="account-admin-name" type="text" maxlength="80" autocomplete="name" required>
+                    <button type="submit">Save display name</button>
                 </form>
-            </div>
-            <button id="refresh-cart-auth-users" type="button">Refresh registered accounts</button>
-            <ul id="cart-admin-list" class="account-admin-list" aria-live="polite"></ul>
-        </section>
+            </section>
 
-        <section class="account-admin-card" id="cart-user-management" aria-labelledby="cart-user-management-heading">
-            <h2 id="cart-user-management-heading">Cart usernames</h2>
-            <p>Browser names are self-entered labels linked to an email account. Only the owner can remove a browser.</p>
-            <button id="refresh-cart-users" type="button">Refresh cart usernames</button>
-            <ul id="cart-user-list" class="account-admin-list" aria-live="polite"></ul>
-        </section>
+            <section class="account-admin-card" aria-labelledby="website-access-heading">
+                <span class="account-admin-card-icon" aria-hidden="true">02</span>
+                <h2 id="website-access-heading">Website access requests</h2>
+                <p>Review accounts requesting access to the parts lists.</p>
+                <button id="refresh-website-access" class="secondary-action" type="button">Refresh requests</button>
+                <ul id="website-access-request-list" class="account-admin-list" aria-live="polite"></ul>
+            </section>
+
+            <section class="account-admin-card account-admin-card-wide" aria-labelledby="access-invites-heading">
+                <span class="account-admin-card-icon" aria-hidden="true">03</span>
+                <h2 id="access-invites-heading">Issue an access number</h2>
+                <p>Generate a six-digit number and relay it yourself. It stays here until used, revoked, or expired. A replacement disables the previous number.</p>
+                <form id="website-access-invite-form">
+                    <label for="website-access-invite-email">Email address</label>
+                    <input id="website-access-invite-email" type="email" autocomplete="off" required maxlength="254" placeholder="name@example.com">
+                    <button type="submit">Generate access number</button>
+                </form>
+                <div class="account-admin-list-heading">
+                    <h3>Active access numbers</h3>
+                    <button id="refresh-website-access-invites" class="secondary-action" type="button">Refresh list</button>
+                </div>
+                <ul id="website-access-invite-list" class="account-admin-list" aria-live="polite"></ul>
+            </section>
+
+            <section class="account-admin-card" aria-labelledby="registered-users-heading">
+                <span class="account-admin-card-icon" aria-hidden="true">04</span>
+                <h2 id="registered-users-heading">Registered accounts</h2>
+                <p>View the accounts using the site. Only the owner can grant administrator access or delete accounts.</p>
+                <div id="account-admin-owner-actions" hidden>
+                    <form id="add-cart-admin-form">
+                        <label for="add-cart-admin-email">Verified account email</label>
+                        <input id="add-cart-admin-email" type="email" autocomplete="off" required placeholder="admin@example.com">
+                        <button type="submit">Grant admin access</button>
+                    </form>
+                </div>
+                <button id="refresh-cart-auth-users" class="secondary-action" type="button">Refresh accounts</button>
+                <ul id="cart-admin-list" class="account-admin-list" aria-live="polite"></ul>
+            </section>
+
+            <section class="account-admin-card" id="cart-user-management" aria-labelledby="cart-user-management-heading">
+                <span class="account-admin-card-icon" aria-hidden="true">05</span>
+                <h2 id="cart-user-management-heading">Cart usernames</h2>
+                <p>Browser names are labels linked to an email account. Only the owner can remove a browser.</p>
+                <button id="refresh-cart-users" class="secondary-action" type="button">Refresh usernames</button>
+                <ul id="cart-user-list" class="account-admin-list" aria-live="polite"></ul>
+            </section>
+        </div>
     </main>
 </body>
 </html>

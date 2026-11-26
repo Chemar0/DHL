@@ -19,7 +19,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Select a parts list</title>
-    <link rel="stylesheet" href="landing.css">
+    <link rel="stylesheet" href="site-theme.css?v=professional-1">
+    <link rel="stylesheet" href="landing.css?v=professional-1">
     <link rel="stylesheet" href="site-access.css?v=access-number-flow-1">
     <script defer src="supabase-config.js?v=shared-cart-clear-1"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -27,11 +28,19 @@
 </head>
 <body>
     <main class="landing-card">
+        <p class="landing-kicker">DHL · Operations</p>
         <img class="site-logo" src="logo.svg" alt="">
-        <h1>Select a parts list</h1>
+        <h1>Parts lists</h1>
+        <p class="landing-intro">Choose a list to browse parts and build your order.</p>
         <div class="section-buttons">
-            <button type="button" id="mechanical-button">Mechanical</button>
-            <button type="button" id="electrical-button">Electrical</button>
+            <button type="button" id="mechanical-button">
+                <span class="section-button-copy"><strong>Mechanical</strong><small>Fasteners and mechanical consumables</small></span>
+                <span class="section-arrow" aria-hidden="true">↗</span>
+            </button>
+            <button type="button" id="electrical-button">
+                <span class="section-button-copy"><strong>Electrical</strong><small>Electrical parts and consumables</small></span>
+                <span class="section-arrow" aria-hidden="true">↗</span>
+            </button>
         </div>
     </main>
 </body>

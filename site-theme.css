@@ -1,0 +1,37 @@
+:root {
+    color-scheme: light;
+    --brand: #005850;
+    --brand-strong: #01473d;
+    --brand-deep: #102c28;
+    --brand-soft: #e9f3ef;
+    --ink: #172622;
+    --muted: #65716c;
+    --canvas: #edf2ef;
+    --line: #d8e1dc;
+    --surface: #fff;
+    --surface-soft: #f7faf8;
+    --danger: #a33d39;
+    --focus: #e8a647;
+    --shadow-soft: 0 12px 32px #18372d12;
+    --shadow-card: 0 22px 60px #102c2818;
+    --radius-card: 20px;
+    --font-sans: Inter, "Segoe UI", -apple-system, BlinkMacSystemFont, Arial, sans-serif;
+}
+
+html { color-scheme: light; font-family: var(--font-sans); color: var(--ink); }
+button, input, select { font: inherit; }
+button, a, input, select { -webkit-tap-highlight-color: transparent; }
+button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible {
+    outline: 3px solid var(--focus);
+    outline-offset: 3px;
+}
+::selection { background: #cce4da; color: var(--brand-deep); }
+
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        scroll-behavior: auto !important;
+        animation-duration: .01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: .01ms !important;
+    }
+}
