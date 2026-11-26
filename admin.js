@@ -117,6 +117,48 @@ function savePartNumbers() {
     }
 }
 
+function renameItem(category, itemKey, requestedName) {
+    const newName = requestedName.trim().replace(/\s+/g, ' ').slice(0, 100);
+    if (!newName) return false;
+
+    const currentName = itemLabels[category][itemKey] || itemKey;
+    const itemGroup = itemGroups[category][itemKey] || 'Other items';
+    const nameAlreadyUsed = inventory[category].some((otherKey) => {
+        if (otherKey === itemKey) return false;
+        const otherName = (itemLabels[category][otherKey] || otherKey).trim();
+        if (otherName.toLocaleLowerCase() !== newName.toLocaleLowerCase()) return false;
+        return !groupSelect || (itemGroups[category][otherKey] || 'Other items') === itemGroup;
+    });
+    if (nameAlreadyUsed) {
+        status.textContent = `An item named “${newName}” already exists${groupSelect ? ` in ${itemGroup}` : ''}.`;
+        return false;
+    }
+
+    if (newName === currentName.trim()) {
+        status.textContent = 'Item name is unchanged.';
+        return true;
+    }
+
+    if (isElectricalInventory) {
+        // Electrical inventory uses stable keys for group and order metadata; its label controls the visible item name.
+        itemLabels[category][itemKey] = newName;
+        saveInventory();
+        return true;
+    }
+
+    inventory[category] = inventory[category].map((name) => name === itemKey ? newName : name);
+    [minimums, manufacturers, partNumbers, itemGroups, itemLabels].forEach((records) => {
+        if (!records[category] || !Object.prototype.hasOwnProperty.call(records[category], itemKey)) return;
+        records[category][newName] = records[category][itemKey];
+        delete records[category][itemKey];
+    });
+    saveInventory();
+    saveMinimums();
+    saveManufacturers();
+    savePartNumbers();
+    return true;
+}
+
 function renderItems() {
     itemList.replaceChildren();
     const category = categorySelect.value;
@@ -132,6 +174,13 @@ function renderItems() {
     orderedItems.forEach((name) => {
         const row = document.createElement('li');
         const itemName = document.createElement('span');
+        const itemNameHeading = document.createElement('div');
+        const editNameButton = document.createElement('button');
+        const renameForm = document.createElement('form');
+        const renameLabel = document.createElement('label');
+        const renameInput = document.createElement('input');
+        const saveNameButton = document.createElement('button');
+        const cancelNameButton = document.createElement('button');
         const details = document.createElement('div');
         const groupLabel = groupSelect ? document.createElement('label') : null;
         const itemGroupSelect = groupSelect ? document.createElement('select') : null;
@@ -140,7 +189,52 @@ function renderItems() {
         const manufacturerLabel = document.createElement('label');
         const manufacturerInput = document.createElement('input');
         const removeButton = document.createElement('button');
-        itemName.textContent = itemLabels[category][name] || name;
+        const currentLabel = itemLabels[category][name] || name;
+        itemName.textContent = currentLabel;
+        itemNameHeading.className = 'item-name-heading';
+        editNameButton.type = 'button';
+        editNameButton.className = 'edit-item-name';
+        editNameButton.textContent = 'Edit name';
+        editNameButton.setAttribute('aria-label', `Edit name for ${currentLabel}`);
+        renameForm.className = 'item-name-form';
+        renameForm.hidden = true;
+        renameForm.setAttribute('aria-label', `Change the name of ${currentLabel}`);
+        renameLabel.className = 'rename-item-label';
+        renameLabel.append(document.createTextNode('Item name'));
+        renameInput.type = 'text';
+        renameInput.maxLength = 100;
+        renameInput.required = true;
+        renameInput.value = currentLabel;
+        renameInput.setAttribute('aria-label', `New name for ${currentLabel}`);
+        renameLabel.append(renameInput);
+        saveNameButton.type = 'submit';
+        saveNameButton.className = 'save-item-name';
+        saveNameButton.textContent = 'Save name';
+        cancelNameButton.type = 'button';
+        cancelNameButton.className = 'cancel-name-edit';
+        cancelNameButton.textContent = 'Cancel';
+        itemNameHeading.append(itemName, editNameButton);
+        renameForm.append(renameLabel, saveNameButton, cancelNameButton);
+        editNameButton.addEventListener('click', () => {
+            renameForm.hidden = false;
+            editNameButton.hidden = true;
+            renameInput.focus();
+            renameInput.select();
+        });
+        cancelNameButton.addEventListener('click', () => {
+            renameInput.value = currentLabel;
+            renameForm.hidden = true;
+            editNameButton.hidden = false;
+        });
+        renameForm.addEventListener('submit', (event) => {
+            event.preventDefault();
+            if (!renameItem(category, name, renameInput.value)) {
+                renameInput.focus();
+                renameInput.select();
+                return;
+            }
+            renderItems();
+        });
         details.className = 'item-details';
         if (groupSelect) {
             groupLabel.className = 'group-field';
@@ -229,7 +323,7 @@ function renderItems() {
             savePartNumbers();
             renderItems();
         });
-        details.append(itemName, ...(groupLabel ? [groupLabel] : []), ...itemFields);
+        details.append(itemNameHeading, renameForm, ...(groupLabel ? [groupLabel] : []), ...itemFields);
         row.append(details, removeButton);
         itemList.append(row);
     });
