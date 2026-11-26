@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" data-site-access-scripts="electrical-inventory.js?v=inventory-storage-guard-1|cart-user.js?v=verified-cart-users-1|cart-admin.js?v=access-number-invites-1|cart-groups.js?v=cart-groups-1|electrical.js?v=cart-refresh-race-1">
+<html lang="en" data-site-access-scripts="electrical-inventory.js?v=inventory-storage-guard-1|cart-user.js?v=account-admin-page-1|cart-admin.js?v=account-admin-page-1|cart-groups.js?v=cart-groups-1|electrical.js?v=cart-refresh-race-1">
 <head>
     <script>
         (() => {
@@ -19,7 +19,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Electrical Parts List</title>
-    <link rel="stylesheet" href="ani.css?v=access-number-invites-1">
+    <link rel="stylesheet" href="ani.css?v=account-admin-page-1">
     <link rel="stylesheet" href="cart-groups.css?v=cart-groups-1">
     <link rel="stylesheet" href="site-access.css?v=access-number-flow-1">
     <script defer src="supabase-config.js?v=shared-cart-clear-1"></script>
@@ -55,6 +55,7 @@
             <button id="admin-tools-close" type="button" aria-label="Close admin features">×</button>
         </div>
         <a class="admin-manage-link" href="electrical-admin.html">Manage items</a>
+        <a class="admin-manage-link" id="account-management-link" href="accounts-admin.html" hidden>Manage accounts</a>
         <section class="cart-admin" id="cart-admin" aria-labelledby="cart-admin-heading">
             <h3 id="cart-admin-heading">Administrator access</h3>
             <p id="cart-admin-status" role="status" aria-live="polite">Admin controls require a verified account.</p>
@@ -64,17 +65,6 @@
                 <button type="submit">Send sign-in link</button>
             </form>
             <div id="cart-admin-actions" hidden>
-                <section class="website-access-requests" id="website-access-requests" hidden aria-labelledby="website-access-heading">
-                    <h3 id="website-access-heading">Website access requests</h3>
-                    <p>Review verified email addresses before they can open the parts lists.</p>
-                    <button id="refresh-website-access" type="button">Refresh requests</button>
-                    <ul id="website-access-request-list" aria-live="polite"></ul>
-                </section>
-                <form id="cart-admin-name-form">
-                    <label for="cart-admin-name">Admin display name</label>
-                    <input id="cart-admin-name" type="text" maxlength="80" autocomplete="name" required>
-                    <button type="submit">Save name</button>
-                </form>
                 <details class="cart-activity" id="cart-activity-panel" hidden>
                     <summary id="cart-activity-heading">Recent changes</summary>
                     <ul id="cart-activity-list" aria-live="polite"></ul>
@@ -85,39 +75,7 @@
                     <ul id="cart-order-email-list" aria-live="polite"></ul>
                     <button id="load-older-order-logs" type="button" hidden>Load older orders</button>
                 </section>
-                <section class="cart-admin-management" id="cart-admin-management" hidden aria-labelledby="cart-admin-management-heading">
-                    <h4 id="cart-admin-management-heading">Registered users</h4>
-                    <p>All admins can see registered emails; cart browser names are listed separately below.</p>
-                    <section class="website-access-invites" id="website-access-invites" aria-labelledby="website-access-invites-heading">
-                        <h4 id="website-access-invites-heading">Allow someone onto the website</h4>
-                        <p>Add their email to generate a six-digit access number. Supabase will not email it. Relay the number yourself; it stays here until used or revoked. If it expires, make a replacement; that replaces the previous number.</p>
-                        <form id="website-access-invite-form">
-                            <label for="website-access-invite-email">Email address</label>
-                            <input id="website-access-invite-email" type="email" autocomplete="off" required maxlength="254">
-                            <button type="submit">Generate access number</button>
-                        </form>
-                        <button id="refresh-website-access-invites" type="button">Refresh access numbers</button>
-                        <ul id="website-access-invite-list" aria-live="polite"></ul>
-                    </section>
-                    <div id="cart-admin-owner-actions" hidden>
-                        <p>Only the owner can grant admin access or delete accounts. Deleting a visitor account removes its access to the shared cart.</p>
-                        <form id="add-cart-admin-form">
-                            <label for="add-cart-admin-email">Verified account email</label>
-                            <input id="add-cart-admin-email" type="email" autocomplete="off" required>
-                            <button type="submit">Grant admin access</button>
-                        </form>
-                    </div>
-                    <button id="refresh-cart-auth-users" type="button">Refresh registered users</button>
-                    <ul id="cart-admin-list" aria-live="polite"></ul>
-                    <section class="cart-user-management" id="cart-user-management" hidden aria-labelledby="cart-user-management-heading">
-                        <h4 id="cart-user-management-heading">Cart usernames</h4>
-                        <p>Browser names are self-entered labels linked to a verified email account. The owner can remove a browser from this list.</p>
-                        <button id="refresh-cart-users" type="button">Refresh usernames</button>
-                        <ul id="cart-user-list" aria-live="polite"></ul>
-                    </section>
-                </section>
             </div>
-            <button id="cart-admin-sign-out" type="button" hidden>Sign out</button>
         </section>
     </aside>
     <dialog class="user-name-dialog" id="cart-visitor-auth-dialog" aria-labelledby="cart-visitor-auth-title">

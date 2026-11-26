@@ -1,0 +1,62 @@
+* { box-sizing: border-box; }
+body {
+    min-height: 100vh;
+    margin: 0;
+    padding: 28px 18px 56px;
+    background: #f2f4f6;
+    color: #20242a;
+    font-family: Arial, sans-serif;
+}
+.account-admin-page { width: min(900px, 100%); margin: 0 auto; }
+.account-admin-nav { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 26px; }
+.account-admin-nav a, .account-admin-nav button {
+    display: inline-flex;
+    min-height: 40px;
+    align-items: center;
+    padding: 8px 12px;
+    border: 1px solid #01473d;
+    border-radius: 7px;
+    background: #fff;
+    color: #01473d;
+    font: inherit;
+    font-size: .9rem;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+}
+.account-admin-nav button { margin-left: auto; }
+.account-admin-nav a:hover, .account-admin-nav button:hover { background: #edf5f3; }
+.account-admin-header { margin: 0 0 22px; }
+.account-admin-kicker { margin: 0 0 6px; color: #08715c; font-size: .82rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+.account-admin-header h1 { margin: 0 0 8px; color: #01473d; font-size: clamp(1.8rem, 5vw, 2.4rem); }
+.account-admin-header > p:not(.account-admin-kicker) { margin: 0 0 8px; color: #5f6872; line-height: 1.5; }
+.account-admin-status { min-height: 1.25em; font-size: .9rem; }
+.account-admin-status.is-error { color: #a83232; }
+.account-admin-card { margin-top: 16px; padding: 20px; border: 1px solid #d0d5dc; border-radius: 12px; background: #fff; box-shadow: 0 3px 12px #19232b0b; }
+.account-admin-card h2 { margin: 0 0 8px; color: #01473d; font-size: 1.15rem; }
+.account-admin-card > p { margin: 0 0 12px; color: #606a75; font-size: .9rem; line-height: 1.5; }
+.account-admin-card form { display: grid; gap: 8px; margin: 12px 0; }
+.account-admin-card label { font-size: .9rem; font-weight: 600; }
+.account-admin-card input { width: 100%; min-height: 42px; padding: 9px 11px; border: 1px solid #aeb5c0; border-radius: 7px; font: inherit; }
+.account-admin-card button { min-height: 38px; width: fit-content; margin: 6px 0 0; padding: 8px 12px; border: 1px solid #01473d; border-radius: 7px; background: #01473d; color: #fff; font: inherit; font-size: .88rem; cursor: pointer; }
+.account-admin-card button:hover { background: #00372f; }
+.account-admin-card button:disabled { cursor: wait; opacity: .55; }
+.account-admin-list { max-height: 420px; overflow: auto; margin: 12px 0 0; padding: 0; list-style: none; }
+.account-admin-list > li { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; padding: 12px 0; border-top: 1px solid #e2e6ea; overflow-wrap: anywhere; }
+.admin-account-details { min-width: 0; display: flex; flex: 1 1 230px; flex-direction: column; gap: 4px; }
+.admin-account-name, .website-access-request-email { font-weight: 700; overflow-wrap: anywhere; }
+.admin-owner-label, .admin-account-dates, .website-access-request-meta, .website-access-invite-meta { color: #65707b; font-size: .8rem; }
+.admin-account-empty { color: #65707b; }
+.delete-auth-account, .website-access-invite-remove { border-color: #a83232 !important; background: #fff !important; color: #a83232 !important; }
+.delete-auth-account:hover, .website-access-invite-remove:hover { background: #fff1f1 !important; }
+.website-access-request-actions, .website-access-invite-actions { display: flex; flex: 0 0 auto; flex-wrap: wrap; gap: 6px; }
+.website-access-request-actions button[data-decision="denied"] { border-color: #a83232; background: #fff; color: #a83232; }
+.website-access-request-status { color: #65707b; font-size: .82rem; text-transform: capitalize; }
+.website-access-invite-code { display: inline-block; width: fit-content; padding: 5px 8px; border: 1px solid #cbd5d1; border-radius: 6px; background: #f1f6f4; color: #01473d; font: 700 1.05rem/1.2 ui-monospace, SFMono-Regular, Consolas, monospace; letter-spacing: .1em; }
+.website-access-invite-actions button { min-height: 34px; margin: 0; padding: 6px 9px; font-size: .8rem; }
+#account-admin-owner-actions[hidden] { display: none; }
+@media (max-width: 560px) {
+    body { padding: 18px 12px 40px; }
+    .account-admin-card { padding: 16px; }
+    .account-admin-nav button { margin-left: 0; }
+}

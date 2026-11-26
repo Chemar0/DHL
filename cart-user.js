@@ -35,6 +35,7 @@
     function showName() {
         nameOutput.textContent = adminAccess && adminName ? adminName : currentName;
         changeButton.hidden = !adminAccess;
+        if (adminAccess) changeButton.textContent = 'Manage account';
     }
 
     function saveNameLocally(name, nameReentered = false) {
@@ -70,21 +71,16 @@
         }
 
         if (window.CartAdmin?.isAdmin()) {
-            try {
-                await window.CartAdmin.setName(name);
-            } catch (error) {
-                window.CartAdmin.setStatus(error.message || 'Could not save the administrator name.', true);
-                return;
-            }
-        } else {
-            saveNameLocally(name, true);
+            window.location.href = 'accounts-admin.html';
+            return;
         }
+        saveNameLocally(name, true);
 
         dialog.close();
     });
 
     changeButton.addEventListener('click', () => {
-        if (window.CartAdmin?.isAdmin()) promptForName();
+        if (window.CartAdmin?.isAdmin()) window.location.href = 'accounts-admin.html';
     });
     dialog.addEventListener('cancel', (event) => {
         if (!currentName) event.preventDefault();
