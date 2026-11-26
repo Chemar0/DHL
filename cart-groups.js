@@ -1,6 +1,7 @@
 // File purpose: Shared-cart category normalization helpers used to label and group mechanical versus electrical cart entries.
 
 (() => {
+    // Category classification maps cart rows to the two top-level groups shown to users.
     const electricalCategories = new Set([
         'Cable & Wire', 'Cable Indents', 'Connectors', 'Switches', 'Fuses', 'Relays',
         'Sensors', 'Power Supplies', 'Terminals', 'Terminals & Crimps', 'Lighting',

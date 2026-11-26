@@ -2,6 +2,7 @@
 
 -- Expose only whether an administrator is configured so the site can hide
 -- the administrator panel from ordinary visitors.
+-- Safe public status check reveals setup state without returning admin identity data.
 create or replace function public.cart_admin_is_configured()
 returns boolean
 language sql

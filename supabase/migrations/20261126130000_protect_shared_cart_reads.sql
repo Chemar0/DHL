@@ -3,6 +3,7 @@
 -- Cart reads must enforce the same approved-account gate as cart writes.
 -- A valid Supabase session alone is not sufficient for website access.
 
+-- Read RPCs apply the same verified-and-approved gate as cart mutations.
 create or replace function public.get_shared_cart()
 returns table (
     category text,

@@ -14,6 +14,7 @@
     let adminAccess = false;
     let deviceId = '';
 
+    // Browser identity and display-name state: maintain an anonymous device key plus a user-editable label.
     function createDeviceId() {
         if (window.crypto?.randomUUID) return window.crypto.randomUUID();
         return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (character) => {
@@ -34,6 +35,7 @@
         if (!deviceId) deviceId = createDeviceId();
     }
 
+    // Name prompt and validation: request a label when needed and let authorized admins manage it.
     function showName() {
         nameOutput.textContent = adminAccess && adminName ? adminName : currentName;
         changeButton.hidden = !adminAccess;
@@ -90,6 +92,7 @@
 
     if (currentName) showName();
 
+    // Cross-script events and public API let the cart controller react to auth and name changes.
     document.addEventListener('cart-user-auth-ready', (event) => {
         emailOutput.textContent = event.detail?.email || '';
         if (!currentName && !adminAccess) promptForName();

@@ -39,6 +39,7 @@ begin
 end;
 $$;
 
+-- Private order email-draft audit schema and admin-only access.
 create table if not exists private.cart_order_email_log (
     id bigint generated always as identity primary key,
     cart_type text not null check (cart_type in ('mechanical', 'electrical')),

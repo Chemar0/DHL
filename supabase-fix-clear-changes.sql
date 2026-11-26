@@ -4,6 +4,7 @@
 -- existing clear-all behavior while making both cart clear RPCs executable.
 begin;
 
+-- Replace clear-history and cart-clear RPCs while preserving audit behavior.
 create or replace function public.clear_shared_cart_activity()
 returns integer
 language plpgsql

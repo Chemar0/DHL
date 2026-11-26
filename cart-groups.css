@@ -1,5 +1,6 @@
 /* File purpose: Small layout overrides that visually separate mechanical and electrical groups inside the shared cart. */
 
+/* Cart group headings and category labels distinguish mechanical from electrical items. */
 .cart-items li.cart-type-heading {
     display: block;
     margin-top: 4px;
@@ -12,6 +13,7 @@
 
 .cart-items li.cart-type-heading:first-child { margin-top: 0; }
 
+/* Nested category labels keep item subgroups readable within each cart type. */
 .cart-items li.cart-category {
     display: block;
     padding: 10px 0 5px 10px;

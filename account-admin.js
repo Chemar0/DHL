@@ -26,6 +26,7 @@
     let isOwner = false;
     let loadingInvites = false;
 
+    // Shared UI and error helpers keep feedback consistent across account-management actions.
     function setStatus(message, isError = false) {
         if (!status) return;
         status.textContent = message;
@@ -49,6 +50,7 @@
         if (ownerActions) ownerActions.hidden = !isOwner;
     }
 
+    // Administrator and access-request workflows: load pending requests, review them, and manage issued access codes.
     async function refreshAccountList() {
         if (!isAdmin || !accountList) return;
         if (refreshAccountsButton) refreshAccountsButton.disabled = true;
@@ -332,6 +334,7 @@
         });
     }
 
+    // Registered-account and browser registry workflows are separate lists managed from this page.
     async function refreshCartUsers() {
         if (!isAdmin || !cartUserList) return;
         if (refreshCartUsersButton) refreshCartUsersButton.disabled = true;
@@ -413,6 +416,7 @@
         });
     }
 
+    // Page bootstrap: establish an authorized admin session, load the dashboard, then wire its forms and buttons.
     async function loadAdmin() {
         if (!client) return;
         const { data: sessionData, error: sessionError } = await client.auth.getSession();

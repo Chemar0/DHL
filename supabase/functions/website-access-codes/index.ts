@@ -17,6 +17,7 @@ type InviteRow = {
   failed_attempts: number;
 };
 
+// HTTP boundary: CORS, JSON response formatting, and bounded request parsing.
 function responseHeaders(origin: string): Headers {
   return new Headers({
     "Access-Control-Allow-Origin": origin,
@@ -75,6 +76,7 @@ function validEmail(email: string): boolean {
   return email.length <= 254 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
+// Access-code cryptography: encode, hash, and encrypt codes without storing them in plaintext.
 function bytesToBase64Url(bytes: Uint8Array): string {
   let binary = "";
   for (const byte of bytes) binary += String.fromCharCode(byte);
@@ -134,6 +136,7 @@ async function decryptCode(email: string, ciphertext: string, iv: string): Promi
   return new TextDecoder().decode(cleartext);
 }
 
+// Database and authorization helpers call trusted Supabase endpoints with server-only secrets.
 function serviceHeaders(): Headers {
   return new Headers({
     apikey: SERVICE_ROLE_KEY,
@@ -184,6 +187,7 @@ async function requireAdmin(request: Request): Promise<{ id: string } | null> {
   return { id: user.id };
 }
 
+// Invite operations create an admin-issued number, list pending invites, and redeem a submitted code.
 async function createInvite(email: string, adminId: string): Promise<Record<string, unknown>> {
   const generatedResponse = await fetch(`${SUPABASE_URL}/auth/v1/admin/generate_link`, {
     method: "POST",

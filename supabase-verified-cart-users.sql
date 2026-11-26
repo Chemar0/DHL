@@ -2,6 +2,7 @@
 
 -- Require a confirmed email and approved website access for shared cart use,
 -- and link each named browser to the verified Auth account that registered it.
+-- Shared authorization guard binds account verification and website approval to cart access.
 create or replace function private.require_verified_cart_user()
 returns text
 language plpgsql

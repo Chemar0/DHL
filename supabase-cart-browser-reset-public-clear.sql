@@ -4,6 +4,7 @@
 -- approval migration and does not grant anonymous access to shared-cart data.
 -- When an owner removes a visitor browser, its old saved name must not be
 -- silently registered again. That browser must submit a name again first.
+-- Browser reset marker prevents removed devices from silently re-registering old labels.
 create table if not exists private.shared_cart_user_reset_required (
     device_id uuid primary key,
     removed_at timestamptz not null default now()
@@ -71,6 +72,7 @@ begin
 end;
 $$;
 
+-- Admin removal and approved-user clear-cart RPCs.
 create or replace function public.remove_shared_cart_user(p_device_id uuid)
 returns void
 language plpgsql

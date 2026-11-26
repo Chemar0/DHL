@@ -4,6 +4,7 @@ const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const CLIENT_ID = Deno.env.get("MICROSOFT_CLIENT_ID") ?? "";
 const SETUP_KEY = Deno.env.get("MICROSOFT_MAIL_SETUP_KEY") ?? "";
 
+// Credential and REST helpers access protected configuration through the Supabase backend.
 function getSecretApiKey(): string {
   const secretsJson = Deno.env.get("SUPABASE_SECRET_KEYS");
   if (secretsJson) {
@@ -35,6 +36,7 @@ function constantTimeEqual(left: string, right: string): boolean {
   return difference === 0;
 }
 
+// Admin authorization and state persistence keep Graph authorization tokens out of the browser.
 async function manageState(
   action: "get" | "set_device" | "clear_device" | "set_refresh",
   options: { deviceCode?: string; expiresAt?: string; refreshToken?: string } = {},
@@ -55,6 +57,7 @@ async function manageState(
   return typeof value === "object" && value !== null ? value as Record<string, unknown> : {};
 }
 
+// Device authorization starts consent and polls until Microsoft approves or denies it.
 async function requestDeviceCode(): Promise<Response> {
   const response = await fetch("https://login.microsoftonline.com/consumers/oauth2/v2.0/devicecode", {
     method: "POST",

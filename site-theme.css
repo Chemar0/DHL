@@ -1,5 +1,6 @@
 /* File purpose: Design tokens and shared base rules for colors, typography, surfaces, focus rings, and consistent box sizing. */
 
+/* Shared design tokens are the single place to tune site colors, typography, radii, and shadows. */
 :root {
     color-scheme: light;
     --brand: #005850;

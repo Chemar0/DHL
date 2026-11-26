@@ -2,6 +2,7 @@
 
 const store = window.FastenerInventory;
 const isElectricalInventory = typeof store.loadData === 'function';
+// Catalog loading and validation: recover saved browser data while rejecting malformed records.
 function readSavedObject(key) {
     try {
         const value = JSON.parse(localStorage.getItem(key) || 'null');
@@ -64,6 +65,7 @@ Object.keys(inventory).forEach((category) => {
     categorySelect.append(option);
 });
 
+// Editor rendering and persistence: populate controls and save each catalog property to local storage.
 function renderGroupOptions(selectedGroup) {
     if (!groupSelect) return;
     groupSelect.replaceChildren();
@@ -119,6 +121,7 @@ function savePartNumbers() {
     }
 }
 
+// Item identity operations: rename visible labels without losing their stable metadata keys.
 function renameItem(category, itemKey, requestedName) {
     const newName = requestedName.trim().replace(/\s+/g, ' ').slice(0, 100);
     if (!newName) return false;
@@ -161,6 +164,7 @@ function renameItem(category, itemKey, requestedName) {
     return true;
 }
 
+// Draw the selected category and bind its edit controls to the persistence helpers above.
 function renderItems() {
     itemList.replaceChildren();
     const category = categorySelect.value;

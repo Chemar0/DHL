@@ -1,5 +1,6 @@
 -- File purpose: Migration adding encrypted website access invites and admin/redeem management RPCs.
 
+-- Invite storage keeps only a digest for validation and encrypted code material for admin display.
 create table if not exists private.website_access_invites (
     id uuid primary key default gen_random_uuid(),
     email text not null,
@@ -29,6 +30,7 @@ create index if not exists website_access_invites_active_created_idx
 alter table private.website_access_invites enable row level security;
 revoke all on table private.website_access_invites from public, anon, authenticated;
 
+-- Admin management and visitor redemption are routed through one authorization-checked RPC.
 create or replace function public.manage_website_access_invites(
     p_action text,
     p_email text default null,

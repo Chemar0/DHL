@@ -3,6 +3,7 @@
 -- Allow every allowlisted cart admin to view Supabase Auth accounts.
 -- Account deletion remains restricted to the owner by delete_cart_auth_user.
 
+-- Return account details only to authenticated administrators.
 create or replace function public.get_cart_auth_users()
 returns table(
     user_id uuid,

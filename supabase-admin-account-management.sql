@@ -3,6 +3,7 @@
 -- Let every cart admin view Supabase Auth accounts. Only the owner can
 -- delete selected non-owner accounts; the owner account is never deletable here.
 
+-- Admin account listing and owner-only deletion RPCs.
 create or replace function public.get_cart_auth_users()
 returns table(
     user_id uuid,

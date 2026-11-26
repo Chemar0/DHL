@@ -29,6 +29,7 @@
     let resolveAccessReady;
     let accessReadyResolved = false;
     const accessReady = new Promise((resolve) => { resolveAccessReady = resolve; });
+    // Session markers and page state support a fast return while server checks remain authoritative.
     function rememberApprovedAdminSession(userId) {
         if (!userId) return;
         try { sessionStorage.setItem(approvedAdminSessionKey, userId); } catch (error) { /* Storage can be disabled. */ }
@@ -59,6 +60,7 @@
         if (!state.isVisitorVerified) event.preventDefault();
     });
 
+    // UI state helpers show only the controls allowed by the currently verified account.
     function finishAccessCheck() {
         if (accessReadyResolved) return;
         accessReadyResolved = true;
@@ -124,6 +126,7 @@
         document.dispatchEvent(new Event('cart-user-auth-signed-out'));
     }
 
+    // Authorization checks: distinguish visitor access, approved users, and allowlisted administrators.
     async function refreshAdminSetupStatus() {
         const { data, error } = await state.client.rpc('cart_admin_is_configured');
         // Fail closed: never display admin controls publicly if the status endpoint is unavailable.
@@ -219,6 +222,7 @@
         void window.refreshSharedCart?.();
     }
 
+    // Order history: format and paginate the administrator-only record of email drafts.
     function renderOrderEmailLog() {
         if (!orderLogList || !state.isAdmin) return;
         orderLogList.replaceChildren();
@@ -293,6 +297,7 @@
         }
     }
 
+    // Publish a small API for the account page and wire sign-in, sign-out, and drawer interactions.
     async function refreshOrderEmailLog(reset = false) {
         if (!state.isAdmin || !state.client || !orderLogList || state.loadingOrderEmails) return;
         if (reset) {

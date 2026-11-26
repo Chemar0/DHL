@@ -2,6 +2,7 @@
 
 (() => {
 // Keep these category and group names in sync with electrical.html.
+// Electrical catalog source of truth: category/group membership and visible item labels used to build the default list.
 const categoryGroups = {
     'Cable & Wire': {
         'Cable Idents': [
@@ -69,6 +70,7 @@ const categoryGroups = {
     }
 };
 
+// Derive stable item keys and lookup maps from the source catalog so duplicate labels remain distinguishable.
 const defaults = {};
 const itemGroups = {};
 const itemLabels = {};
@@ -91,6 +93,7 @@ Object.entries(categoryGroups).forEach(([category, sections]) => {
     });
 });
 
+// Storage validation and migration: safely read persisted edits and repair older catalog formats.
 function readSavedValue(key) {
     try {
         return JSON.parse(localStorage.getItem(key) || 'null');
@@ -112,6 +115,7 @@ function cleanRecord(value, isAllowed) {
     return cleaned;
 }
 
+// Inventory store API: load, normalize, migrate, and persist electrical catalog data for the list and admin page.
 const inventoryStore = {
     storageKey: 'electrical-list-inventory',
     groupsKey: 'electrical-list-item-groups',
@@ -255,6 +259,7 @@ const inventoryStore = {
     }
 };
 
+// Legacy conversion helpers keep existing saved inventories usable after schema changes.
 function addLegacyItem(data, category, group, item) {
     const normalized = item.trim().toLocaleLowerCase();
     const alreadyListed = data.inventory[category].some((key) =>

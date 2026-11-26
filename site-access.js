@@ -1,6 +1,7 @@
 // File purpose: Shared access gate: restores approved sessions, submits/reviews access requests, verifies account approval, and loads protected page scripts.
 
 (() => {
+    // Reusable in-page confirmation dialog replaces browser-native confirm prompts.
     let siteConfirmId = 0;
     let siteConfirmOpen = false;
 
@@ -108,6 +109,7 @@
     const submitButton = root.querySelector('#site-access-submit');
     const status = root.querySelector('#site-access-status');
     const signOutButton = root.querySelector('#site-access-signout');
+    // Access overlay setup and script loading keep protected page logic dormant until access is checked.
     const scriptNames = (document.documentElement.dataset.siteAccessScripts || '').split('|').filter(Boolean);
     const needsAdmin = document.documentElement.dataset.siteAccessAdminOnly === 'true';
     const approvedSessionKey = 'dhl-approved-session-user';
@@ -123,6 +125,7 @@
     const loadedAppScripts = new Set();
     let pageUnlocked = false;
 
+    // Access-screen state helpers control messages, modes, and visibility during transitions.
     function setStatus(message, isError = false) {
         status.textContent = message;
         status.classList.toggle('is-error', isError);
@@ -212,6 +215,7 @@
         document.documentElement.classList.add('site-access-locked');
     }
 
+    // Session hints accelerate refreshes, but every resumed session is revalidated with Supabase.
     function hasApprovedSessionHint(session) {
         if (!session?.user?.id) return false;
         try {
@@ -239,6 +243,7 @@
         try { sessionStorage.setItem(approvedAdminSessionKey, session.user.id); } catch (error) { /* Storage can be disabled. */ }
     }
 
+    // Approval flow verifies website permission before unlocking the page and loading its scripts.
     async function resumeApprovedSession(session) {
         if (!hasApprovedSessionHint(session)) {
             if (preflightResume) lockPage();
@@ -315,6 +320,7 @@
         }
     }
 
+    // Startup/auth lifecycle: request access when needed and respond to sign-in, sign-out, and token changes.
     async function checkAccess() {
         if (!client || !currentSession) return;
         if (checking) {

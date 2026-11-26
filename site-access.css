@@ -21,6 +21,7 @@ html.site-access-locked body > :not(.site-access-overlay) {
     pointer-events: none !important;
 }
 
+/* Access overlay and form: visible while the account is checked or awaiting approval. */
 .site-access-overlay {
     position: fixed;
     z-index: 2147483000;
@@ -157,6 +158,7 @@ html.site-access-locked body > :not(.site-access-overlay) {
 .site-access-overlay.is-leaving .site-access-card { transform: translateY(-10px) scale(.98); }
 body.site-content-enter > :not(.site-access-overlay) { animation: site-content-arrive 460ms cubic-bezier(.2,.75,.25,1) both; }
 
+/* Motion communicates loading and approval state; reduced-motion overrides follow below. */
 @keyframes access-card-arrive { from { opacity: 0; transform: translateY(18px) scale(.985); } to { opacity: 1; transform: translateY(0) scale(1); } }
 @keyframes access-card-pulse { 50% { box-shadow: 0 24px 95px #000c, 0 0 0 1px #ffffff10 inset; } }
 @keyframes access-approved { from { opacity: .45; transform: translateY(12px) scale(.97); } to { opacity: 1; transform: translateY(0) scale(1); } }

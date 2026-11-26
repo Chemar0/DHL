@@ -1,6 +1,7 @@
 <!doctype html>
 <!-- File purpose: Mechanical inventory administration page structure and dependencies for editing the mechanical parts list. -->
 <html lang="en" data-site-access-admin-only="true" data-site-access-scripts="inventory.js?v=mechanical-admin-fix-1|admin.js?v=item-rename-1">
+    <!-- Head: preload the protected editor and load its theme, admin styles, Supabase client, and access gate. -->
 <head>
     <script>
         (() => {
@@ -28,6 +29,7 @@
     <script defer src="site-access.js?v=access-number-flow-3"></script>
 </head>
 <body>
+        <!-- Editor form: select a category, edit catalog details, and display save status. -->
     <main class="admin-card">
         <nav class="admin-nav" aria-label="Page navigation">
             <a class="admin-brand" href="index.html" aria-label="DHL home"><img src="logo.svg" alt=""></a>

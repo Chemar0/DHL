@@ -1,5 +1,6 @@
 -- File purpose: Migration creating website access requests, approval checks, and gated cart/order RPCs.
 
+-- Access request records and row-level policy: visitors can request entry, while review remains server-controlled.
 create table if not exists public.website_access_requests (
     user_id uuid primary key references auth.users(id) on delete cascade,
     email text not null,
@@ -20,6 +21,7 @@ create index if not exists website_access_requests_status_requested_idx
 alter table public.website_access_requests enable row level security;
 revoke all on table public.website_access_requests from public, anon, authenticated;
 
+-- Approval predicate shared by the request/status endpoints and protected cart operations.
 create or replace function private.user_has_website_access(p_user_id uuid)
 returns boolean
 language sql
@@ -41,6 +43,7 @@ $function$;
 
 revoke all on function private.user_has_website_access(uuid) from public, anon, authenticated;
 
+-- Visitor-facing RPCs submit a request and return the current account's approval state.
 create or replace function public.submit_website_access_request()
 returns text
 language plpgsql
@@ -113,6 +116,7 @@ begin
 end;
 $function$;
 
+-- Admin-only review RPCs list requests and persist an approve/deny decision.
 create or replace function public.list_website_access_requests()
 returns table (
     user_id uuid,
@@ -182,6 +186,7 @@ grant execute on function public.get_website_access_status() to authenticated;
 grant execute on function public.list_website_access_requests() to authenticated;
 grant execute on function public.review_website_access_request(uuid, text) to authenticated;
 
+-- Verified-access guard and cart/order RPCs enforce approval for shared data changes.
 create or replace function private.require_verified_cart_user()
 returns text
 language plpgsql

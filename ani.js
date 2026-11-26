@@ -72,6 +72,7 @@ panels.forEach((panel) => {
     }
 });
 
+// Tab interaction: maintain the selected tab, panel visibility, keyboard focus, and URL-independent page state.
 function selectTab(tab, moveFocus = false) {
     const panelId = tab.getAttribute('aria-controls');
 
@@ -139,6 +140,7 @@ const sharedCartEnabled = Boolean(
     typeof publicApiKey === 'string' && publicApiKey.trim()
 );
 
+// Shared-cart connection and visitor registration: call protected Supabase RPCs and report sync state.
 function updateCartSyncStatus(message, isError = false) {
     if (!cartSyncStatus) return;
     cartSyncStatus.textContent = message;
@@ -202,6 +204,7 @@ document.addEventListener('cart-user-name-changed', (event) => {
 });
 document.addEventListener('cart-user-auth-ready', () => { void registerCartUser(true); });
 
+// Cart state and synchronization: restore local fallback data, then reconcile it with the shared cart.
 function loadLocalCart() {
     try {
         const savedCart = JSON.parse(localStorage.getItem(cartStorageKey) || '[]');
@@ -288,6 +291,7 @@ async function refreshSharedCart() {
     }
 }
 
+// Cart mutations and attribution: update quantities and record who changed each item.
 function applyLocalCartChange(category, name, delta, actorName) {
     if (!cart.has(category)) cart.set(category, new Map());
     const items = cart.get(category);
@@ -354,6 +358,7 @@ function recordCartActivity(action, category, itemName, delta, quantityAfter, ac
     recentCartActivity = recentCartActivity.slice(0, 12);
 }
 
+// Activity history presentation: turn stored events into readable labels and render recent changes.
 function describeCartActivity(entry) {
     const actor = entry.actor_name || 'Unknown device';
     const item = entry.item_name || 'item';
@@ -472,7 +477,8 @@ function renderCart() {
     renderCartActivity();
 }
 
-async function clearSharedCart() {
+async // Cart clearing and order handoff: clear through the server, then prepare an email draft when requested.
+function clearSharedCart() {
     await window.CartAdmin?.whenAccessChecked?.();
     if (!window.CartAdmin?.isVisitorVerified?.()) {
         throw new Error('Verify your email and wait for website approval before clearing the shared cart.');
@@ -623,6 +629,7 @@ quantityDialog.addEventListener('close', () => {
     pendingCartItem = null;
 });
 
+// Cart panel accessibility: synchronize drawer visibility, focus handling, and keyboard dismissal.
 function setCartOpen(open) {
     cartPanel.classList.toggle('open', open);
     cartPanel.setAttribute('aria-hidden', String(!open));
