@@ -1,9 +1,9 @@
--- File purpose: Private registry and RPCs for recording visitor-selected cart names and allowing admins to review or remove browser entries.
+-- File purpose: Private list of browser names and database functions for approved users and admins to manage it.
 
 -- Store the self-entered name for each browser so every cart admin can see
 -- the names that have used the shared cart. These are labels, not identities.
 
--- Private browser registry schema, cleanup rules, and legacy-name seeding.
+-- Save browser names privately and carry over names from the older list.
 create table if not exists private.shared_cart_users (
     device_id uuid primary key,
     display_name text not null check (char_length(btrim(display_name)) between 1 and 80),
@@ -54,7 +54,7 @@ where names.name_key not in ('unknown device', 'unknown')
   )
 on conflict (device_id) do nothing;
 
--- Registry RPCs let approved visitors register and admins review/remove browser labels.
+-- Database actions let approved users save browser names and admins review or remove them.
 create or replace function public.register_shared_cart_user(
     p_device_id uuid,
     p_display_name text

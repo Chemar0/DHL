@@ -1,8 +1,8 @@
-/* File purpose: Landing-page card, logo, typography, and navigation styling. */
+/* File purpose: Styles the landing page, logo, text, and list links. */
 
 * { box-sizing: border-box; }
 
-/* Landing-page frame and centered brand card. */
+/* Landing page background and centered logo box. */
 body {
     min-height: 100vh;
     margin: 0;
@@ -53,7 +53,7 @@ body {
 .landing-card h1 { margin: 0; color: var(--ink); font-size: clamp(1.8rem, 5vw, 2.35rem); font-weight: 700; letter-spacing: -.045em; }
 .landing-intro { max-width: 42ch; margin: 10px auto 30px; color: var(--muted); font-size: .98rem; line-height: 1.6; }
 
-/* Mechanical/electrical navigation cards and their responsive layout. */
+/* Buttons for the two parts lists and their small-screen layout. */
 .section-buttons { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
 .section-buttons button {
     display: flex;
@@ -90,7 +90,7 @@ body {
     to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
-/* Mobile layout stacks the two parts-list entry cards. */
+/* On phones, stack the two parts-list buttons. */
 @media (max-width: 540px) {
     .landing-card { padding: 34px 22px 24px; border-radius: 21px; }
     .section-buttons { grid-template-columns: 1fr; gap: 10px; }

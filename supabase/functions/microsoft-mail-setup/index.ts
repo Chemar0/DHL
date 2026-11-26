@@ -1,10 +1,10 @@
-// File purpose: Admin-only Microsoft Graph authorization flow: requests a device code, polls consent, and stores mail-token state through protected database RPCs.
+// File purpose: Lets an admin connect Microsoft email, checks approval, and saves the email sign-in details safely.
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const CLIENT_ID = Deno.env.get("MICROSOFT_CLIENT_ID") ?? "";
 const SETUP_KEY = Deno.env.get("MICROSOFT_MAIL_SETUP_KEY") ?? "";
 
-// Credential and REST helpers access protected configuration through the Supabase backend.
+// These helpers read private settings from Supabase (the online database service).
 function getSecretApiKey(): string {
   const secretsJson = Deno.env.get("SUPABASE_SECRET_KEYS");
   if (secretsJson) {
@@ -36,7 +36,7 @@ function constantTimeEqual(left: string, right: string): boolean {
   return difference === 0;
 }
 
-// Admin authorization and state persistence keep Graph authorization tokens out of the browser.
+// Check the admin and save Microsoft sign-in details on the server, not in the browser.
 async function manageState(
   action: "get" | "set_device" | "clear_device" | "set_refresh",
   options: { deviceCode?: string; expiresAt?: string; refreshToken?: string } = {},
@@ -57,7 +57,7 @@ async function manageState(
   return typeof value === "object" && value !== null ? value as Record<string, unknown> : {};
 }
 
-// Device authorization starts consent and polls until Microsoft approves or denies it.
+// Start Microsoft sign-in and check until it is approved or denied.
 async function requestDeviceCode(): Promise<Response> {
   const response = await fetch("https://login.microsoftonline.com/consumers/oauth2/v2.0/devicecode", {
     method: "POST",

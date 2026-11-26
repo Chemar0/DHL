@@ -1,10 +1,10 @@
--- File purpose: Database changes for admin removal of remembered cart browsers and approved-user cart clearing with audit attribution.
+-- File purpose: Database rules for removing a remembered browser and clearing the shared cart with a record of who did it.
 
 -- Legacy filename retained. This script requires the current website access
 -- approval migration and does not grant anonymous access to shared-cart data.
 -- When an owner removes a visitor browser, its old saved name must not be
 -- silently registered again. That browser must submit a name again first.
--- Browser reset marker prevents removed devices from silently re-registering old labels.
+-- Mark removed browsers so their old names are not added back without asking.
 create table if not exists private.shared_cart_user_reset_required (
     device_id uuid primary key,
     removed_at timestamptz not null default now()
@@ -72,7 +72,7 @@ begin
 end;
 $$;
 
--- Admin removal and approved-user clear-cart RPCs.
+-- Let admins remove a browser and approved users clear the shared cart.
 create or replace function public.remove_shared_cart_user(p_device_id uuid)
 returns void
 language plpgsql

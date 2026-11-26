@@ -1,4 +1,4 @@
-// File purpose: Supabase Auth email hook: obtains/refreshes Microsoft Graph credentials, builds safe verification messages, and sends them through Graph.
+// File purpose: Sends account sign-in and verification emails through Microsoft; builds the message and keeps private values out of the browser.
 
 import { Webhook } from "standardwebhooks";
 
@@ -29,7 +29,7 @@ type MicrosoftTokenResponse = {
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const CLIENT_ID = Deno.env.get("MICROSOFT_CLIENT_ID") ?? "";
-// Runtime secrets and sender configuration are read from the function environment.
+// Private settings and the sender address come from the server settings.
 const SENDER_EMAIL = (Deno.env.get("MICROSOFT_SENDER_EMAIL") ?? "").toLowerCase();
 const HOOK_SECRET = Deno.env.get("SEND_EMAIL_HOOK_SECRET") ?? "";
 
@@ -37,7 +37,7 @@ let cachedRefreshToken: string | null = null;
 let cachedAccessToken: string | null = null;
 let cachedAccessTokenExpiresAt = 0;
 
-// Token state helpers securely retrieve and refresh the Microsoft Graph access token.
+// These helpers get and renew the Microsoft email sign-in token. Token means a temporary access key.
 function getSecretApiKey(): string {
   const secretsJson = Deno.env.get("SUPABASE_SECRET_KEYS");
   if (secretsJson) {
@@ -131,7 +131,7 @@ async function getAccessToken(): Promise<string> {
   return cachedAccessToken;
 }
 
-// Email rendering escapes user-controlled values before inserting them into HTML templates.
+// Clean user-provided text before adding it to an email so it cannot change the message layout.
 function escapeHtml(value: string): string {
   return value.replace(/[&<>"']/g, (character) => ({
     "&": "&amp;",
@@ -178,7 +178,7 @@ function messageHtml(subject: string, link?: string, token?: string): string {
   return `<div style="font-family:Arial,sans-serif;line-height:1.5;color:#222"><h2>${safeSubject}</h2>${button}${code}<p>If you did not request this, you can ignore this email.</p></div>`;
 }
 
-// Delivery layer sends the constructed authentication email through Microsoft Graph.
+// Send the finished sign-in email through Microsoft.
 async function sendGraphMessage(
   accessToken: string,
   to: string,
@@ -208,7 +208,7 @@ async function sendGraphMessage(
   }
 }
 
-// Auth event mapping chooses the right message and verification URL for each Supabase action.
+// Choose the right email and check link for each account action.
 function createMessages(event: AuthEvent): Array<{ to: string; subject: string; html: string }> {
   const user = event.user;
   const data = event.email_data;

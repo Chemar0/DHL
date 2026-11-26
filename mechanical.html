@@ -1,7 +1,7 @@
 <!doctype html>
-<!-- File purpose: Mechanical parts-list page markup: admin/cart panels, category tabs, item groups, accessibility hooks, and dependencies. -->
+<!-- File purpose: Page layout for the mechanical list, tabs, cart, admin tools, and page files. -->
 <html lang="en" data-site-access-scripts="inventory.js?v=mechanical-admin-fix-1|cart-user.js?v=account-admin-page-1|cart-admin.js?v=account-admin-page-3|cart-groups.js?v=cart-groups-1|ani.js?v=cart-refresh-race-2">
-    <!-- Head: preload page modules and load the shared theme, cart styles, Supabase client, and access gate. -->
+    <!-- Page setup: load the page code, shared look, cart styles, and access check. -->
 <head>
     <script>
         (() => {
@@ -34,7 +34,7 @@
     <script defer src="site-access.js?v=access-number-flow-3"></script>
 </head>
 <body>
-        <!-- Cart and admin drawers: overlays are hidden or locked by their controllers until access is confirmed. -->
+        <!-- Cart and admin panels: their scripts control when they are shown. -->
     <button class="cart-toggle" id="cart-toggle" type="button" aria-controls="cart-panel" aria-expanded="false">
         Cart <span class="cart-count" id="cart-count">0</span>
     </button>
@@ -133,7 +133,7 @@
     </dialog>
     <div class="main-layout mechanical-layout">
         <a class="site-logo-link" href="index.html" aria-label="DHL home"><img class="site-logo" src="logo.svg" alt=""></a>
-            <!-- Parts-list content: category tabs control the matching panels and item buttons. -->
+            <!-- Parts list: tabs show groups of items and their buttons. -->
     <main class="box">
             <h1>Fastener List</h1>
 

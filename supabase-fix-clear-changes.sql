@@ -1,10 +1,10 @@
--- File purpose: Replacement cart-clear and activity-clear RPC definitions that preserve audit behavior and use explicit DELETE predicates.
+-- File purpose: Updated database functions for clearing the cart and its change history while keeping a record of the action.
 
 -- Supabase requires an explicit WHERE clause on DELETE statements. Keep the
 -- existing clear-all behavior while making both cart clear RPCs executable.
 begin;
 
--- Replace clear-history and cart-clear RPCs while preserving audit behavior.
+-- Update the clear-history and clear-cart actions while keeping a record of them.
 create or replace function public.clear_shared_cart_activity()
 returns integer
 language plpgsql

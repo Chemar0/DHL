@@ -1,4 +1,4 @@
-// File purpose: Mechanical parts-list behavior: tab navigation, shared-cart sync, item quantities and activity, cart rendering, clear-cart flow, and email-draft actions.
+// File purpose: Runs the mechanical parts page: tabs, cart items, saved changes, clearing the cart, and email drafts.
 
 const tabs = Array.from(document.querySelectorAll('[role="tab"]'));
 const panels = Array.from(document.querySelectorAll('[role="tabpanel"]'));
@@ -72,7 +72,7 @@ panels.forEach((panel) => {
     }
 });
 
-// Tab interaction: maintain the selected tab, panel visibility, keyboard focus, and URL-independent page state.
+// Tabs: show the chosen panel and keep keyboard focus in the right place.
 function selectTab(tab, moveFocus = false) {
     const panelId = tab.getAttribute('aria-controls');
 
@@ -140,7 +140,7 @@ const sharedCartEnabled = Boolean(
     typeof publicApiKey === 'string' && publicApiKey.trim()
 );
 
-// Shared-cart connection and visitor registration: call protected Supabase RPCs and report sync state.
+// Cart connection and visitor setup: send requests to Supabase (the online database) and show sync (when saved copies match) status.
 function updateCartSyncStatus(message, isError = false) {
     if (!cartSyncStatus) return;
     cartSyncStatus.textContent = message;
@@ -204,7 +204,7 @@ document.addEventListener('cart-user-name-changed', (event) => {
 });
 document.addEventListener('cart-user-auth-ready', () => { void registerCartUser(true); });
 
-// Cart state and synchronization: restore local fallback data, then reconcile it with the shared cart.
+// Cart data: load the browser copy, then sync (keep both copies up to date) with the shared cart.
 function loadLocalCart() {
     try {
         const savedCart = JSON.parse(localStorage.getItem(cartStorageKey) || '[]');
@@ -291,7 +291,7 @@ async function refreshSharedCart() {
     }
 }
 
-// Cart mutations and attribution: update quantities and record who changed each item.
+// Cart changes: update item counts and save who made each change.
 function applyLocalCartChange(category, name, delta, actorName) {
     if (!cart.has(category)) cart.set(category, new Map());
     const items = cart.get(category);
@@ -358,7 +358,7 @@ function recordCartActivity(action, category, itemName, delta, quantityAfter, ac
     recentCartActivity = recentCartActivity.slice(0, 12);
 }
 
-// Activity history presentation: turn stored events into readable labels and render recent changes.
+// Change history: turn saved events into readable messages and show recent changes.
 function describeCartActivity(entry) {
     const actor = entry.actor_name || 'Unknown device';
     const item = entry.item_name || 'item';
@@ -477,7 +477,7 @@ function renderCart() {
     renderCartActivity();
 }
 
-// Cart clearing and order handoff: clear through the server, then prepare an email draft when requested.
+// Clear the cart through the server, then prepare an email draft if requested.
 async function clearSharedCart() {
     await window.CartAdmin?.whenAccessChecked?.();
     if (!window.CartAdmin?.isVisitorVerified?.()) {
@@ -629,7 +629,7 @@ quantityDialog.addEventListener('close', () => {
     pendingCartItem = null;
 });
 
-// Cart panel accessibility: synchronize drawer visibility, focus handling, and keyboard dismissal.
+// Cart panel: show or hide it and let keyboard users close it.
 function setCartOpen(open) {
     cartPanel.classList.toggle('open', open);
     cartPanel.setAttribute('aria-hidden', String(!open));

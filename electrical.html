@@ -1,7 +1,7 @@
 <!doctype html>
-<!-- File purpose: Electrical parts-list page markup: admin/cart panels, tabs, item groups, accessibility hooks, and page script/style dependencies. -->
+<!-- File purpose: Page layout for the electrical list, tabs, cart, admin tools, and page files. -->
 <html lang="en" data-site-access-scripts="electrical-inventory.js?v=inventory-storage-guard-1|cart-user.js?v=account-admin-page-1|cart-admin.js?v=account-admin-page-3|cart-groups.js?v=cart-groups-1|electrical.js?v=cart-refresh-race-2">
-    <!-- Head: preload page modules and load theme, electrical/cart styles, Supabase client, and access gate. -->
+    <!-- Page setup: load the electrical page code, shared look, cart styles, and access check. -->
 <head>
     <script>
         (() => {
@@ -30,7 +30,7 @@
     <script defer src="site-access.js?v=access-number-flow-3"></script>
 </head>
 <body>
-        <!-- Cart and admin drawers: shared controls and activity are populated by the page scripts. -->
+        <!-- Cart and admin panels: their scripts fill in cart items and recent changes. -->
     <button class="cart-toggle" id="cart-toggle" type="button" aria-controls="cart-panel" aria-expanded="false">
         Cart <span class="cart-count" id="cart-count">0</span>
     </button>
@@ -129,7 +129,7 @@
     </dialog>
     <div class="main-layout">
         <a class="site-logo-link" href="index.html" aria-label="DHL home"><img class="site-logo" src="logo.svg" alt=""></a>
-            <!-- Parts-list content: electrical category tabs and panels host the catalog items. -->
+            <!-- Parts list: electrical tabs show groups of items and their buttons. -->
     <main class="box">
             <h1>Electrical Parts List</h1>
             <div class="tabs" role="tablist" aria-label="Electrical categories">

@@ -1,4 +1,4 @@
-// File purpose: Collects and remembers a visitor-provided cart display name and browser ID, then notifies cart scripts when identity state changes.
+// File purpose: Remembers a visitor name and this browser’s ID so cart changes can show who made them.
 
 (() => {
     const storageKey = 'dhl-cart-user-name';
@@ -14,7 +14,7 @@
     let adminAccess = false;
     let deviceId = '';
 
-    // Browser identity and display-name state: maintain an anonymous device key plus a user-editable label.
+    // Browser name: save an ID for this browser and a name the user can change.
     function createDeviceId() {
         if (window.crypto?.randomUUID) return window.crypto.randomUUID();
         return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (character) => {
@@ -35,7 +35,7 @@
         if (!deviceId) deviceId = createDeviceId();
     }
 
-    // Name prompt and validation: request a label when needed and let authorized admins manage it.
+    // Name box: ask for a name when needed and let admins manage it.
     function showName() {
         nameOutput.textContent = adminAccess && adminName ? adminName : currentName;
         changeButton.hidden = !adminAccess;
@@ -92,7 +92,7 @@
 
     if (currentName) showName();
 
-    // Cross-script events and public API let the cart controller react to auth and name changes.
+    // Page events and shared controls tell the cart when the name or sign-in changes.
     document.addEventListener('cart-user-auth-ready', (event) => {
         emailOutput.textContent = event.detail?.email || '';
         if (!currentName && !adminAccess) promptForName();

@@ -1,8 +1,8 @@
-// File purpose: Electrical catalog schema, defaults, browser-storage recovery, and migrations for electrical groups, item labels, and metadata.
+// File purpose: Holds the electrical item list and saved item details; also updates older saved lists to the current format.
 
 (() => {
 // Keep these category and group names in sync with electrical.html.
-// Electrical catalog source of truth: category/group membership and visible item labels used to build the default list.
+// Electrical list: categories, groups, and item names used to build the default page.
 const categoryGroups = {
     'Cable & Wire': {
         'Cable Idents': [
@@ -70,7 +70,7 @@ const categoryGroups = {
     }
 };
 
-// Derive stable item keys and lookup maps from the source catalog so duplicate labels remain distinguishable.
+// Build saved item keys and lookups so items with the same name stay separate.
 const defaults = {};
 const itemGroups = {};
 const itemLabels = {};
@@ -93,7 +93,7 @@ Object.entries(categoryGroups).forEach(([category, sections]) => {
     });
 });
 
-// Storage validation and migration: safely read persisted edits and repair older catalog formats.
+// Check saved data and update older saved lists to the current format.
 function readSavedValue(key) {
     try {
         return JSON.parse(localStorage.getItem(key) || 'null');
@@ -115,7 +115,7 @@ function cleanRecord(value, isAllowed) {
     return cleaned;
 }
 
-// Inventory store API: load, normalize, migrate, and persist electrical catalog data for the list and admin page.
+// List tools: load, clean up, update, and save electrical items for the page and editor.
 const inventoryStore = {
     storageKey: 'electrical-list-inventory',
     groupsKey: 'electrical-list-item-groups',
@@ -259,7 +259,7 @@ const inventoryStore = {
     }
 };
 
-// Legacy conversion helpers keep existing saved inventories usable after schema changes.
+// These helpers convert older saved lists so they still work.
 function addLegacyItem(data, category, group, item) {
     const normalized = item.trim().toLocaleLowerCase();
     const alreadyListed = data.inventory[category].some((key) =>

@@ -1,7 +1,7 @@
-// File purpose: Shared access gate: restores approved sessions, submits/reviews access requests, verifies account approval, and loads protected page scripts.
+// File purpose: Checks whether a person may use the site, handles access requests, and loads page code after approval.
 
 (() => {
-    // Reusable in-page confirmation dialog replaces browser-native confirm prompts.
+    // This pop-up asks for confirmation inside the page instead of using a browser alert.
     let siteConfirmId = 0;
     let siteConfirmOpen = false;
 
@@ -109,7 +109,7 @@
     const submitButton = root.querySelector('#site-access-submit');
     const status = root.querySelector('#site-access-status');
     const signOutButton = root.querySelector('#site-access-signout');
-    // Access overlay setup and script loading keep protected page logic dormant until access is checked.
+    // Keep page code locked until the access check is complete.
     const scriptNames = (document.documentElement.dataset.siteAccessScripts || '').split('|').filter(Boolean);
     const needsAdmin = document.documentElement.dataset.siteAccessAdminOnly === 'true';
     const approvedSessionKey = 'dhl-approved-session-user';
@@ -125,7 +125,7 @@
     const loadedAppScripts = new Set();
     let pageUnlocked = false;
 
-    // Access-screen state helpers control messages, modes, and visibility during transitions.
+    // These helpers change the access message and screen during page changes.
     function setStatus(message, isError = false) {
         status.textContent = message;
         status.classList.toggle('is-error', isError);
@@ -215,7 +215,7 @@
         document.documentElement.classList.add('site-access-locked');
     }
 
-    // Session hints accelerate refreshes, but every resumed session is revalidated with Supabase.
+    // Saved notes speed up refreshes, but Supabase (the online database) still checks access.
     function hasApprovedSessionHint(session) {
         if (!session?.user?.id) return false;
         try {
@@ -243,7 +243,7 @@
         try { sessionStorage.setItem(approvedAdminSessionKey, session.user.id); } catch (error) { /* Storage can be disabled. */ }
     }
 
-    // Approval flow verifies website permission before unlocking the page and loading its scripts.
+    // Check approval before opening the page and loading its code.
     async function resumeApprovedSession(session) {
         if (!hasApprovedSessionHint(session)) {
             if (preflightResume) lockPage();
@@ -320,7 +320,7 @@
         }
     }
 
-    // Startup/auth lifecycle: request access when needed and respond to sign-in, sign-out, and token changes.
+    // At startup, check access requests, sign-in, sign-out, and refreshed login details.
     async function checkAccess() {
         if (!client || !currentSession) return;
         if (checking) {

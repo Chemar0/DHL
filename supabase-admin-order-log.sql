@@ -1,4 +1,4 @@
--- File purpose: Private order-email audit table and administrator-only RPCs to append, list, and delete order-draft log entries.
+-- File purpose: Private order email history and admin-only database functions to add, view, and remove records.
 
 -- Keep cart change history administrator-only and log order email drafts only
 -- for verified accounts approved to use the site.
@@ -39,7 +39,7 @@ begin
 end;
 $$;
 
--- Private order email-draft audit schema and admin-only access.
+-- Private order email history that only admins can use.
 create table if not exists private.cart_order_email_log (
     id bigint generated always as identity primary key,
     cart_type text not null check (cart_type in ('mechanical', 'electrical')),

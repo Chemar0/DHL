@@ -1,7 +1,7 @@
-// File purpose: Default mechanical inventory and the local-storage key shared by the mechanical list and its admin editor.
+// File purpose: Default mechanical parts list and the browser save names used by the list and its editor.
 
 // Shared default inventory and browser storage key for the fastener list and admin page.
-// Mechanical catalog defaults and storage-key names shared by list and admin pages.
+// Default mechanical items and browser save names used by the list and editor.
 window.FastenerInventory = {
     storageKey: 'fastener-list-inventory',
     minimumsKey: 'fastener-list-minimums',

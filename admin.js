@@ -1,8 +1,8 @@
-// File purpose: Mechanical inventory editor: reads saved data, renders item controls, and persists edits to labels, groups, minimums, manufacturers, and part numbers.
+// File purpose: Edits the mechanical parts list: loads saved items, shows edit controls, and saves names and item details.
 
 const store = window.FastenerInventory;
 const isElectricalInventory = typeof store.loadData === 'function';
-// Catalog loading and validation: recover saved browser data while rejecting malformed records.
+// Load and check saved list data; skip entries that are not in the expected format.
 function readSavedObject(key) {
     try {
         const value = JSON.parse(localStorage.getItem(key) || 'null');
@@ -65,7 +65,7 @@ Object.keys(inventory).forEach((category) => {
     categorySelect.append(option);
 });
 
-// Editor rendering and persistence: populate controls and save each catalog property to local storage.
+// Show the editing controls and save list changes in this browser.
 function renderGroupOptions(selectedGroup) {
     if (!groupSelect) return;
     groupSelect.replaceChildren();
@@ -121,7 +121,7 @@ function savePartNumbers() {
     }
 }
 
-// Item identity operations: rename visible labels without losing their stable metadata keys.
+// Rename the shown item while keeping its saved item key and extra details.
 function renameItem(category, itemKey, requestedName) {
     const newName = requestedName.trim().replace(/\s+/g, ' ').slice(0, 100);
     if (!newName) return false;
@@ -164,7 +164,7 @@ function renameItem(category, itemKey, requestedName) {
     return true;
 }
 
-// Draw the selected category and bind its edit controls to the persistence helpers above.
+// Show the chosen category and connect its controls to the save functions above.
 function renderItems() {
     itemList.replaceChildren();
     const category = categorySelect.value;

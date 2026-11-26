@@ -1,66 +1,60 @@
-# Parts List Project Map
+# Parts List Project Guide
 
-This is a static parts-list website with a Supabase-backed shared cart, an approval gate, and separate administration screens. The annotations in source files explain each file's main responsibility; this guide groups the related files and describes their roles.
+This project is the mechanical and electrical parts website. It uses Supabase (an online database and sign-in service) for the shared cart and account checks. The notes inside the code say what each main group does in plain language.
 
-## Visitor journey and access control
+## Opening the site
 
-- `index.html`, `landing.css`, and `landing.js` form the landing page and navigation into the two parts lists.
-- `site-access.js` and `site-access.css` implement the access gate, account/session checks, request and approval flow, loading state, and transitions. Protected page scripts are loaded after access is confirmed.
-- `supabase-config.js` supplies the browser-safe Supabase endpoint and publishable key. It must never contain a service-role key.
-- `logo.svg` is the shared scalable brand artwork.
+- `index.html`, `landing.css`, and `landing.js` make the home page and its two list buttons.
+- `site-access.js` and `site-access.css` check whether someone may enter and show the waiting or approved screens.
+- `supabase-config.js` has the public address and browser key for Supabase. Never put a private admin key in this file.
+- `logo.svg` is the site logo.
 
-## Parts-list pages and catalog data
+## Parts lists and carts
 
-- `mechanical.html`, `ani.js`, `ani.css`, and `inventory.js` work together for the mechanical list. The HTML defines the tab panels, `inventory.js` supplies default catalog data, `ani.js` handles interactions and the cart, and `ani.css` styles the list and cart.
-- `electrical.html`, `electrical.js`, `electrical-inventory.js`, and `cart-groups.css` work together for the electrical list. The inventory module supplies categories, default items, and metadata; the page controller handles tabs and cart behavior.
-- `cart-groups.js` contains shared category/group normalization helpers used to keep cart entries identified as mechanical or electrical.
-- `cart-user.js` maintains the browser's cart display name and device identifier for attribution. These are labels, not verified identities.
+- `mechanical.html`, `inventory.js`, `ani.js`, and `ani.css` make the mechanical list. The HTML shows the page, inventory.js holds the default items, ani.js runs the buttons and cart, and ani.css sets their appearance.
+- `electrical.html`, `electrical-inventory.js`, `electrical.js`, and `cart-groups.css` do the same for the electrical list.
+- `cart-groups.js` sorts cart items into mechanical or electrical groups.
+- `cart-user.js` remembers the name shown beside cart changes and identifies the browser. The name is only a label; it does not prove who the person is.
+- `cart-admin.js` runs the admin controls in the cart, checks admin access, and shows the order email history.
 
-## Administration screens
+## Editing and account pages
 
-- `admin.html`, `admin.css`, and `admin.js` are the mechanical inventory editor. The script reads, renders, and saves item names and catalog metadata.
-- `electrical-admin.html` reuses the administration layout for the electrical list; `electrical-inventory.js` owns its editable electrical catalog structure and persistence/migration behavior.
-- `accounts-admin.html`, `account-admin.js`, and `account-admin.css` provide account and access-request administration, access-code invites, and registered cart-user management.
-- `cart-admin.js` manages admin-only shared-cart controls and the order email-draft activity log, including the admin access checks.
+- `admin.html`, `admin.css`, and `admin.js` let an admin edit the mechanical list.
+- `electrical-admin.html` opens the electrical editor. It uses `admin.css`, `admin.js`, and `electrical-inventory.js`.
+- `accounts-admin.html`, `account-admin.css`, and `account-admin.js` manage access requests, access numbers, accounts, and browser names.
 
-## Shared design and interaction styles
+## Shared look
 
-- `site-theme.css` defines the shared design tokens and base styles.
-- `site-access.css` styles the access/verification screens.
-- `ani.css`, `admin.css`, `account-admin.css`, `landing.css`, and `cart-groups.css` style their corresponding feature areas. `cart-groups.css` is intentionally a small override layer.
+- `site-theme.css` sets the common colors and text styles.
+- `site-access.css` styles the access screens.
+- Each other CSS file styles the page or feature named in its file purpose note. CSS means the rules that set how a page looks.
 
-## Browser and server code groups
+## Server-side code
 
-- `ani.js` and `electrical.js` each contain the page-specific tab controller, shared-cart client/RPC adapter, local fallback and sync, activity rendering, clear-cart behavior, email-draft handoff, and cart-panel interactions. Their cart implementations are parallel; keep shared behavior aligned when changing either.
-- `admin.js` edits mechanical inventory; `electrical-inventory.js` defines and migrates electrical catalog state; `electrical-admin.html` loads the electrical admin page with its configuration and access gate.
-- `supabase/functions/website-access-codes/index.ts` is the access-invite API: request parsing and response handling, code hashing/encryption, admin authorization, invite creation/listing, and redemption.
-- `supabase/functions/send-auth-email/index.ts` handles Supabase Auth email hooks through Microsoft Graph: token retrieval/refresh, message construction and HTML escaping, and delivery.
-- `supabase/functions/microsoft-mail-setup/index.ts` handles the admin's Microsoft Graph device authorization flow and persists its state through protected database operations.
-- Each `supabase/functions/*/deno.json` configures the matching Deno function runtime. JSON configuration is kept comment-free so it remains valid JSON; its purpose is listed here.
+The files under `supabase/functions/` run on the Supabase server:
 
-## Database SQL and migrations
+- `website-access-codes/index.ts` creates and checks access numbers.
+- `send-auth-email/index.ts` sends sign-in emails through Microsoft.
+- `microsoft-mail-setup/index.ts` lets an admin connect Microsoft email.
+- Each nearby `deno.json` tells Deno (the program that runs these server files) how to start that function. JSON files do not allow comments, so their purpose is described here.
 
-The SQL files are deployment scripts and schema history. Prefer applying ordered files in `supabase/migrations/` to an existing database; the root `supabase-*.sql` files are setup or focused repair scripts and can overlap with migration definitions. Review the target project and current schema before applying a script.
+## Database files
 
-- `supabase/migrations/20261125113331_website_access_approval.sql`: access-request records, approval helpers, and approved-user gates for cart operations.
-- `supabase/migrations/20261125125923_fix_clear_shared_cart_where_clause.sql`: corrected cart clear function.
-- `supabase/migrations/20261125151441_microsoft_graph_email_state.sql`: private Microsoft Graph token state and management RPC.
-- `supabase/migrations/20261126093132_website_access_codes.sql`: encrypted access invites and management/redeem RPCs.
-- `supabase/migrations/20261126130000_protect_shared_cart_reads.sql`: approved-user checks on shared-cart reads.
-- `supabase-setup.sql`: consolidated shared-cart tables, policies, functions, admin helpers, and order draft logging for initial setup.
-- `supabase-admin-security.sql`: consolidated admin security and management functions, including profiles, display-name protection, logs, account management, and cart-user registry.
-- `supabase-admin-management.sql`, `supabase-admin-account-management.sql`, and `supabase-admin-account-visibility.sql`: focused admin/account management variants that may overlap with the consolidated security script.
-- `supabase-admin-order-log.sql`: focused order email-draft audit table and RPCs.
-- `supabase-admin-visibility.sql`: safe “admin configured” status RPC for hiding admin UI from visitors.
-- `supabase-cart-user-registry.sql`: visitor cart-name registry and admin management RPCs.
-- `supabase-cart-browser-reset-public-clear.sql`: browser removal/reset and approved-user cart clearing.
-- `supabase-fix-clear-changes.sql`: replacement clear-cart and activity-clear functions.
-- `supabase-verified-cart-users.sql`: shared-cart approval/verification enforcement and browser-to-user association.
+SQL files set up the database or change how it works. RPC means a database function the website can call. Migrations are numbered database updates that are applied in order.
 
-## Database setup reference
+- `supabase/migrations/20261125113331_website_access_approval.sql` saves access requests and checks approval.
+- `supabase/migrations/20261125125923_fix_clear_shared_cart_where_clause.sql` fixes the cart clear action.
+- `supabase/migrations/20261125151441_microsoft_graph_email_state.sql` saves Microsoft email sign-in details privately.
+- `supabase/migrations/20261126093132_website_access_codes.sql` saves and checks website access numbers.
+- `supabase/migrations/20261126130000_protect_shared_cart_reads.sql` checks approval before showing cart data.
+- `supabase-setup.sql` creates the shared cart, change history, admin tools, and order email history.
+- `supabase-admin-security.sql` sets rules for admin accounts, names, cart clearing, and history.
+- `supabase-admin-management.sql`, `supabase-admin-account-management.sql`, and `supabase-admin-account-visibility.sql` manage admin accounts and who can view them.
+- `supabase-admin-order-log.sql` saves and shows the admin-only order email history.
+- `supabase-admin-visibility.sql` lets the page check whether admin tools exist without showing admin names or email addresses.
+- `supabase-cart-user-registry.sql` saves browser names and lets admins review or remove them.
+- `supabase-cart-browser-reset-public-clear.sql` lets admins remove a browser and approved users clear the cart.
+- `supabase-fix-clear-changes.sql` updates the cart clearing actions and keeps a record of them.
+- `supabase-verified-cart-users.sql` checks that an account is confirmed and approved before it can use the shared cart.
 
-`SUPABASE_SETUP.md` is the operational setup and troubleshooting guide for Supabase configuration, SQL deployment, functions, and secrets. It complements the code map; consult it before changing the hosted backend.
-
-## Source coverage
-
-Every maintained project file is covered above or has a file-purpose comment at its top. The three `deno.json` files are the exception to inline comments because they are machine-readable JSON; their role is documented in the Deno section. `README.md` is this map, and `SUPABASE_SETUP.md` is the backend operations guide.
+Some SQL files cover the same parts of the database. `SUPABASE_SETUP.md` explains how the database and server functions are set up. Read it before changing Supabase settings.

@@ -1,6 +1,6 @@
--- File purpose: Migration adding private storage and admin-only management for Microsoft Graph mail authorization tokens.
+-- File purpose: Database update that adds private storage for Microsoft email sign-in details.
 
--- Private token storage is inaccessible through the public Data API.
+-- Store email sign-in details privately so website visitors cannot read them.
 create table if not exists private.microsoft_graph_email_state (
     singleton boolean primary key default true check (singleton),
     refresh_token text,
@@ -14,7 +14,7 @@ revoke all on table private.microsoft_graph_email_state from public, anon, authe
 grant usage on schema private to service_role;
 grant all on table private.microsoft_graph_email_state to service_role;
 
--- Admin-only RPC reads or updates Microsoft Graph authorization state.
+-- Admin-only database action reads or updates Microsoft email sign-in details.
 create or replace function public.manage_microsoft_graph_email_state(
     p_action text,
     p_refresh_token text default null,

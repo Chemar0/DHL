@@ -1,8 +1,8 @@
-/* File purpose: Presentation rules for the account administration page: navigation, profile, access approvals, invites, registered users, and cart-user management. */
+/* File purpose: Styles the account management page: links, profile, approvals, invites, and user lists. */
 
 * { box-sizing: border-box; }
 
-/* Base page framing and navigation keep the account tools aligned with the rest of the admin area. */
+/* Page background and top links for the account tools. */
 body {
     min-height: 100vh;
     margin: 0;
@@ -39,7 +39,7 @@ body {
 .account-admin-nav > a:not(.account-admin-brand):hover, .account-admin-nav button:hover { transform: translateY(-1px); border-color: #97b6a8; background: #fff; }
 .account-admin-nav button { border-color: #d7b4b0; background: #fff; color: var(--danger); }
 .account-admin-nav button:hover { border-color: #c9928c; background: #fff8f7; }
-/* Header and dashboard cards establish the account page hierarchy and responsive layout. */
+/* Page heading and account boxes, including their small-screen layout. */
 /* Dashboard content cards: profile forms, request queues, account lists, and state feedback. */
 .account-admin-header {
     position: relative;
@@ -122,7 +122,7 @@ body {
 
 @keyframes account-card-enter { from { opacity: 0; transform: translateY(7px); } to { opacity: 1; transform: translateY(0); } }
 
-/* Narrow screens stack dashboard cards and simplify the account navigation. */
+/* On phones, stack the account boxes and simplify the top links. */
 @media (max-width: 720px) {
     body { padding: 15px 13px 38px; }
     .account-admin-nav { gap: 7px; margin-bottom: 14px; }

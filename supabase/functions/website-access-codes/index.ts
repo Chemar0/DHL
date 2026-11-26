@@ -1,4 +1,4 @@
-// File purpose: Website access-code API: creates, lists, and redeems admin-issued codes using authorization checks and protected RPCs.
+// File purpose: Creates, lists, and checks admin-issued website access numbers.
 
 const SUPABASE_URL = (Deno.env.get("SUPABASE_URL") ?? "").replace(/\/$/, "");
 const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
@@ -17,7 +17,7 @@ type InviteRow = {
   failed_attempts: number;
 };
 
-// HTTP boundary: CORS, JSON response formatting, and bounded request parsing.
+// Request handling: allow the website to call this function, read JSON, and limit request size. CORS means which websites may connect.
 function responseHeaders(origin: string): Headers {
   return new Headers({
     "Access-Control-Allow-Origin": origin,
@@ -76,7 +76,7 @@ function validEmail(email: string): boolean {
   return email.length <= 254 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
-// Access-code cryptography: encode, hash, and encrypt codes without storing them in plaintext.
+// Protect access numbers: hide or lock codes so they are not saved as readable text. Hash means a one-way code check; encrypt means lock it with a key.
 function bytesToBase64Url(bytes: Uint8Array): string {
   let binary = "";
   for (const byte of bytes) binary += String.fromCharCode(byte);
@@ -136,7 +136,7 @@ async function decryptCode(email: string, ciphertext: string, iv: string): Promi
   return new TextDecoder().decode(cleartext);
 }
 
-// Database and authorization helpers call trusted Supabase endpoints with server-only secrets.
+// These helpers call the database and check admin rights using private server keys.
 function serviceHeaders(): Headers {
   return new Headers({
     apikey: SERVICE_ROLE_KEY,
@@ -187,7 +187,7 @@ async function requireAdmin(request: Request): Promise<{ id: string } | null> {
   return { id: user.id };
 }
 
-// Invite operations create an admin-issued number, list pending invites, and redeem a submitted code.
+// Access number tools create, list, and check numbers entered by users.
 async function createInvite(email: string, adminId: string): Promise<Record<string, unknown>> {
   const generatedResponse = await fetch(`${SUPABASE_URL}/auth/v1/admin/generate_link`, {
     method: "POST",

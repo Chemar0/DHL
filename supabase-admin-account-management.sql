@@ -1,9 +1,9 @@
--- File purpose: Database RPCs for listing Auth accounts to cart admins and deleting non-owner accounts under owner-only authorization.
+-- File purpose: Database functions for admins to view accounts and for the owner to remove non-owner accounts.
 
 -- Let every cart admin view Supabase Auth accounts. Only the owner can
 -- delete selected non-owner accounts; the owner account is never deletable here.
 
--- Admin account listing and owner-only deletion RPCs.
+-- Database actions let admins view accounts and only the owner remove admins.
 create or replace function public.get_cart_auth_users()
 returns table(
     user_id uuid,

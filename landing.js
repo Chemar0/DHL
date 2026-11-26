@@ -1,4 +1,4 @@
-// File purpose: Landing-page interaction hooks; currently a lightweight entry point reserved for landing-specific behavior.
+// File purpose: Sends a button click to the matching parts list.
 
 document.getElementById('mechanical-button').addEventListener('click', () => {
     window.location.href = 'mechanical.html';

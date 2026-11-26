@@ -1,4 +1,4 @@
--- File purpose: Consolidated database security setup: private admin profiles and names, cart clearing/auditing, admin management, order logs, account management, and cart-user registry.
+-- File purpose: Database rules for admin profiles, names, cart clearing, change history, accounts, and cart users.
 
 -- Secure the existing shared cart without deleting cart items or activity.
 -- Run in the Supabase SQL editor after supabase-setup.sql.

@@ -1,8 +1,8 @@
-// File purpose: Browser-safe Supabase project URL and publishable key configuration; never place service-role credentials in this file.
+// File purpose: Public Supabase address and browser key. Never put a private admin key here.
 
 // Supabase project connection settings for the shared electrical cart.
 // The anon/publishable key is intended for browser use. Never put a service-role key here.
-// Runtime browser config contains only public connection values used by the client SDK.
+// These public settings let the website connect to Supabase.
 window.SUPABASE_CONFIG = {
     url: 'https://nkgqvtppxtqybrqljgwj.supabase.co',
     publishableKey: 'sb_publishable_qUx90pjWWzuforKuKC_TGQ_h45jSGZl'

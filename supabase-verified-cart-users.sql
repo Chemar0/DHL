@@ -1,8 +1,8 @@
--- File purpose: Database access enforcement requiring verified, approved accounts for cart operations and associating browser registry rows with users.
+-- File purpose: Database rules that require a confirmed, approved account before someone can use the shared cart.
 
 -- Require a confirmed email and approved website access for shared cart use,
 -- and link each named browser to the verified Auth account that registered it.
--- Shared authorization guard binds account verification and website approval to cart access.
+-- Check that the account is confirmed and approved before allowing cart access.
 create or replace function private.require_verified_cart_user()
 returns text
 language plpgsql

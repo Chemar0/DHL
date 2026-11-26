@@ -1,4 +1,4 @@
-// File purpose: Account administration controller: loads and reviews access requests, manages invited access codes and cart users, and updates admin profile controls.
+// File purpose: Runs the account tools: checks access requests, creates access codes, and manages accounts and cart users.
 
 (() => {
     const config = window.SUPABASE_CONFIG || {};
@@ -26,7 +26,7 @@
     let isOwner = false;
     let loadingInvites = false;
 
-    // Shared UI and error helpers keep feedback consistent across account-management actions.
+    // Shared page messages and error helpers keep feedback consistent.
     function setStatus(message, isError = false) {
         if (!status) return;
         status.textContent = message;
@@ -50,7 +50,7 @@
         if (ownerActions) ownerActions.hidden = !isOwner;
     }
 
-    // Administrator and access-request workflows: load pending requests, review them, and manage issued access codes.
+    // Access requests and codes: load requests, record decisions, and manage issued codes.
     async function refreshAccountList() {
         if (!isAdmin || !accountList) return;
         if (refreshAccountsButton) refreshAccountsButton.disabled = true;
@@ -334,7 +334,7 @@
         });
     }
 
-    // Registered-account and browser registry workflows are separate lists managed from this page.
+    // Account and browser lists: show registered accounts and browsers used for the cart.
     async function refreshCartUsers() {
         if (!isAdmin || !cartUserList) return;
         if (refreshCartUsersButton) refreshCartUsersButton.disabled = true;
@@ -416,7 +416,7 @@
         });
     }
 
-    // Page bootstrap: establish an authorized admin session, load the dashboard, then wire its forms and buttons.
+    // Page startup: check admin access, load the dashboard, and connect its forms and buttons.
     async function loadAdmin() {
         if (!client) return;
         const { data: sessionData, error: sessionError } = await client.auth.getSession();

@@ -1,4 +1,4 @@
-// File purpose: Shared cart administration controller: verifies admin access, controls visitor/admin views, and loads or manages order email history.
+// File purpose: Runs cart admin tools: checks admin access, shows the right controls, and manages order email history.
 
 (() => {
     const status = document.getElementById('cart-admin-status');
@@ -29,7 +29,7 @@
     let resolveAccessReady;
     let accessReadyResolved = false;
     const accessReady = new Promise((resolve) => { resolveAccessReady = resolve; });
-    // Session markers and page state support a fast return while server checks remain authoritative.
+    // Saved session notes speed up return visits; the server still checks access each time.
     function rememberApprovedAdminSession(userId) {
         if (!userId) return;
         try { sessionStorage.setItem(approvedAdminSessionKey, userId); } catch (error) { /* Storage can be disabled. */ }
@@ -60,7 +60,7 @@
         if (!state.isVisitorVerified) event.preventDefault();
     });
 
-    // UI state helpers show only the controls allowed by the currently verified account.
+    // Page controls show only what the checked account is allowed to use.
     function finishAccessCheck() {
         if (accessReadyResolved) return;
         accessReadyResolved = true;
@@ -126,7 +126,7 @@
         document.dispatchEvent(new Event('cart-user-auth-signed-out'));
     }
 
-    // Authorization checks: distinguish visitor access, approved users, and allowlisted administrators.
+    // Access checks tell visitors, approved users, and listed admins apart.
     async function refreshAdminSetupStatus() {
         const { data, error } = await state.client.rpc('cart_admin_is_configured');
         // Fail closed: never display admin controls publicly if the status endpoint is unavailable.
@@ -222,7 +222,7 @@
         void window.refreshSharedCart?.();
     }
 
-    // Order history: format and paginate the administrator-only record of email drafts.
+    // Order history: show the admin-only list of email drafts in pages.
     function renderOrderEmailLog() {
         if (!orderLogList || !state.isAdmin) return;
         orderLogList.replaceChildren();
@@ -297,7 +297,7 @@
         }
     }
 
-    // Publish a small API for the account page and wire sign-in, sign-out, and drawer interactions.
+    // Share these controls with the account page and connect sign-in, sign-out, and panel buttons.
     async function refreshOrderEmailLog(reset = false) {
         if (!state.isAdmin || !state.client || !orderLogList || state.loadingOrderEmails) return;
         if (reset) {

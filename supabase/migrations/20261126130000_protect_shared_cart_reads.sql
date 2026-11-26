@@ -1,9 +1,9 @@
--- File purpose: Migration requiring approved verified users for shared-cart reads and restricting access to the underlying helper.
+-- File purpose: Database update that checks approval before showing shared cart data.
 
 -- Cart reads must enforce the same approved-account gate as cart writes.
 -- A valid Supabase session alone is not sufficient for website access.
 
--- Read RPCs apply the same verified-and-approved gate as cart mutations.
+-- Check approval before showing cart data, just as for cart changes.
 create or replace function public.get_shared_cart()
 returns table (
     category text,

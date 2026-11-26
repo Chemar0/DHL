@@ -1,6 +1,6 @@
--- File purpose: Migration replacing the cart-clear RPC with an explicit safe DELETE condition required by Postgres.
+-- File purpose: Database update that fixes the cart clear function.
 
--- Cart clearing RPC replacement: keep the approved-user guard and explicit DELETE predicate.
+-- Replace the cart clear action; check approval and state which rows can be deleted.
 create or replace function public.clear_shared_cart(p_actor_name text)
 returns void
 language plpgsql

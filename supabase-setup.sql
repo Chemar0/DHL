@@ -1,4 +1,4 @@
--- File purpose: Base shared-cart schema, policies, RPCs, admin helpers, activity auditing, and order-email logging used by both parts pages.
+-- File purpose: Base database setup for shared cart items, change history, admin tools, and order email history.
 
 -- Shared cart for the GitHub Pages mechanical and electrical parts lists.
 -- Anyone who can access the site can view and change this team cart.
