@@ -160,8 +160,10 @@ async function createInvite(email: string, adminId: string): Promise<Record<stri
   }
 
   const generated = await generatedResponse.json();
-  const code = generated?.properties?.email_otp;
-  const userId = generated?.user?.id;
+  // The raw Auth REST response is flat (email_otp, id); supabase-js wraps
+  // those values in properties and user when it normalizes the response.
+  const code = generated?.email_otp ?? generated?.properties?.email_otp;
+  const userId = generated?.id ?? generated?.user?.id;
   if (typeof code !== "string" || !/^\d{6}$/.test(code) || typeof userId !== "string") {
     console.error("Supabase returned an incomplete access code response.");
     throw new Error("Supabase returned an incomplete access code response.");
@@ -214,7 +216,7 @@ async function redeemCode(email: string, code: string): Promise<Record<string, u
   const authResponse = await fetch(`${SUPABASE_URL}/auth/v1/verify`, {
     method: "POST",
     headers: { apikey: ANON_KEY, "Content-Type": "application/json" },
-    body: JSON.stringify({ email, token: code, type: "email" }),
+    body: JSON.stringify({ email, token: code, type: "magiclink" }),
     signal: AbortSignal.timeout(8_000),
   });
   if (!authResponse.ok) {
